@@ -1,72 +1,285 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PACE IIT & Medical — AI Timetable Importer</title>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0f172a">
+<title>PACE IIT & Medical — Timetable Manager</title>
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f4f7fb;color:#172033}.header{background:#101a32;color:#fff;padding:18px 24px;display:flex;justify-content:space-between;align-items:center}.header h1{margin:0;font-size:20px}.header small{opacity:.7}.steps{display:flex;gap:10px;padding:16px 24px;background:#fff;border-bottom:1px solid #e5e9f0;overflow:auto}.step{padding:10px 16px;border-radius:20px;background:#e9eef5;font-weight:700;white-space:nowrap}.step.active{background:#dff8e9;color:#087b3e}.layout{display:grid;grid-template-columns:360px 1fr;gap:20px;padding:20px;max-width:1500px;margin:auto}.card{background:#fff;border:1px solid #e1e6ee;border-radius:16px;padding:18px;box-shadow:0 2px 8px #1720330b}.card h2{font-size:18px;margin:0 0 8px}.muted{color:#68758a;font-size:13px}.drop{border:2px dashed #aeb9ca;border-radius:14px;padding:28px;text-align:center;margin-top:16px;background:#fbfcfe}button{border:0;border-radius:10px;padding:11px 16px;font-weight:700;font-size:14px;cursor:pointer}.primary{background:#087f3f;color:#fff}.secondary{background:#e8edf4;color:#172033}.actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}.notice{padding:12px 14px;border-radius:10px;margin:14px 0;background:#fff0f0;color:#a32626;font-weight:600}.success{background:#e9faef;color:#087b3e}.warn{background:#fff8dd;color:#775a00}table{width:100%;border-collapse:separate;border-spacing:0;border:1px solid #dfe5ed;border-radius:12px;overflow:hidden}th,td{padding:10px 8px;border-bottom:1px solid #e7ebf1;text-align:left;font-size:13px;vertical-align:middle}th{background:#f7f9fc;font-size:12px;color:#4c5870}tr:last-child td{border-bottom:0}td input,td select{width:100%;border:1px solid #cbd4e1;border-radius:7px;padding:8px;background:#fff}.badge{display:inline-block;border-radius:14px;padding:5px 9px;font-size:11px;font-weight:800}.high{background:#d9f8e6;color:#087b3e}.medium{background:#fff0c2;color:#8a6500}.review{background:#fff0c2;color:#8a6500}.ok{background:#dff8e9;color:#087b3e}.empty{text-align:center;padding:45px;color:#7b879a}.merge-box{margin:14px 0;padding:14px 16px;border:1px solid #e3d49a;border-radius:12px;background:#fffaf0}.merge-title{font-weight:800;color:#6f5600;margin-bottom:5px}.merge-item{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #eee5c9}.merge-item:last-child{border-bottom:0}.merge-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}.combined-badge{background:#e5efff;color:#2459a6}.conflict-badge{background:#ffe3e3;color:#a32626}@media(max-width:900px){.layout{grid-template-columns:1fr;padding:12px}.table-wrap{overflow:auto}table{min-width:950px}}
-</style></head><body>
-<header class="header"><div><h1>PACE IIT &amp; Medical</h1><small>AI Handwritten Timetable Importer · V4</small></div><div style="font-size:13px">Drafts stay private until you publish.</div></header>
-<div class="steps"><div class="step active">1 Upload</div><div class="step active">2 AI Read</div><div class="step active">3 Review</div><div class="step">4 Conflicts</div><div class="step">5 Confirm &amp; Publish</div></div>
-<main class="layout"><section class="card"><h2>Handwritten timetable</h2><div class="muted">Upload a photo or PDF. AI extracts only what it can confidently read.</div>
-<div class="drop"><label for="file" class="primary" style="display:inline-block;padding:12px 18px;border-radius:10px;cursor:pointer">Choose image / PDF</label><input id="file" type="file" accept="image/*,.pdf"><div id="fileName" style="margin-top:10px;font-size:13px;font-weight:600">No file selected</div></div>
-<div class="actions"><button id="readBtn" class="primary">🤖 Read timetable</button><button id="sampleBtn" class="secondary">Load sample</button></div><div id="status" class="notice" style="display:none"></div>
-<div style="margin-top:24px"><label class="muted">Schedule</label><select id="schedule" style="width:100%;padding:10px;border:1px solid #cbd4e1;border-radius:8px;margin-top:6px"><option>Daily</option><option>Weekly</option></select></div></section>
-<section class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div><h2>Review &amp; publish</h2><div class="muted">Every extracted class is editable before it can be published.</div></div><div><button class="secondary">Daily</button> <button class="secondary">Weekly</button></div></div><div id="notice"></div><div id="mergeQuestions"></div>
-<div class="table-wrap"><table><thead><tr><th>#</th><th>Date</th><th>Centre</th><th>Batch</th><th>Teacher</th><th>Activity / Subject</th><th>Start</th><th>End</th><th>Confidence</th><th>Combined?</th><th>Status</th></tr></thead><tbody id="rows"><tr><td colspan="11" class="empty">Upload a timetable or load the sample to begin.</td></tr></tbody></table></div>
-<div class="actions"><button class="secondary" onclick="saveDraft()">Save draft</button><button class="primary" onclick="publish()">Review &amp; Publish</button></div></section></main>
+:root{--nav:#0f172a;--blue:#155eef;--green:#15803d;--bg:#f4f7fb;--card:#fff;--line:#dfe5ee;--muted:#64748b;--red:#b42318;--amber:#9a6700}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#172033;font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+header{background:var(--nav);color:#fff;padding:15px 18px;position:sticky;top:0;z-index:10}.head{max-width:1400px;margin:auto;display:flex;justify-content:space-between;align-items:center}.brand{font-size:21px;font-weight:800}.sub{font-size:12px;color:#aab6c9}
+main{max-width:1400px;margin:auto;padding:15px}.nav{display:flex;gap:7px;overflow:auto;margin-bottom:15px}.nav button{white-space:nowrap;border:1px solid var(--line);background:#fff;padding:10px 13px;border-radius:9px;font-weight:700}.nav .active{background:var(--nav);color:#fff}
+.page.hidden{display:none}.card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:17px;margin-bottom:15px;box-shadow:0 5px 20px #0f172a0b}
+h2,h3{margin:0 0 7px}.muted{color:var(--muted);font-size:13px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.stat{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:14px}.stat b{display:block;font-size:25px;margin-top:3px}
+.row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.between{justify-content:space-between}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+button{border:0;border-radius:9px;padding:10px 14px;font-weight:700;cursor:pointer}.primary{background:var(--blue);color:#fff}.green{background:var(--green);color:#fff}.secondary{background:#e9eef5}.danger{background:#fee4e2;color:var(--red)}.amber{background:#fff1c2;color:var(--amber)}
+input,select,textarea{font:inherit;border:1px solid #cbd5e1;border-radius:8px;padding:9px;background:#fff;width:100%}
+label{font-size:12px;font-weight:700}.field{display:grid;gap:5px}.notice{padding:11px 13px;border-radius:9px;margin:10px 0;background:#eef6ff;color:#174ea6}.notice.green{background:#ecfdf3;color:#087443}.notice.red{background:#fff0ef;color:#9b2219}
+.scroll{overflow:auto}table{border-collapse:collapse;width:100%;min-width:1050px}th,td{padding:8px;border-bottom:1px solid #e8edf3;text-align:left;font-size:13px}th{background:#f7f9fc;font-size:12px}.badge{display:inline-block;padding:4px 8px;border-radius:20px;font-size:11px;font-weight:800}.ok{background:#dcfce7;color:#166534}.warn{background:#fef3c7;color:#92400e}.bad{background:#fee2e2;color:#991b1b}
+.message{white-space:pre-wrap;background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:15px;line-height:1.65}.teachergrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.batchgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.personcard{border:1px solid var(--line);border-radius:12px;padding:14px}.daygrid{display:grid;grid-template-columns:repeat(7,minmax(180px,1fr));gap:9px;overflow:auto}.day{background:#f8fafc;border:1px solid var(--line);border-radius:11px;padding:10px;min-height:170px}.event{background:#fff;border-left:4px solid var(--blue);border-radius:8px;padding:8px;margin:7px 0;font-size:12px}
+.small{font-size:12px}.pill{padding:5px 8px;border-radius:99px;background:#eef2ff;color:#3730a3;font-size:11px;font-weight:800}
+@media(max-width:900px){.grid{grid-template-columns:1fr 1fr}.grid3,.grid4,.teachergrid,.batchgrid{grid-template-columns:1fr}}@media(max-width:600px){.grid{grid-template-columns:1fr}}
+</style>
 <script>
-const sample=[{date:"",centre:"Virar",batch:"XI-J",teacher:"AP — Aman Shree",activity:"Test",start:"",end:"",confidence:"high",status:"Needs review",combined:null},{date:"",centre:"Virar",batch:"XI-N",teacher:"AP — Aman Shree",activity:"Test",start:"",end:"",confidence:"high",status:"Needs review",combined:null},{date:"",centre:"Vasai",batch:"XII-1",teacher:"GM — Gajendra Kumar",activity:"GM (11–5)",start:"",end:"",confidence:"medium",status:"Needs review",combined:null}];let data=[];const $=id=>document.getElementById(id);
-$("file").onchange=e=>$("fileName").textContent=e.target.files[0]?.name||"No file selected";
-$("sampleBtn").onclick=()=>{data=structuredClone(sample);render()};
-$("readBtn").onclick=async()=>{const f=$("file").files[0];if(!f){show("Please choose an image/PDF first.","warn");return}show("Sending timetable to AI…","warn");try{const base=localStorage.getItem("SUPABASE_FUNCTION_URL");if(!base)throw Error("Set SUPABASE_FUNCTION_URL in local storage first.");const bytes=await f.arrayBuffer();let s="";for(const b of new Uint8Array(bytes))s+=String.fromCharCode(b);const b64=btoa(s);const r=await fetch(base,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({filename:f.name,mimeType:f.type,data:b64})});const j=await r.json();if(!r.ok)throw Error(j.error||"AI request failed");data=j.rows||[];render();show("AI extraction complete. Review highlighted fields before publishing.","success")}catch(e){show(e.message,"")}};
-function show(t,c){$("status").style.display="block";$("status").className="notice "+c;$("status").textContent=t}
-function esc(s=""){return String(s).replaceAll("&","&amp;").replaceAll('"',"&quot;").replaceAll("<","&lt;").replaceAll(">","&gt;")}
-function getGroups(){
-  const groups={};
-  data.forEach((r,i)=>{
-    const teacher=(r.teacher||'').trim().toLowerCase(), start=(r.start||'').trim(), end=(r.end||'').trim(), date=(r.date||'').trim();
-    if(!teacher||!start||!end) return;
-    const key=[date,teacher,start,end].join('|');
-    (groups[key] ||= []).push(i);
+window.PACE_CONFIG = {
+  supabaseFunctionUrl: "https://fzgtforhxxpnihipmiix.supabase.co/functions/v1/quick-function"
+};
+</script>
+</head>
+<body>
+<header><div class="head"><div><div class="brand">PACE IIT & Medical</div><div class="sub">Timetable • Faculty • Batches • Topic Hours</div></div><div class="sub">Admin Schedule Manager</div></div></header>
+<main>
+<div class="nav">
+<button class="active" onclick="show('dashboard',this)">Dashboard</button>
+<button onclick="show('schedule',this)">Schedule</button>
+<button onclick="show('faculty',this)">Faculty</button>
+<button onclick="show('batches',this)">Batches</button>
+<button onclick="show('hours',this)">Hours & Topics</button>
+<button onclick="show('messages',this)">Messages</button>
+<button onclick="show('access',this)">Access</button>
+</div>
+
+<section id="dashboard" class="page">
+<div class="grid">
+<div class="stat">Classes<b id="statClasses">0</b></div><div class="stat">Faculty Assignments<b id="statFaculty">0</b></div>
+<div class="stat">Teaching Hours<b id="statHours">0.0</b></div><div class="stat">Topics<b id="statTopics">0</b></div>
+</div>
+<div class="card"><div class="row between"><div><h2>Schedule for date</h2><div class="muted">Teacher and batch conflicts are flagged automatically.</div></div><input id="dashDate" type="date" style="max-width:180px" onchange="renderAll()"></div><div id="dash"></div></div>
+</section>
+
+<section id="schedule" class="page hidden">
+<div class="card">
+<h2>🤖 AI Timetable Import</h2>
+<div class="muted">Upload a timetable image. The Supabase Edge Function reads it; Gemini stays server-side.</div>
+<div class="grid4" style="margin-top:12px">
+  <div class="field"><label>Timetable image</label><input id="aiFile" type="file" accept="image/*"></div>
+  <div class="field"><label>Fallback date</label><input id="aiDate" type="date"></div>
+  <div class="field"><label>Fallback centre</label><select id="aiCentre"><option>Auto detect</option><option>Vasai</option><option>Virar</option><option>Both</option></select></div>
+  <div class="field"><label>Schedule</label><select id="aiMode"><option value="daily">Daily</option><option value="weekly">Weekly</option></select></div>
+</div>
+<div class="row" style="margin-top:12px">
+  <button class="primary" onclick="readAITimetable()">🤖 Read timetable</button>
+  <span id="aiStatus" class="muted"></span>
+</div>
+<div id="aiReview" style="margin-top:12px"></div>
+</div>
+<div class="card"><h2>Add class</h2><div class="muted">If the activity is College, leave Faculty blank. College lectures do not count as faculty teaching hours.</div>
+<div class="grid4" style="margin-top:12px">
+<div class="field"><label>Date</label><input id="date" type="date"></div>
+<div class="field"><label>Centre</label><select id="centre"><option>Vasai</option><option>Virar</option></select></div>
+<div class="field"><label>Batch</label><select id="batch"></select></div>
+<div class="field"><label>Faculty</label><select id="teacher"></select></div>
+<div class="field"><label>Subject / Activity</label><input id="subject" placeholder="Physics / College"></div>
+<div class="field"><label>Topic / Chapter</label><input id="topic" placeholder="Kinematics"></div>
+<div class="field"><label>Start</label><input id="start" type="time"></div>
+<div class="field"><label>End</label><input id="end" type="time"></div>
+</div><div class="row" style="margin-top:12px"><button class="primary" onclick="addClass()">Add Class</button><button class="secondary" onclick="sample()">Load Sample</button></div><div id="addMsg"></div></div>
+<div class="card"><div class="row between"><h2>All scheduled classes</h2><div class="row"><input id="filterDate" type="date" style="width:160px" onchange="renderAll()"><select id="filterTeacher" style="width:190px" onchange="renderAll()"><option value="">All faculty</option></select><select id="filterBatch" style="width:190px" onchange="renderAll()"><option value="">All batches</option></select></div></div><div id="all"></div></div>
+</section>
+
+<section id="faculty" class="page hidden"><div class="card"><div class="row between"><div><h2>Faculty Timetables</h2><div class="muted">Each faculty member gets only their assigned lectures in their message/view.</div></div><input id="facultyDate" type="date" style="max-width:180px" onchange="renderFaculty()"></div><div id="facultyCards" class="teachergrid" style="margin-top:12px"></div></div></section>
+
+<section id="batches" class="page hidden"><div class="card"><div class="row between"><div><h2>Batch Timetables</h2><div class="muted">Student-facing schedule for each batch.</div></div><input id="batchDate" type="date" style="max-width:180px" onchange="renderBatches()"></div><div id="batchCards" class="batchgrid" style="margin-top:12px"></div></div></section>
+
+<section id="hours" class="page hidden">
+<div class="card"><h2>Hours by Faculty & Topic</h2><div class="muted">Actual hours are calculated from start/end times. Same teacher + same topic is accumulated automatically.</div><div id="hoursTable" style="margin-top:12px"></div></div>
+<div class="card"><h2>Teacher's own view</h2><select id="ownTeacher" onchange="renderOwnTeacher()" style="max-width:320px"></select><div id="own"></div></div>
+</section>
+
+<section id="messages" class="page hidden"><div class="card"><h2>WhatsApp Message Generator</h2><div class="row"><select id="msgType" onchange="messagePicker()"><option value="faculty">Faculty</option><option value="batch">Batch</option></select><select id="msgWho" style="min-width:250px"></select><input id="msgDate" type="date"><button class="primary" onclick="generateMessage()">Generate</button></div><div id="messageOut" style="margin-top:12px"></div></div></section>
+
+<section id="access" class="page hidden"><div class="card"><h2>Access Structure</h2><div class="muted">This prototype stores access locally. For a live multi-user version, connect Supabase Auth + Row Level Security.</div><div class="grid3" style="margin-top:12px"><div class="personcard"><b>Admin</b><p class="muted">Can see all faculty, all batches, hours, topics and schedules.</p></div><div class="personcard"><b>Scheduler</b><p class="muted">Can create/edit schedules and generate messages.</p></div><div class="personcard"><b>Faculty</b><p class="muted">Should see only their own timetable and their own teaching/topic hours.</p></div></div></div></section>
+</main>
+<script>
+const TEACHERS=[
+["DC","Devendra Shukla","Devendra Sir"],["NC","Nitish Kumar","Nitish Sir"],["GM","Gajendra Kumar","Gajendra Sir"],["AP","Aman Shree","Aman Sir"],["RB","Rashmi Singh","Rashmi Mam"],["MB","Priyanka Maurya","Priyanka Mam"],["PB","Pranay Jha","Pranay Sir"]];
+const BATCHES=[
+["V12J1","Vasai 12th 1","XII JEE 1","Vasai"],["V12J2","Vasai 12th 2","XII JEE 2","Vasai"],["V12N","Vasai 12th NEET","XII NEET","Vasai"],["V11J","Vasai 11th JEE","XI JEE","Vasai"],["V11N","Vasai 11th NEET","XI NEET","Vasai"],
+["R12J1","Virar 12th 1","XII JEE 1","Virar"],["R12J2","Virar 12th 2","XII JEE 2","Virar"],["R12N","Virar 12th NEET","XII NEET","Virar"],["R11J","Virar 11th JEE","XI JEE","Virar"],["R11N","Virar 11th NEET","XI NEET","Virar"]];
+let data=JSON.parse(localStorage.getItem("PACE_TIMETABLE_V2")||"[]");
+const $=x=>document.getElementById(x), today=()=>new Date().toISOString().slice(0,10);
+function esc(s=""){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function T(c){return TEACHERS.find(x=>x[0]===c)} function B(c){return BATCHES.find(x=>x[0]===c)}
+function mins(x){let [h,m]=String(x||"0:0").split(":").map(Number);return h*60+m} function hours(c){return Math.max(0,(mins(c.end)-mins(c.start))/60)}
+function save(){localStorage.setItem("PACE_TIMETABLE_V2",JSON.stringify(data))}
+function init(){
+["dashDate","facultyDate","batchDate","msgDate","date"].forEach(x=>$(x).value=today());
+$("batch").innerHTML=BATCHES.map(b=>`<option value="${b[0]}">${b[1]}</option>`).join("");
+$("teacher").innerHTML='<option value="">College / No faculty</option>'+TEACHERS.map(t=>`<option value="${t[0]}">${t[1]} (${t[0]})</option>`).join("");
+$("filterTeacher").innerHTML='<option value="">All faculty</option>'+TEACHERS.map(t=>`<option value="${t[0]}">${t[1]} (${t[0]})</option>`).join("");
+$("filterBatch").innerHTML='<option value="">All batches</option>'+BATCHES.map(b=>`<option value="${b[0]}">${b[1]}</option>`).join("");
+$("ownTeacher").innerHTML=TEACHERS.map(t=>`<option value="${t[0]}">${t[1]} (${t[0]})</option>`).join("");
+messagePicker();renderAll()
+}
+function show(id,btn){document.querySelectorAll(".page").forEach(x=>x.classList.add("hidden"));$(id).classList.remove("hidden");document.querySelectorAll(".nav button").forEach(x=>x.classList.remove("active"));btn?.classList.add("active");renderAll()}
+function conflict(c){return data.some(x=>x.id!==c.id&&x.date===c.date&&x.teacher&&c.teacher&&x.teacher===c.teacher&&mins(x.start)<mins(c.end)&&mins(c.start)<mins(x.end))}
+function addClass(){
+let c={id:Date.now(),date:$("date").value,centre:$("centre").value,batch:$("batch").value,teacher:$("teacher").value,subject:$("subject").value.trim(),topic:$("topic").value.trim(),start:$("start").value,end:$("end").value};
+let b=B(c.batch);c.centre=b[3];
+if(!c.date||!c.batch||!c.start||!c.end){$("addMsg").innerHTML='<div class="notice red">Date, batch and timings are required.</div>';return}
+if(!c.teacher)c.subject=c.subject||"College";
+let same=data.filter(x=>x.date===c.date&&x.teacher&&c.teacher&&x.teacher===c.teacher&&mins(x.start)<mins(c.end)&&mins(c.start)<mins(x.end));
+if(same.length&&!confirm("This teacher is already assigned to another class at the same time. Could this be a combined class? Press OK to continue as a combined class."))return;
+c.combined=!!same.length;data.push(c);save();$("addMsg").innerHTML='<div class="notice green">Class added.</div>';renderAll()
+}
+function del(id){data=data.filter(x=>x.id!==id);save();renderAll()}
+function sample(){
+let d=$("date").value||today();data.push(
+{id:Date.now(),date:d,centre:"Vasai",batch:"V12J2",teacher:"DC",subject:"Chemistry",topic:"Chemical Bonding",start:"09:30",end:"12:45"},
+{id:Date.now()+1,date:d,centre:"Vasai",batch:"V12N",teacher:"MB",subject:"Biology",topic:"Human Reproduction",start:"09:30",end:"12:45"},
+{id:Date.now()+2,date:d,centre:"Vasai",batch:"V12J1",teacher:"",subject:"College",topic:"",start:"12:45",end:"13:45"});save();renderAll()
+}
+function table(arr){
+if(!arr.length)return '<div class="muted" style="margin-top:12px">No classes.</div>';
+return `<div class="scroll" style="margin-top:12px"><table><tr><th>Date</th><th>Time</th><th>Centre</th><th>Batch</th><th>Faculty</th><th>Subject</th><th>Topic</th><th>Hours</th><th>Status</th><th></th></tr>${arr.slice().sort((a,b)=>mins(a.start)-mins(b.start)).map(c=>{let t=T(c.teacher),b=B(c.batch),co=conflict(c);return `<tr><td>${c.date}</td><td>${c.start}–${c.end}</td><td>${b?.[3]}</td><td>${b?.[1]}</td><td>${t?esc(t[1])+" ("+t[0]+")":"College"}</td><td>${esc(c.subject)}</td><td>${esc(c.topic)}</td><td>${hours(c).toFixed(2)}</td><td>${c.combined?'<span class="badge warn">Combined</span> ':''}${co?'<span class="badge bad">Teacher overlap</span>':'<span class="badge ok">OK</span>'}</td><td><button class="danger" onclick="del(${c.id})">Delete</button></td></tr>`}).join("")}</table></div>`
+}
+function renderAll(){
+let d=$("dashDate").value||today();$("statClasses").textContent=data.length;$("statFaculty").textContent=data.filter(x=>x.teacher).length;$("statHours").textContent=data.filter(x=>x.teacher).reduce((s,x)=>s+hours(x),0).toFixed(2);$("statTopics").textContent=new Set(data.filter(x=>x.teacher&&x.topic).map(x=>x.teacher+"|"+x.topic)).size;
+$("dash").innerHTML=table(data.filter(x=>x.date===d));
+let fd=$("filterDate").value,ft=$("filterTeacher").value,fb=$("filterBatch").value;$("all").innerHTML=table(data.filter(x=>(!fd||x.date===fd)&&(!ft||x.teacher===ft)&&(!fb||x.batch===fb)));
+renderFaculty();renderBatches();renderHours();renderOwnTeacher()
+}
+function facultyRows(code,date){return data.filter(x=>x.teacher===code&&x.date===date).sort((a,b)=>mins(a.start)-mins(b.start))}
+function facultyMsg(code,date){
+let t=T(code),rs=facultyRows(code,date),dt=new Date(date+"T00:00:00"),day=dt.toLocaleDateString("en-IN",{weekday:"long"}),ds=dt.toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"});
+let by={};rs.forEach(c=>(by[c.centre]??=[]).push(c));let lines=`Good Evening\\n*${t[2]}*\\nDate :- ${ds}\\nDay :- ${day}\\n\\n`;
+for(let center of ["Vasai","Virar"]){if(!by[center])continue;lines+=`*${center} Center*\\n`;by[center].forEach(c=>{let b=B(c.batch);lines+=`${c.start} AM to ${c.end} PM : ${b[2]}${c.subject?" — "+c.subject:""}${c.topic?" ("+c.topic+")":""}\\n`});lines+="\\n"}return lines+"Thank you.";
+}
+function renderFaculty(){let d=$("facultyDate").value||today();$("facultyCards").innerHTML=TEACHERS.map(t=>{let rs=facultyRows(t[0],d);return `<div class="personcard"><div class="row between"><h3>${t[1]} (${t[0]})</h3><span class="pill">${rs.length} classes · ${rs.reduce((s,x)=>s+hours(x),0).toFixed(2)} h</span></div><div class="message">${esc(facultyMsg(t[0],d))}</div><button class="secondary" style="margin-top:8px" onclick='copyText(${JSON.stringify(facultyMsg(t[0],d))})'>Copy Message</button></div>`}).join("")}
+function batchRows(id,date){return data.filter(x=>x.batch===id&&x.date===date).sort((a,b)=>mins(a.start)-mins(b.start))}
+function batchMsg(id,date){
+let b=B(id),rs=batchRows(id,date),dt=new Date(date+"T00:00:00"),day=dt.toLocaleDateString("en-IN",{weekday:"long"}),ds=dt.toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"});
+let lines=`Good Evening\\nDear Students\\n(${b[2]}) ${b[3].slice(0,1)}S\\n\\nTomorrow ${ds} ${day}\\nClass timings are as follows -\\n`;
+if(!rs.length)return lines+"No class scheduled.\\n\\nThank You";
+let start=Math.min(...rs.map(x=>mins(x.start))),end=Math.max(...rs.map(x=>mins(x.end)));
+let fmt=m=>{let h=Math.floor(m/60),mm=m%60,ap=h>=12?"PM":"AM";h=h%12||12;return h+":"+String(mm).padStart(2,"0")+" "+ap};lines+=`${fmt(start)} - ${fmt(end)}\\n\\n`;
+rs.forEach(c=>{let t=T(c.teacher);lines+=`${c.start} - ${c.end}: ${c.subject||"Class"}${t?" ("+t[0]+")":""}${c.topic?" — "+c.topic:""}\\n`});return lines+"\\nThank You";
+}
+function renderBatches(){let d=$("batchDate").value||today();$("batchCards").innerHTML=BATCHES.map(b=>{let rs=batchRows(b[0],d);return `<div class="personcard"><div class="row between"><h3>${b[1]}</h3><span class="pill">${rs.length} classes · ${rs.reduce((s,x)=>s+hours(x),0).toFixed(2)} h</span></div><div class="message">${esc(batchMsg(b[0],d))}</div><button class="secondary" style="margin-top:8px" onclick='copyText(${JSON.stringify(batchMsg(b[0],d))})'>Copy Message</button></div>`}).join("")}
+function renderHours(){
+let map={};data.filter(c=>c.teacher&&c.topic).forEach(c=>{let k=c.teacher+"|"+c.topic;if(!map[k])map[k]={teacher:c.teacher,topic:c.topic,h:0,classes:0};map[k].h+=hours(c);map[k].classes++});
+$("hoursTable").innerHTML=Object.values(map).length?`<div class="scroll"><table><tr><th>Faculty</th><th>Topic / Chapter</th><th>Classes</th><th>Hours Taken</th></tr>${Object.values(map).map(x=>`<tr><td>${T(x.teacher)[1]} (${x.teacher})</td><td>${esc(x.topic)}</td><td>${x.classes}</td><td><b>${x.h.toFixed(2)}</b></td></tr>`).join("")}</table></div>`:'<div class="muted">No topic data yet.</div>'
+}
+function renderOwnTeacher(){let code=$("ownTeacher").value||"DC",rs=data.filter(x=>x.teacher===code),t=T(code);let total=rs.reduce((s,x)=>s+hours(x),0);let topics={};rs.filter(x=>x.topic).forEach(x=>topics[x.topic]=(topics[x.topic]||0)+hours(x));$("own").innerHTML=`<div class="row" style="margin:12px 0"><span class="pill">${rs.length} classes</span><span class="pill">${total.toFixed(2)} teaching hours</span></div>`+(Object.keys(topics).length?`<div class="scroll"><table><tr><th>Topic</th><th>Hours taken</th></tr>${Object.entries(topics).map(([k,v])=>`<tr><td>${esc(k)}</td><td>${v.toFixed(2)}</td></tr>`).join("")}</table></div>`:'<div class="muted">No topic hours recorded.</div>')}
+function messagePicker(){let type=$("msgType").value;$("msgWho").innerHTML=type==="faculty"?TEACHERS.map(t=>`<option value="${t[0]}">${t[1]} (${t[0]})</option>`).join(""):BATCHES.map(b=>`<option value="${b[0]}">${b[1]}</option>`).join("")}
+function generateMessage(){let type=$("msgType").value,id=$("msgWho").value,d=$("msgDate").value||today(),m=type==="faculty"?facultyMsg(id,d):batchMsg(id,d);$("messageOut").innerHTML=`<div class="message">${esc(m)}</div><button class="secondary" style="margin-top:8px" onclick='copyText(${JSON.stringify(m)})'>Copy</button>`}
+function copyText(x){navigator.clipboard?.writeText(x);alert("Message copied")}
+function renderManage(){}
+function clearAll(){if(confirm("Delete all schedule data?")){data=[];save();renderAll()}}
+function exportData(){let blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="PACE-timetable.json";a.click()}
+
+function fileToBase64(file){
+  return new Promise((resolve,reject)=>{
+    const r=new FileReader();
+    r.onload=()=>resolve(String(r.result).split(",")[1]);
+    r.onerror=reject;
+    r.readAsDataURL(file);
   });
-  return Object.values(groups).filter(g=>g.length>1);
 }
-function refreshStatuses(){
-  const groups=getGroups(), grouped=new Set(groups.flat());
-  data.forEach((r,i)=>{
-    const complete=!!(r.date&&r.batch&&r.teacher&&r.start&&r.end);
-    if(!complete){r.status='Needs review';return}
-    if(grouped.has(i)){
-      const g=groups.find(x=>x.includes(i));
-      const decision=g.every(idx=>data[idx].combined===true);
-      const rejected=g.some(idx=>data[idx].combined===false);
-      r.status=decision?'OK':'Conflict';
-      if(rejected) r.status='Conflict';
-    } else r.status='OK';
-  });
+function aiTeacherCode(v){
+  if(!v) return "";
+  const s=String(v).trim().toUpperCase();
+  const hit=TEACHERS.find(t=>t[0]===s || t[1].toUpperCase()===s || t[2].toUpperCase()===s);
+  return hit ? hit[0] : s;
 }
-function render(){
-  refreshStatuses();
-  if(!data.length){$('rows').innerHTML='<tr><td colspan="11" class="empty">No rows extracted.</td></tr>';return}
-  $('rows').innerHTML=data.map((r,i)=>`<tr><td>${i+1}</td><td><input value="${esc(r.date)}" onchange="edit(${i},'date',this.value)"></td><td><select onchange="edit(${i},'centre',this.value)"><option ${r.centre==="Vasai"?"selected":""}>Vasai</option><option ${r.centre==="Virar"?"selected":""}>Virar</option></select></td><td><input value="${esc(r.batch)}" onchange="edit(${i},'batch',this.value)"></td><td><input value="${esc(r.teacher)}" onchange="edit(${i},'teacher',this.value)"></td><td><input value="${esc(r.activity)}" onchange="edit(${i},'activity',this.value)"></td><td><input value="${esc(r.start)}" onchange="edit(${i},'start',this.value)"></td><td><input value="${esc(r.end)}" onchange="edit(${i},'end',this.value)"></td><td><span class="badge ${r.confidence}">${r.confidence||"low"}</span></td><td>${r.combined===true?'<span class="badge combined-badge">Yes</span>':r.combined===false?'<span class="badge conflict-badge">No</span>':'—'}</td><td><span class="badge ${r.status==="OK"?"ok":r.status==="Conflict"?"conflict-badge":"review"}">${r.status||"Needs review"}</span></td></tr>`).join('');
-  renderMergeQuestions();
-  const bad=data.filter(r=>r.status!=='OK').length;
-  $('notice').innerHTML=bad?`<div class="notice">${bad} row(s) need attention. Missing details are highlighted as “Needs review”. If the same teacher is assigned to multiple batches at the same time, confirm whether those batches are a <b>combined class</b>.</div>`:`<div class="notice success">All rows are ready to publish.</div>`;
+function aiBatchId(v, centre){
+  if(!v) return "";
+  const s=String(v).trim().toUpperCase();
+  let hit=BATCHES.find(b=>b[0].toUpperCase()===s || b[1].toUpperCase()===s || b[2].toUpperCase()===s);
+  if(hit) return hit[0];
+  hit=BATCHES.find(b=>b[2].toUpperCase()===s && (!centre || b[3]===centre));
+  return hit ? hit[0] : "";
 }
-function renderMergeQuestions(){
-  const host=document.getElementById('mergeQuestions');
-  if(!host) return;
-  const groups=getGroups();
-  if(!groups.length){host.innerHTML='';return}
-  host.innerHTML='<div class="merge-box"><div class="merge-title">Combined-class confirmation</div><div class="muted">The same teacher is assigned to multiple batches at the same date and time. If this is intentional, mark it as a combined class and the overlap will be allowed.</div>'+groups.map((g,gi)=>{
-    const teacher=data[g[0]].teacher, date=data[g[0]].date, start=data[g[0]].start, end=data[g[0]].end;
-    const allYes=g.every(i=>data[i].combined===true), anyNo=g.some(i=>data[i].combined===false);
-    return `<div class="merge-item"><div style="flex:1"><b>${esc(teacher)}</b> · ${esc(date)} · ${esc(start)}–${esc(end)}<br><span class="muted">Batches: ${g.map(i=>esc(data[i].batch)).join(', ')}</span></div><div class="merge-actions"><button class="primary" onclick="setCombined(${gi},true)">Yes, combined class</button><button class="secondary" onclick="setCombined(${gi},false)">No, separate classes</button>${allYes?'<span class="badge combined-badge">Confirmed</span>':anyNo?'<span class="badge conflict-badge">Conflict</span>':''}</div></div>`;
-  }).join('')+'</div>';
+function aiNormTime(v){
+  if(!v) return "";
+  let s=String(v).trim().toUpperCase().replace(/\./g,":").replace(/\s+/g,"");
+  let m=s.match(/^(\d{1,2})(?::(\d{1,2}))?(AM|PM)?$/);
+  if(!m) return String(v).trim();
+  let h=Number(m[1]), mm=Number(m[2]||0), ap=m[3];
+  if(ap==="PM"&&h<12)h+=12;
+  if(ap==="AM"&&h===12)h=0;
+  return String(h).padStart(2,"0")+":"+String(mm).padStart(2,"0");
 }
-function setCombined(groupNo,value){
-  const g=getGroups()[groupNo];
-  g.forEach(i=>data[i].combined=value);
-  render();
+function aiDate(v){
+  if(!v) return $("aiDate").value || today();
+  if(/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+  const m=String(v).match(/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/);
+  if(m){
+    let y=m[3].length===2?"20"+m[3]:m[3];
+    return y+"-"+String(m[2]).padStart(2,"0")+"-"+String(m[1]).padStart(2,"0");
+  }
+  return $("aiDate").value || today();
 }
-function edit(i,k,v){data[i][k]=v;if(k==='teacher'||k==='date'||k==='start'||k==='end')data[i].combined=null;render()}
-function saveDraft(){refreshStatuses();localStorage.setItem("PACE_TIMETABLE_DRAFT",JSON.stringify(data));show("Draft saved on this device.","success")}
-function publish(){refreshStatuses();const bad=data.filter(r=>r.status!=="OK");if(bad.length){show("Please complete all rows marked Needs review and confirm any combined classes before publishing.","warn");return}show("Ready to publish. Combined-class overlaps have been accepted and will not be treated as conflicts.","success")}
-</script></body></html>
+function showAIReview(rows){
+  if(!rows.length){$("aiReview").innerHTML='<div class="notice red">AI returned no classes.</div>';return}
+  $("aiReview").innerHTML='<div class="notice">AI extracted <b>'+rows.length+'</b> rows. Review them before importing.</div>'+table(rows.map((r,i)=>({...r,id:"ai"+i})))+
+  '<div class="row" style="margin-top:10px"><button class="green" onclick="importAIRows()">Import reviewed rows</button></div>';
+  window._aiRows=rows;
+}
+function importAIRows(){
+  const rs=window._aiRows||[];
+  let added=0;
+  for(const r of rs){
+    if(!r.batch||!r.start||!r.end) continue;
+    const b=B(r.batch);
+    let c={id:Date.now()+added,date:r.date||today(),centre:b?.[3]||r.centre||"",batch:r.batch,teacher:r.teacher||"",subject:r.subject||"",topic:r.topic||"",start:r.start,end:r.end,combined:false};
+    const same=data.filter(x=>x.date===c.date&&x.teacher&&c.teacher&&x.teacher===c.teacher&&mins(x.start)<mins(c.end)&&mins(c.start)<mins(x.end));
+    if(same.length){
+      if(confirm("Teacher "+(T(c.teacher)?.[1]||c.teacher)+" is already assigned at "+c.start+"–"+c.end+". Is this a combined class?")) c.combined=true;
+      else continue;
+    }
+    data.push(c); added++;
+  }
+  save(); $("aiReview").innerHTML='<div class="notice green"><b>'+added+'</b> reviewed rows imported.</div>'; renderAll();
+}
+async function readAITimetable(){
+  const file=$("aiFile").files[0];
+  if(!file){$("aiStatus").textContent="Choose a timetable image first.";return}
+  $("aiStatus").textContent="Reading timetable…";
+  try{
+    const b64=await fileToBase64(file);
+    const payload={
+      imageBase64:b64,
+      mimeType:file.type||"image/jpeg",
+      fallbackDate:$("aiDate").value||today(),
+      fallbackCentre:$("aiCentre").value,
+      mode:$("aiMode").value
+    };
+    const url=window.PACE_CONFIG.supabaseFunctionUrl;
+    const resp=await fetch(url,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(payload)
+    });
+    const text=await resp.text();
+    let result; try{result=JSON.parse(text)}catch{throw new Error("Supabase returned non-JSON: "+text.slice(0,300))}
+    if(!resp.ok) throw new Error(result.error||result.message||("HTTP "+resp.status));
+    const raw=Array.isArray(result)?result:(result.rows||result.classes||result.timetable||[]);
+    const rows=raw.map(r=>{
+      let subject=String(r.subject||r.activity||"");
+      let college=/^\s*college\s*$/i.test(subject)||/^\s*college\s*$/i.test(String(r.teacher||""));
+      return {
+        date:aiDate(r.date||r.class_date),
+        centre:(r.centre||r.center||($("aiCentre").value==="Auto detect"?"":$("aiCentre").value)),
+        batch:aiBatchId(r.batch||r.batchName||r.batch_name,r.centre||r.center),
+        teacher:college?"":aiTeacherCode(r.teacher||r.teacherCode||r.teacher_code),
+        subject:subject||"Class",
+        topic:r.topic||r.chapter||"",
+        start:aiNormTime(r.start||r.start_time),
+        end:aiNormTime(r.end||r.end_time)
+      };
+    });
+    $("aiStatus").textContent="AI reading complete.";
+    showAIReview(rows);
+  }catch(e){
+    console.error(e);
+    $("aiStatus").textContent="AI reader error.";
+    $("aiReview").innerHTML='<div class="notice red"><b>AI reader failed.</b><br>'+esc(e.message||String(e))+'<br><span class="small">Check that the Supabase function is deployed and accepts this request format.</span></div>';
+  }
+}
+
+init()
+</script>
+</body>
+</html>
