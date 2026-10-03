@@ -1,0 +1,72 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PACE IIT & Medical — AI Timetable Importer</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f4f7fb;color:#172033}.header{background:#101a32;color:#fff;padding:18px 24px;display:flex;justify-content:space-between;align-items:center}.header h1{margin:0;font-size:20px}.header small{opacity:.7}.steps{display:flex;gap:10px;padding:16px 24px;background:#fff;border-bottom:1px solid #e5e9f0;overflow:auto}.step{padding:10px 16px;border-radius:20px;background:#e9eef5;font-weight:700;white-space:nowrap}.step.active{background:#dff8e9;color:#087b3e}.layout{display:grid;grid-template-columns:360px 1fr;gap:20px;padding:20px;max-width:1500px;margin:auto}.card{background:#fff;border:1px solid #e1e6ee;border-radius:16px;padding:18px;box-shadow:0 2px 8px #1720330b}.card h2{font-size:18px;margin:0 0 8px}.muted{color:#68758a;font-size:13px}.drop{border:2px dashed #aeb9ca;border-radius:14px;padding:28px;text-align:center;margin-top:16px;background:#fbfcfe}button{border:0;border-radius:10px;padding:11px 16px;font-weight:700;font-size:14px;cursor:pointer}.primary{background:#087f3f;color:#fff}.secondary{background:#e8edf4;color:#172033}.actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}.notice{padding:12px 14px;border-radius:10px;margin:14px 0;background:#fff0f0;color:#a32626;font-weight:600}.success{background:#e9faef;color:#087b3e}.warn{background:#fff8dd;color:#775a00}table{width:100%;border-collapse:separate;border-spacing:0;border:1px solid #dfe5ed;border-radius:12px;overflow:hidden}th,td{padding:10px 8px;border-bottom:1px solid #e7ebf1;text-align:left;font-size:13px;vertical-align:middle}th{background:#f7f9fc;font-size:12px;color:#4c5870}tr:last-child td{border-bottom:0}td input,td select{width:100%;border:1px solid #cbd4e1;border-radius:7px;padding:8px;background:#fff}.badge{display:inline-block;border-radius:14px;padding:5px 9px;font-size:11px;font-weight:800}.high{background:#d9f8e6;color:#087b3e}.medium{background:#fff0c2;color:#8a6500}.review{background:#fff0c2;color:#8a6500}.ok{background:#dff8e9;color:#087b3e}.empty{text-align:center;padding:45px;color:#7b879a}.merge-box{margin:14px 0;padding:14px 16px;border:1px solid #e3d49a;border-radius:12px;background:#fffaf0}.merge-title{font-weight:800;color:#6f5600;margin-bottom:5px}.merge-item{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #eee5c9}.merge-item:last-child{border-bottom:0}.merge-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}.combined-badge{background:#e5efff;color:#2459a6}.conflict-badge{background:#ffe3e3;color:#a32626}@media(max-width:900px){.layout{grid-template-columns:1fr;padding:12px}.table-wrap{overflow:auto}table{min-width:950px}}
+</style></head><body>
+<header class="header"><div><h1>PACE IIT &amp; Medical</h1><small>AI Handwritten Timetable Importer · V4</small></div><div style="font-size:13px">Drafts stay private until you publish.</div></header>
+<div class="steps"><div class="step active">1 Upload</div><div class="step active">2 AI Read</div><div class="step active">3 Review</div><div class="step">4 Conflicts</div><div class="step">5 Confirm &amp; Publish</div></div>
+<main class="layout"><section class="card"><h2>Handwritten timetable</h2><div class="muted">Upload a photo or PDF. AI extracts only what it can confidently read.</div>
+<div class="drop"><label for="file" class="primary" style="display:inline-block;padding:12px 18px;border-radius:10px;cursor:pointer">Choose image / PDF</label><input id="file" type="file" accept="image/*,.pdf"><div id="fileName" style="margin-top:10px;font-size:13px;font-weight:600">No file selected</div></div>
+<div class="actions"><button id="readBtn" class="primary">🤖 Read timetable</button><button id="sampleBtn" class="secondary">Load sample</button></div><div id="status" class="notice" style="display:none"></div>
+<div style="margin-top:24px"><label class="muted">Schedule</label><select id="schedule" style="width:100%;padding:10px;border:1px solid #cbd4e1;border-radius:8px;margin-top:6px"><option>Daily</option><option>Weekly</option></select></div></section>
+<section class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div><h2>Review &amp; publish</h2><div class="muted">Every extracted class is editable before it can be published.</div></div><div><button class="secondary">Daily</button> <button class="secondary">Weekly</button></div></div><div id="notice"></div><div id="mergeQuestions"></div>
+<div class="table-wrap"><table><thead><tr><th>#</th><th>Date</th><th>Centre</th><th>Batch</th><th>Teacher</th><th>Activity / Subject</th><th>Start</th><th>End</th><th>Confidence</th><th>Combined?</th><th>Status</th></tr></thead><tbody id="rows"><tr><td colspan="11" class="empty">Upload a timetable or load the sample to begin.</td></tr></tbody></table></div>
+<div class="actions"><button class="secondary" onclick="saveDraft()">Save draft</button><button class="primary" onclick="publish()">Review &amp; Publish</button></div></section></main>
+<script>
+const sample=[{date:"",centre:"Virar",batch:"XI-J",teacher:"AP — Aman Shree",activity:"Test",start:"",end:"",confidence:"high",status:"Needs review",combined:null},{date:"",centre:"Virar",batch:"XI-N",teacher:"AP — Aman Shree",activity:"Test",start:"",end:"",confidence:"high",status:"Needs review",combined:null},{date:"",centre:"Vasai",batch:"XII-1",teacher:"GM — Gajendra Kumar",activity:"GM (11–5)",start:"",end:"",confidence:"medium",status:"Needs review",combined:null}];let data=[];const $=id=>document.getElementById(id);
+$("file").onchange=e=>$("fileName").textContent=e.target.files[0]?.name||"No file selected";
+$("sampleBtn").onclick=()=>{data=structuredClone(sample);render()};
+$("readBtn").onclick=async()=>{const f=$("file").files[0];if(!f){show("Please choose an image/PDF first.","warn");return}show("Sending timetable to AI…","warn");try{const base=localStorage.getItem("SUPABASE_FUNCTION_URL");if(!base)throw Error("Set SUPABASE_FUNCTION_URL in local storage first.");const bytes=await f.arrayBuffer();let s="";for(const b of new Uint8Array(bytes))s+=String.fromCharCode(b);const b64=btoa(s);const r=await fetch(base,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({filename:f.name,mimeType:f.type,data:b64})});const j=await r.json();if(!r.ok)throw Error(j.error||"AI request failed");data=j.rows||[];render();show("AI extraction complete. Review highlighted fields before publishing.","success")}catch(e){show(e.message,"")}};
+function show(t,c){$("status").style.display="block";$("status").className="notice "+c;$("status").textContent=t}
+function esc(s=""){return String(s).replaceAll("&","&amp;").replaceAll('"',"&quot;").replaceAll("<","&lt;").replaceAll(">","&gt;")}
+function getGroups(){
+  const groups={};
+  data.forEach((r,i)=>{
+    const teacher=(r.teacher||'').trim().toLowerCase(), start=(r.start||'').trim(), end=(r.end||'').trim(), date=(r.date||'').trim();
+    if(!teacher||!start||!end) return;
+    const key=[date,teacher,start,end].join('|');
+    (groups[key] ||= []).push(i);
+  });
+  return Object.values(groups).filter(g=>g.length>1);
+}
+function refreshStatuses(){
+  const groups=getGroups(), grouped=new Set(groups.flat());
+  data.forEach((r,i)=>{
+    const complete=!!(r.date&&r.batch&&r.teacher&&r.start&&r.end);
+    if(!complete){r.status='Needs review';return}
+    if(grouped.has(i)){
+      const g=groups.find(x=>x.includes(i));
+      const decision=g.every(idx=>data[idx].combined===true);
+      const rejected=g.some(idx=>data[idx].combined===false);
+      r.status=decision?'OK':'Conflict';
+      if(rejected) r.status='Conflict';
+    } else r.status='OK';
+  });
+}
+function render(){
+  refreshStatuses();
+  if(!data.length){$('rows').innerHTML='<tr><td colspan="11" class="empty">No rows extracted.</td></tr>';return}
+  $('rows').innerHTML=data.map((r,i)=>`<tr><td>${i+1}</td><td><input value="${esc(r.date)}" onchange="edit(${i},'date',this.value)"></td><td><select onchange="edit(${i},'centre',this.value)"><option ${r.centre==="Vasai"?"selected":""}>Vasai</option><option ${r.centre==="Virar"?"selected":""}>Virar</option></select></td><td><input value="${esc(r.batch)}" onchange="edit(${i},'batch',this.value)"></td><td><input value="${esc(r.teacher)}" onchange="edit(${i},'teacher',this.value)"></td><td><input value="${esc(r.activity)}" onchange="edit(${i},'activity',this.value)"></td><td><input value="${esc(r.start)}" onchange="edit(${i},'start',this.value)"></td><td><input value="${esc(r.end)}" onchange="edit(${i},'end',this.value)"></td><td><span class="badge ${r.confidence}">${r.confidence||"low"}</span></td><td>${r.combined===true?'<span class="badge combined-badge">Yes</span>':r.combined===false?'<span class="badge conflict-badge">No</span>':'—'}</td><td><span class="badge ${r.status==="OK"?"ok":r.status==="Conflict"?"conflict-badge":"review"}">${r.status||"Needs review"}</span></td></tr>`).join('');
+  renderMergeQuestions();
+  const bad=data.filter(r=>r.status!=='OK').length;
+  $('notice').innerHTML=bad?`<div class="notice">${bad} row(s) need attention. Missing details are highlighted as “Needs review”. If the same teacher is assigned to multiple batches at the same time, confirm whether those batches are a <b>combined class</b>.</div>`:`<div class="notice success">All rows are ready to publish.</div>`;
+}
+function renderMergeQuestions(){
+  const host=document.getElementById('mergeQuestions');
+  if(!host) return;
+  const groups=getGroups();
+  if(!groups.length){host.innerHTML='';return}
+  host.innerHTML='<div class="merge-box"><div class="merge-title">Combined-class confirmation</div><div class="muted">The same teacher is assigned to multiple batches at the same date and time. If this is intentional, mark it as a combined class and the overlap will be allowed.</div>'+groups.map((g,gi)=>{
+    const teacher=data[g[0]].teacher, date=data[g[0]].date, start=data[g[0]].start, end=data[g[0]].end;
+    const allYes=g.every(i=>data[i].combined===true), anyNo=g.some(i=>data[i].combined===false);
+    return `<div class="merge-item"><div style="flex:1"><b>${esc(teacher)}</b> · ${esc(date)} · ${esc(start)}–${esc(end)}<br><span class="muted">Batches: ${g.map(i=>esc(data[i].batch)).join(', ')}</span></div><div class="merge-actions"><button class="primary" onclick="setCombined(${gi},true)">Yes, combined class</button><button class="secondary" onclick="setCombined(${gi},false)">No, separate classes</button>${allYes?'<span class="badge combined-badge">Confirmed</span>':anyNo?'<span class="badge conflict-badge">Conflict</span>':''}</div></div>`;
+  }).join('')+'</div>';
+}
+function setCombined(groupNo,value){
+  const g=getGroups()[groupNo];
+  g.forEach(i=>data[i].combined=value);
+  render();
+}
+function edit(i,k,v){data[i][k]=v;if(k==='teacher'||k==='date'||k==='start'||k==='end')data[i].combined=null;render()}
+function saveDraft(){refreshStatuses();localStorage.setItem("PACE_TIMETABLE_DRAFT",JSON.stringify(data));show("Draft saved on this device.","success")}
+function publish(){refreshStatuses();const bad=data.filter(r=>r.status!=="OK");if(bad.length){show("Please complete all rows marked Needs review and confirm any combined classes before publishing.","warn");return}show("Ready to publish. Combined-class overlaps have been accepted and will not be treated as conflicts.","success")}
+</script></body></html>
