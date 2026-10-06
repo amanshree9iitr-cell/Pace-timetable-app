@@ -2,7 +2,7 @@
 <html lang="en" __gcrremoteframetoken="c9016a972f52a5e543bb01bf2ef33178" data-theme="light" style="color-scheme: light;" data-frame-refused-watch=""><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PACE IIT &amp; Medical — Timetable</title>
+<title>PACE IIT &amp; Medical — Timetable Manager</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
@@ -152,6 +152,26 @@
   .tabbar button{ all:unset; cursor:pointer; padding:9px 4px; margin-right:14px; font-size:13.5px; font-weight:600; color:var(--text-muted); border-bottom:2px solid transparent; }
   .tabbar button.active{ color:var(--ink); border-bottom-color:var(--amber); }
 
+
+  /* Faculty / Student timetable navigation */
+  .person-layout{display:grid;grid-template-columns:250px 1fr;gap:18px;align-items:start;}
+  .person-list{display:flex;flex-direction:column;gap:7px;}
+  .person-btn{all:unset;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 12px;border:1px solid var(--line);border-radius:9px;background:var(--card);color:var(--ink);font-size:13px;font-weight:600;}
+  .person-btn:hover{background:var(--paper);}
+  .person-btn.active{background:color-mix(in srgb,var(--amber) 15%,var(--card));border-color:color-mix(in srgb,var(--amber) 55%,var(--line));}
+  .person-btn .sub{font-size:11px;color:var(--text-muted);font-weight:500;}
+  .schedule-title{font-size:16px;font-weight:700;color:var(--ink);}
+  .schedule-subtitle{font-size:12px;color:var(--text-muted);margin-top:3px;}
+  .schedule-summary{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0;}
+  .schedule-summary .mini{border:1px solid var(--line);background:var(--paper);border-radius:9px;padding:8px 11px;font-size:12px;}
+  .schedule-summary .mini b{font-size:14px;color:var(--ink);}
+  .schedule-table td.time{white-space:nowrap;font-weight:700;color:var(--ink);}
+  .schedule-table td.center{white-space:nowrap;}
+  .schedule-table .batch-name{font-weight:650;color:var(--ink);}
+  .schedule-table .detail{font-size:11.5px;color:var(--text-muted);margin-top:2px;}
+  .schedule-empty{border:1px dashed var(--line);border-radius:10px;padding:30px;text-align:center;color:var(--text-muted);}
+  @media(max-width:850px){.person-layout{grid-template-columns:1fr}.person-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));}.person-btn{min-width:0}}
+
   .toast{
     position:fixed; bottom:22px; left:50%; transform:translateX(-50%);
     background:var(--ink); color:#fff; padding:9px 18px; border-radius:99px; font-size:13px;
@@ -192,12 +212,10 @@
   .subrow td{ background:var(--paper); }
 </style>
 
-<link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#152238">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="PACE Timetable">
-<link rel="apple-touch-icon" href="icon-180.png">
 </head>
 <body>
 <div id="shell">
@@ -348,6 +366,7 @@ if(!STATE.topicDefaults) STATE.topicDefaults = {};
 if(!STATE.chapterProgress) STATE.chapterProgress = {};
 if(!STATE.weeklyPattern) STATE.weeklyPattern = {};
 if(!STATE.holidays) STATE.holidays = [];
+const ACCESS = JSON.parse(localStorage.getItem('pace_access_v1') || '{\"role\":\"admin\",\"teacherId\":null}');
 const UI = {
   tab: 'schedule',
   scheduleDate: todayStr(),
@@ -365,6 +384,8 @@ const UI = {
   holidayTeacher: '',
   holidayDate: '',
   previewBatchFilter: '',
+  facultyTeacher: '',
+  studentBatch: '',
 };
 
 /* ================= Helpers ================= */
@@ -998,14 +1019,45 @@ const NAV_ITEMS = [
   {id:'setup', label:'Teachers & Batches', ic:'⚙️'},
 ];
 
+function currentAccessLabel(){
+  if(ACCESS.role==='teacher'){ const t=teacherById(ACCESS.teacherId); return t ? 'Teacher · '+t.code : 'Teacher'; }
+  return 'Admin';
+}
+function isAdmin(){ return ACCESS.role==='admin'; }
+function teacherScopeId(){ return ACCESS.role==='teacher' ? ACCESS.teacherId : null; }
+function setAccess(role, teacherId){ ACCESS.role=role; ACCESS.teacherId=teacherId||null; localStorage.setItem('pace_access_v1',JSON.stringify(ACCESS)); if(role==='teacher'){UI.tab='faculty';UI.facultyTeacher=teacherId;} else UI.tab='schedule'; render(); }
+function openAccess(){
+  const ov=document.getElementById('accessOverlay'); const sel=document.getElementById('accessTeacher');
+  sel.innerHTML=STATE.teachers.map(t=>`<option value="${t.id}">${esc(t.name)} (${esc(t.code)})</option>`).join('');
+  sel.value=ACCESS.teacherId || (STATE.teachers[0]&&STATE.teachers[0].id) || '';
+  document.getElementById('roleAdmin').classList.toggle('active',ACCESS.role==='admin');
+  document.getElementById('roleTeacher').classList.toggle('active',ACCESS.role==='teacher');
+  document.getElementById('teacherAccessField').style.display=ACCESS.role==='teacher'?'block':'none';
+  ov.style.display='flex';
+}
+function installAccessHandlers(){
+  const ov=document.getElementById('accessOverlay'); if(!ov) return;
+  document.getElementById('accessBtn').onclick=openAccess;
+  document.getElementById('roleAdmin').onclick=()=>{ACCESS.role='admin';document.getElementById('roleAdmin').classList.add('active');document.getElementById('roleTeacher').classList.remove('active');document.getElementById('teacherAccessField').style.display='none';};
+  document.getElementById('roleTeacher').onclick=()=>{ACCESS.role='teacher';document.getElementById('roleTeacher').classList.add('active');document.getElementById('roleAdmin').classList.remove('active');document.getElementById('teacherAccessField').style.display='block';};
+  document.getElementById('accessCancel').onclick=()=>ov.style.display='none';
+  document.getElementById('accessContinue').onclick=()=>{ const tid=document.getElementById('accessTeacher').value; setAccess(ACCESS.role,tid); ov.style.display='none'; };
+}
+function shareWhatsApp(text){ if(!text)return; const url='https://wa.me/?text='+encodeURIComponent(text); window.open(url,'_blank'); }
+function messageButtons(text,label){ return `<div class="wa-row"><button class="btn ghost" data-copymsg="1">Copy Message</button><button class="btn primary" data-sharemsg="1">Share on WhatsApp</button></div>`; }
+function wireMessageButtons(root,text,label){ const c=root.querySelector('[data-copymsg]'); const w=root.querySelector('[data-sharemsg]'); if(c)c.onclick=()=>copyText(text,label||'Message'); if(w)w.onclick=()=>shareWhatsApp(text); }
+
 function render(){
   const now = new Date();
+  document.getElementById('accessLabel').textContent = currentAccessLabel();
   document.getElementById('todaylabel').textContent = `${dayName(todayStr())}, ${fmtDateLong(todayStr())}`;
-  document.getElementById('pagetitle').textContent = NAV_ITEMS.find(n=>n.id===UI.tab).label;
+  const navItem = NAV_ITEMS.find(n=>n.id===UI.tab) || NAV_ITEMS[1];
+  if(!isAdmin() && !['faculty','students'].includes(navItem.id)) UI.tab='faculty';
+  document.getElementById('pagetitle').textContent = (NAV_ITEMS.find(n=>n.id===UI.tab)||NAV_ITEMS[1]).label;
 
   const nav = document.getElementById('nav');
   nav.innerHTML = '';
-  NAV_ITEMS.forEach(item=>{
+  NAV_ITEMS.filter(item=> isAdmin() || ['faculty','students'].includes(item.id)).forEach(item=>{
     const btn = document.createElement('button');
     btn.className = item.id===UI.tab ? 'active' : '';
     btn.innerHTML = `<span class="ic">${item.ic}</span> ${item.label}`;
@@ -1015,7 +1067,7 @@ function render(){
 
   const mt = document.getElementById('mobiletabs');
   mt.innerHTML = '';
-  NAV_ITEMS.forEach(item=>{
+  NAV_ITEMS.filter(item=> isAdmin() || ['faculty','students'].includes(item.id)).forEach(item=>{
     const btn = document.createElement('button');
     btn.className = item.id===UI.tab ? 'active' : '';
     btn.textContent = item.label;
@@ -1024,6 +1076,7 @@ function render(){
   });
 
   const view = document.getElementById('view');
+  if(!isAdmin() && !['faculty','students'].includes(UI.tab)) UI.tab='faculty';
   if(UI.tab==='schedule') view.innerHTML = '';
   if(UI.tab==='schedule') renderSchedule(view);
   else if(UI.tab==='faculty') renderFaculty(view);
@@ -1275,6 +1328,15 @@ function renderSchedule(view){
 
 function renderFaculty(view){
   const date = UI.facultyDate;
+  if(!isAdmin()) UI.facultyTeacher = ACCESS.teacherId;
+  if(!UI.facultyTeacher && STATE.teachers.length) UI.facultyTeacher = STATE.teachers[0].id;
+  const selected = teacherById(UI.facultyTeacher) || STATE.teachers[0];
+  if(selected) UI.facultyTeacher = selected.id;
+
+  const entries = selected ? classesFor(date).filter(c=>c.teacherId===selected.id).sort((a,b)=>a.start.localeCompare(b.start)) : [];
+  const regular = entries.filter(c=>!c.isDoubt);
+  const doubts = entries.filter(c=>c.isDoubt);
+
   view.innerHTML = `
     <div class="card" style="margin-bottom:18px;">
       <div class="row" style="align-items:flex-end;">
@@ -1285,66 +1347,151 @@ function renderFaculty(view){
         <div class="muted" style="padding-bottom:9px;">${dayName(date)} · ${relLabel(date)||''}</div>
       </div>
     </div>
-    <div id="facList"></div>
-  `;
-  document.getElementById('facDate').onchange = (e)=>{ UI.facultyDate=e.target.value; render(); };
-  const list = document.getElementById('facList');
-  STATE.teachers.forEach(t=>{
-    const msg = facultyMessage(t.id, date);
-    const box = document.createElement('div');
-    box.className = 'msg-card';
-    box.innerHTML = `
-      <div class="msg-head">
-        <span class="who">${esc(t.name)} (${esc(t.code)})</span>
-        ${msg ? `<button class="btn ghost" data-copy="${t.id}">Copy message</button>` : ''}
+
+    <div class="person-layout">
+      <div class="card">
+        <div class="cardhead"><h2>Faculty</h2></div>
+        <div class="person-list" id="facultyList">
+          ${STATE.teachers.map(t=>{
+            const count=classesFor(date).filter(c=>c.teacherId===t.id).length;
+            return `<button class="person-btn ${t.id===UI.facultyTeacher?'active':''}" data-faculty="${t.id}">
+              <span>${esc(t.name)}<span class="sub" style="display:block;">${esc(t.code)} · ${esc(t.salutation||'Sir')}</span></span>
+              <span class="pill ${count?'vasai':''}">${count}</span>
+            </button>`;
+          }).join('')}
+        </div>
       </div>
-      ${msg ? `<div class="msg-body">${esc(msg).replace(/\*(.+?)\*/g,'<b>$1</b>')}</div>` : `<div class="msg-empty">No classes scheduled for this date.</div>`}
-    `;
-    list.appendChild(box);
-  });
-  list.querySelectorAll('[data-copy]').forEach(btn=>{
-    btn.onclick = ()=>{
-      const t = teacherById(btn.getAttribute('data-copy'));
-      copyText(facultyMessage(t.id, date), t.name+"'s message");
-    };
-  });
+
+      <div>
+        <div class="card" style="margin-bottom:18px;">
+          ${selected ? `
+            <div class="cardhead">
+              <div>
+                <div class="schedule-title">${esc(selected.name)} (${esc(selected.code)})</div>
+                <div class="schedule-subtitle">${dayName(date)}, ${fmtDateLong(date)} · Faculty schedule</div>
+              </div>
+              ${entries.length ? `<button class="btn ghost" id="copyFacultyMsg">Copy message</button>`:''}
+            </div>
+            <div class="schedule-summary">
+              <div class="mini"><b>${regular.length}</b><br>Classes</div>
+              <div class="mini"><b>${doubts.length}</b><br>Doubt sessions</div>
+              <div class="mini"><b>${regular.reduce((m,c)=>m+durMin(c.start,c.end),0)/60 % 1 ? (regular.reduce((m,c)=>m+durMin(c.start,c.end),0)/60).toFixed(1) : regular.reduce((m,c)=>m+durMin(c.start,c.end),0)/60}</b><br>Teaching hours</div>
+            </div>
+            ${entries.length ? `
+              <div style="overflow:auto;">
+                <table class="schedule-table">
+                  <thead><tr><th>Time</th><th>Centre</th><th>Batch</th><th>Subject</th><th>Chapter / Topic</th></tr></thead>
+                  <tbody>
+                    ${entries.map(c=>{
+                      const b=batchById(c.batchId);
+                      const center=b?b.center:(c.customCenter||'—');
+                      const label=c.customBatchLabel||(b?b.label:'—');
+                      return `<tr>
+                        <td class="time">${fmt12(c.start)} – ${fmt12(c.end)}</td>
+                        <td class="center"><span class="pill ${center==='Vasai'||center==='VASAI'?'vasai':'virar'}">${esc(center)}</span></td>
+                        <td><div class="batch-name">${esc(label)}</div></td>
+                        <td>${c.isDoubt?'<span class="pill doubt">Doubt Session</span>':esc(c.subject||'—')}</td>
+                        <td><div class="detail">${esc(chapterLabel(c,false)||c.topic||'—')}</div></td>
+                      </tr>`;
+                    }).join('')}
+                  </tbody>
+                </table>
+              </div>
+            ` : `<div class="schedule-empty">No classes scheduled for ${esc(selected.name)} on this date.</div>`}
+          ` : `<div class="schedule-empty">No faculty found.</div>`}
+        </div>
+
+        ${selected && entries.length ? `<div class="msg-card">
+          <div class="msg-head"><span class="who">Automatic faculty message</span></div>
+          <div class="msg-body">${esc(facultyMessage(selected.id,date)).replace(/\*(.+?)\*/g,'<b>$1</b>')}</div>${messageButtons(facultyMessage(selected.id,date),'Faculty message')}
+        </div>`:''}
+      </div>
+    </div>
+  `;
+
+  document.getElementById('facDate').onchange=(e)=>{UI.facultyDate=e.target.value;render();};
+  view.querySelectorAll('[data-faculty]').forEach(btn=>btn.onclick=()=>{UI.facultyTeacher=btn.getAttribute('data-faculty');render();});
+  const copy=document.getElementById('copyFacultyMsg');
+  if(copy && selected) copy.onclick=()=>copyText(facultyMessage(selected.id,date),selected.name+"'s message");
+  const msgRoot=view.querySelector('.msg-card'); if(msgRoot) wireMessageButtons(msgRoot,facultyMessage(selected.id,date),selected.name+"'s message");
 }
 
 function renderStudents(view){
   const date = UI.studentDate;
-  view.innerHTML = `
+  if(!UI.studentBatch && STATE.batches.length) UI.studentBatch = STATE.batches[0].id;
+  const selected = batchById(UI.studentBatch) || STATE.batches[0];
+  if(selected) UI.studentBatch=selected.id;
+
+  const entries = selected ? classesFor(date).filter(c=>c.batchId===selected.id).sort((a,b)=>a.start.localeCompare(b.start)) : [];
+  const regular=entries.filter(c=>!c.isDoubt);
+  const doubts=entries.filter(c=>c.isDoubt);
+  const centers=[...new Set(STATE.batches.map(b=>b.center))];
+  const visibleBatches=centers.flatMap(center=>STATE.batches.filter(b=>b.center===center));
+
+  view.innerHTML=`
     <div class="card" style="margin-bottom:18px;">
       <div class="row" style="align-items:flex-end;">
-        <div class="field" style="max-width:220px;">
-          <label>Date</label>
-          <input type="date" id="stuDate" value="${date}">
-        </div>
+        <div class="field" style="max-width:220px;"><label>Date</label><input type="date" id="stuDate" value="${date}"></div>
         <div class="muted" style="padding-bottom:9px;">${dayName(date)} · ${relLabel(date)||''}</div>
       </div>
     </div>
-    <div id="stuList"></div>
-  `;
-  document.getElementById('stuDate').onchange = (e)=>{ UI.studentDate=e.target.value; render(); };
-  const list = document.getElementById('stuList');
-  STATE.batches.forEach(b=>{
-    const msg = studentMessage(b.id, date);
-    const box = document.createElement('div');
-    box.className = 'msg-card';
-    box.innerHTML = `
-      <div class="msg-head">
-        <span class="who">${esc(b.name)} — ${esc(b.label)}</span>
-        ${msg ? `<button class="btn ghost" data-copy="${b.id}">Copy message</button>` : ''}
+
+    <div class="person-layout">
+      <div class="card">
+        <div class="cardhead"><h2>Student Batches</h2></div>
+        <div class="person-list" id="studentList">
+          ${centers.map(center=>`<div style="font-size:11px;font-weight:700;color:var(--text-muted);padding:5px 3px 2px;">${esc(center)} CENTER</div>${visibleBatches.filter(b=>b.center===center).map(b=>{
+            const count=classesFor(date).filter(c=>c.batchId===b.id).length;
+            return `<button class="person-btn ${b.id===UI.studentBatch?'active':''}" data-student="${b.id}">
+              <span>${esc(b.label)}<span class="sub" style="display:block;">${esc(b.short)} · ${esc(b.name)}</span></span>
+              <span class="pill ${count?'vasai':''}">${count}</span>
+            </button>`;
+          }).join('')}`).join('')}
+        </div>
       </div>
-      ${msg ? `<div class="msg-body">${esc(msg).replace(/_\*(.+?)\*_/g,'<b><i>$1</i></b>')}</div>` : `<div class="msg-empty">No classes scheduled for this date.</div>`}
-    `;
-    list.appendChild(box);
-  });
-  list.querySelectorAll('[data-copy]').forEach(btn=>{
-    btn.onclick = ()=>{
-      const b = batchById(btn.getAttribute('data-copy'));
-      copyText(studentMessage(b.id, date), b.name+"'s message");
-    };
-  });
+
+      <div>
+        <div class="card" style="margin-bottom:18px;">
+          ${selected ? `
+            <div class="cardhead">
+              <div>
+                <div class="schedule-title">${esc(selected.label)} (${esc(selected.short)})</div>
+                <div class="schedule-subtitle">${esc(selected.center)} Center · ${dayName(date)}, ${fmtDateLong(date)}</div>
+              </div>
+              ${entries.length ? `<button class="btn ghost" id="copyStudentMsg">Copy message</button>`:''}
+            </div>
+            <div class="schedule-summary">
+              <div class="mini"><b>${regular.length}</b><br>Classes</div>
+              <div class="mini"><b>${doubts.length}</b><br>Doubt sessions</div>
+              <div class="mini"><b>${regular.reduce((m,c)=>m+durMin(c.start,c.end),0)/60 % 1 ? (regular.reduce((m,c)=>m+durMin(c.start,c.end),0)/60).toFixed(1) : regular.reduce((m,c)=>m+durMin(c.start,c.end),0)/60}</b><br>Class hours</div>
+            </div>
+            ${entries.length ? `<div style="overflow:auto;"><table class="schedule-table">
+              <thead><tr><th>Time</th><th>Faculty</th><th>Subject</th><th>Chapter / Topic</th></tr></thead>
+              <tbody>${entries.map(c=>{
+                const t=teacherById(c.teacherId);
+                return `<tr>
+                  <td class="time">${fmt12(c.start)} – ${fmt12(c.end)}</td>
+                  <td><div class="batch-name">${t?esc(t.name)+' ('+esc(t.code)+')':'—'}</div></td>
+                  <td>${c.isDoubt?'<span class="pill doubt">Doubt Session</span>':esc(c.subject||'—')}</td>
+                  <td><div class="detail">${esc(chapterLabel(c,false)||c.topic||'—')}</div></td>
+                </tr>`;
+              }).join('')}</tbody>
+            </table></div>` : `<div class="schedule-empty">No classes scheduled for ${esc(selected.label)} on this date.</div>`}
+          ` : `<div class="schedule-empty">No student batches found.</div>`}
+        </div>
+
+        ${selected && entries.length ? `<div class="msg-card">
+          <div class="msg-head"><span class="who">Automatic student message</span></div>
+          <div class="msg-body">${esc(studentMessage(selected.id,date)).replace(/_\*(.+?)\*_/g,'<b><i>$1</i></b>')}</div>
+        </div>`:''}
+      </div>
+    </div>
+  `;
+
+  document.getElementById('stuDate').onchange=(e)=>{UI.studentDate=e.target.value;render();};
+  view.querySelectorAll('[data-student]').forEach(btn=>btn.onclick=()=>{UI.studentBatch=btn.getAttribute('data-student');render();});
+  const copy=document.getElementById('copyStudentMsg');
+  if(copy && selected) copy.onclick=()=>copyText(studentMessage(selected.id,date),selected.label+" student message");
 }
 
 function renderReports(view){
@@ -1738,9 +1885,23 @@ function renderSetup(view){
   view.querySelectorAll('[data-delsub]').forEach(b=> b.onclick = ()=> removeSubject(b.getAttribute('data-delsub')));
 }
 
+installAccessHandlers();
 render();
 </script>
 
 
-<script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});</script>
+
+<div id="accessOverlay" class="access-overlay" style="display:none">
+  <div class="access-box">
+    <h2>PACE Timetable Access</h2>
+    <p>Select how you are using the app on this device. Admins can manage the complete timetable. A teacher profile only exposes that teacher's own timetable and holiday option.</p>
+    <div class="access-role">
+      <button id="roleAdmin" type="button">🛠️ Admin</button>
+      <button id="roleTeacher" type="button">🧑‍🏫 Teacher</button>
+    </div>
+    <div id="teacherAccessField" style="display:none" class="field"><label>Teacher</label><select id="accessTeacher"></select></div>
+    <div class="row" style="justify-content:flex-end;margin-top:18px"><button class="btn ghost" id="accessCancel" type="button">Cancel</button><button class="btn primary" id="accessContinue" type="button">Continue</button></div>
+    <div style="font-size:11px;color:var(--text-muted);margin-top:12px">Current version uses a local access profile. Supabase Auth + RLS can replace this layer when the production accounts are wired.</div>
+  </div>
+</div>
 </body></html>
