@@ -2,7 +2,7 @@
 <html lang="en" __gcrremoteframetoken="c9016a972f52a5e543bb01bf2ef33178" data-theme="light" style="color-scheme: light;" data-frame-refused-watch=""><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PACE IIT &amp; Medical — Timetable Manager</title>
+<title>PACE IIT &amp; Medical — Timetable</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
@@ -152,26 +152,6 @@
   .tabbar button{ all:unset; cursor:pointer; padding:9px 4px; margin-right:14px; font-size:13.5px; font-weight:600; color:var(--text-muted); border-bottom:2px solid transparent; }
   .tabbar button.active{ color:var(--ink); border-bottom-color:var(--amber); }
 
-
-  /* Faculty / Student timetable navigation */
-  .person-layout{display:grid;grid-template-columns:250px 1fr;gap:18px;align-items:start;}
-  .person-list{display:flex;flex-direction:column;gap:7px;}
-  .person-btn{all:unset;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 12px;border:1px solid var(--line);border-radius:9px;background:var(--card);color:var(--ink);font-size:13px;font-weight:600;}
-  .person-btn:hover{background:var(--paper);}
-  .person-btn.active{background:color-mix(in srgb,var(--amber) 15%,var(--card));border-color:color-mix(in srgb,var(--amber) 55%,var(--line));}
-  .person-btn .sub{font-size:11px;color:var(--text-muted);font-weight:500;}
-  .schedule-title{font-size:16px;font-weight:700;color:var(--ink);}
-  .schedule-subtitle{font-size:12px;color:var(--text-muted);margin-top:3px;}
-  .schedule-summary{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0;}
-  .schedule-summary .mini{border:1px solid var(--line);background:var(--paper);border-radius:9px;padding:8px 11px;font-size:12px;}
-  .schedule-summary .mini b{font-size:14px;color:var(--ink);}
-  .schedule-table td.time{white-space:nowrap;font-weight:700;color:var(--ink);}
-  .schedule-table td.center{white-space:nowrap;}
-  .schedule-table .batch-name{font-weight:650;color:var(--ink);}
-  .schedule-table .detail{font-size:11.5px;color:var(--text-muted);margin-top:2px;}
-  .schedule-empty{border:1px dashed var(--line);border-radius:10px;padding:30px;text-align:center;color:var(--text-muted);}
-  @media(max-width:850px){.person-layout{grid-template-columns:1fr}.person-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));}.person-btn{min-width:0}}
-
   .toast{
     position:fixed; bottom:22px; left:50%; transform:translateX(-50%);
     background:var(--ink); color:#fff; padding:9px 18px; border-radius:99px; font-size:13px;
@@ -210,12 +190,7 @@
   details.topicbox summary:before{ content:"▸ "; }
   details.topicbox[open] summary:before{ content:"▾ "; }
   .subrow td{ background:var(--paper); }
-</style>
-
-<meta name="theme-color" content="#152238">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="PACE Timetable">
+<style>.role-pill{font-size:11px;padding:4px 8px;border-radius:99px;background:var(--paper);border:1px solid var(--line)}.share-row{display:flex;gap:7px;flex-wrap:wrap}.ai-import-grid{display:grid;grid-template-columns:320px 1fr;gap:18px}@media(max-width:900px){.ai-import-grid{grid-template-columns:1fr}}</style>
 </head>
 <body>
 <div id="shell">
@@ -234,7 +209,7 @@
       <h1 id="pagetitle">Teachers &amp; Batches</h1>
       <div class="topbar-right">
         <span class="today" id="todaylabel">Sunday, 20th Sep 2026</span>
-        <span id="saveflag"><span class="dot" style="background: var(--amber);"></span><span id="saveflagtext">Saving…</span></span>
+        <span id="saveflag"><span class="dot" style="background: var(--amber);"></span><span id="saveflagtext">Saving…</span></span><span class="role-pill" id="accessBadge">Admin</span><select id="roleSelect" style="width:auto;padding:5px 7px;font-size:11px"><option value="admin">Admin</option><option value="teacher">Teacher</option></select><select id="teacherSelectTop" style="width:auto;padding:5px 7px;font-size:11px;display:none"></select><span class="role-pill" id="accessBadge">Admin</span>
       </div>
     </div>
     <div id="view">
@@ -361,12 +336,11 @@
 
 <script>
 /* ================= State ================= */
-let STATE = JSON.parse(document.getElementById('app-state').textContent);
+let STATE = JSON.parse(document.getElementById('app-state').textContent); try{const saved=localStorage.getItem('pace-timetable-state-v6');if(saved)STATE=JSON.parse(saved);}catch(e){}
 if(!STATE.topicDefaults) STATE.topicDefaults = {};
 if(!STATE.chapterProgress) STATE.chapterProgress = {};
 if(!STATE.weeklyPattern) STATE.weeklyPattern = {};
 if(!STATE.holidays) STATE.holidays = [];
-const ACCESS = JSON.parse(localStorage.getItem('pace_access_v1') || '{\"role\":\"admin\",\"teacherId\":null}');
 const UI = {
   tab: 'schedule',
   scheduleDate: todayStr(),
@@ -383,9 +357,7 @@ const UI = {
   weekStart: '',
   holidayTeacher: '',
   holidayDate: '',
-  previewBatchFilter: '',
-  facultyTeacher: '',
-  studentBatch: '',
+  previewBatchFilter: '', aiRows: [], aiView: 'daily', accessRole:'admin', accessTeacher:'',
 };
 
 /* ================= Helpers ================= */
@@ -632,6 +604,8 @@ function copyText(text, label){
     navigator.clipboard.writeText(text).then(done).catch(()=>fallbackCopy(text,done));
   } else fallbackCopy(text,done);
 }
+function shareWhatsApp(text){if(!text)return;window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank');}
+
 function fallbackCopy(text, done){
   const ta=document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
   document.body.appendChild(ta); ta.select();
@@ -672,25 +646,8 @@ function setSaveFlag(mode){
 }
 async function persist(newState){
   setSaveFlag('saving');
-  try{
-    const artifact = await getArtifactCap();
-    if(!artifact){
-      STATE = newState; render();
-      setSaveFlag('error');
-      toast('Read-only view — changes will not be saved');
-      return;
-    }
-    const html = buildHtmlWithState(newState);
-    await artifact.publish(html);
-    STATE = newState;
-    render();
-    setSaveFlag('synced');
-  }catch(e){
-    console.error(e);
-    STATE = newState; render();
-    setSaveFlag('error');
-    toast('Could not save — try again');
-  }
+  try{ STATE=newState; localStorage.setItem('pace-timetable-state-v6',JSON.stringify(newState)); render(); setSaveFlag('synced'); }
+  catch(e){ console.error(e); render(); setSaveFlag('error'); toast('Could not save'); }
 }
 
 /* ================= Mutations ================= */
@@ -857,126 +814,8 @@ function removeSubject(name){
 }
 
 /* ================= Message builders ================= */
-function autoDoubtEntries(date, batchId){
-  const batchEntries = classesFor(date).filter(c=>c.batchId===batchId && !c.isDoubt);
-  const explicit = classesFor(date).some(c=>c.batchId===batchId && c.isDoubt && c.start==='16:30');
-  if(!batchEntries.length || explicit) return [];
-  const endsAt430 = batchEntries.some(c=>c.end==='16:30');
-  if(!endsAt430) return [];
-  return [{
-    id:'auto-doubt-'+batchId+'-'+date,
-    date,
-    batchId,
-    teacherId:null,
-    subject:'Doubt Session',
-    start:'16:30',
-    end:'18:00',
-    isDoubt:true,
-    autoGenerated:true
-  }];
-}
-
-function effectiveClassesForBatch(batchId, date){
-  const rows = classesFor(date).filter(c=>c.batchId===batchId);
-  return rows.concat(autoDoubtEntries(date,batchId));
-}
-
-function effectiveClassesForTeacher(teacherId, date){
-  const rows = classesFor(date).filter(c=>c.teacherId===teacherId);
-  const batchIds = [...new Set(rows.filter(c=>!c.isDoubt).map(c=>c.batchId).filter(Boolean))];
-  const auto = [];
-  batchIds.forEach(batchId=>{
-    const hasTeacherAt430 = rows.some(c=>c.batchId===batchId && !c.isDoubt && c.end==='16:30');
-    const explicitDoubt = classesFor(date).some(c=>c.batchId===batchId && c.isDoubt && c.start==='16:30');
-    if(hasTeacherAt430 && !explicitDoubt){
-      auto.push({
-        id:'auto-doubt-'+teacherId+'-'+batchId+'-'+date,
-        date,batchId,teacherId,subject:'Doubt Session',start:'16:30',end:'18:00',isDoubt:true,autoGenerated:true
-      });
-    }
-  });
-  return rows.concat(auto);
-}
-
-function facultyMessage(teacherId, date){
-  const t = teacherById(teacherId);
-  if(!t) return '';
-  const entries = effectiveClassesForTeacher(teacherId,date)
-    .sort((a,b)=>a.start.localeCompare(b.start));
-  if(!entries.length) return null;
-
-  const centers = {};
-  entries.forEach(c=>{
-    const b = batchById(c.batchId);
-    const center = b ? b.center : (c.customCenter || 'Other');
-    (centers[center] = centers[center] || []).push(c);
-  });
-  Object.values(centers).forEach(list=>list.sort((a,b)=>a.start.localeCompare(b.start)));
-  const order = ['Vasai','Virar'].filter(c=>centers[c])
-    .concat(Object.keys(centers).filter(c=>c!=='Vasai'&&c!=='Virar'));
-
-  const firstName = t.name.split(' ')[0];
-  let out = `Good Evening\n*${firstName} ${t.salutation||'Sir'}*\nDate:- ${fmtDateLong(date)}\nDay:- ${dayName(date)}\n`;
-
-  order.forEach(center=>{
-    out += `\n*${center} Center*\n`;
-    centers[center].forEach(c=>{
-      const b = batchById(c.batchId);
-      const batch = c.customBatchLabel || (b ? b.label : 'Batch');
-      if(c.isDoubt){
-        out += `_*${fmt12(c.start)} - ${fmt12(c.end)}: Doubt Session*_\n`;
-      }else{
-        out += `${fmt12(c.start)} - ${fmt12(c.end)}: ${batch}`;
-        if(c.subject) out += ` (${c.subject})`;
-        out += `\n`;
-      }
-    });
-  });
-
-  out += `\nThank you.`;
-  return out;
-}
-
-function studentMessage(batchId, date){
-  const b = batchById(batchId);
-  if(!b) return '';
-  const entries = effectiveClassesForBatch(batchId,date)
-    .sort((a,b2)=>a.start.localeCompare(b2.start));
-  if(!entries.length) return null;
-
-  const main = entries.filter(c=>!c.isDoubt);
-  const doubts = entries.filter(c=>c.isDoubt);
-  const rel = relLabel(date);
-  const dateText = fmtDateLong(date).replace(/^(\d+\w+) (\w+) (\d{4})$/,'$1 $2, $3');
-  const dateLine = `${rel ? rel+' ' : ''}${dateText} ${dayName(date)}`;
-
-  let out = `Good Evening\nDear Students\n(${b.label}) ${b.short}\n\n${dateLine}\nClass timings are as follows -\n`;
-
-  if(main.length){
-    const start = main.reduce((m,c)=>c.start<m?c.start:m, main[0].start);
-    const end = main.reduce((m,c)=>c.end>m?c.end:m, main[0].end);
-    out += `${fmt12(start)} to ${fmt12(end)}\n`;
-
-    const subjectPairs = [];
-    main.forEach(c=>{
-      const code = teacherById(c.teacherId)?.code || '';
-      const subject = c.subject || '';
-      if(!subject) return;
-      const pair = `${subject}${code ? '('+code+')' : ''}`;
-      if(!subjectPairs.includes(pair)) subjectPairs.push(pair);
-    });
-    if(subjectPairs.length) out += `\nSubject:- ${subjectPairs.join(', ')}\n`;
-  }else{
-    out += `No regular classes scheduled.\n`;
-  }
-
-  doubts.forEach(c=>{
-    out += `\n_*${fmt12(c.start)} - ${fmt12(c.end)}: Doubt Session*_\n`;
-  });
-  out += `\nThank You`;
-  return out;
-}
-
+function facultyMessage(teacherId,date){const t=teacherById(teacherId);if(!t)return '';const e=classesFor(date).filter(c=>c.teacherId===teacherId).sort((a,b)=>a.start.localeCompare(b.start));if(!e.length)return null;const centers={};e.forEach(c=>{const b=batchById(c.batchId),center=b?b.center:(c.customCenter||'Other');(centers[center] ||= []).push(c)});Object.values(centers).forEach(a=>a.sort((x,y)=>x.start.localeCompare(y.start)));const order=['Vasai','Virar'].filter(c=>centers[c]).concat(Object.keys(centers).filter(c=>!['Vasai','Virar'].includes(c)));let out=`Good Evening\n*${t.name.split(' ')[0]} ${t.salutation||'Sir'}*\n\nDate:- ${fmtDateLong(date)}\nDay:- ${dayName(date)}\n`;order.forEach(center=>{out+=`\n*${center} Center*\n`;centers[center].forEach(c=>{const b=batchById(c.batchId),batch=c.customBatchLabel||(b?b.label:'Batch');out+=c.isDoubt?`_*${fmt12(c.start)} - ${fmt12(c.end)}: Doubt Session*_\n`:`${fmt12(c.start)} - ${fmt12(c.end)}: ${batch}${c.subject?' ('+c.subject+')':''}\n`;})});if(e.some(c=>!c.isDoubt&&c.end==='16:30')&&!e.some(c=>c.isDoubt&&c.start==='16:30'))out+=`\n_*4:30 PM - 6:00 PM: Doubt Session*_\n`;return out+'\nThank you.';}
+function studentMessage(batchId,date){const b=batchById(batchId);if(!b)return '';const e=classesFor(date).filter(c=>c.batchId===batchId).sort((a,b)=>a.start.localeCompare(b.start));if(!e.length)return null;const main=e.filter(c=>!c.isDoubt),d=e.filter(c=>c.isDoubt);const st=main.length?main.reduce((m,c)=>c.start<m?c.start:m,main[0].start):null;const en=main.length?main.reduce((m,c)=>c.end>m?c.end:m,main[0].end):null;let out=`Good Evening\nDear Students\n*(${b.label}) ${b.short}*\n\n${relLabel(date)?relLabel(date)+' ':''}${fmtDateLong(date)} ${dayName(date)}\nClass timings are as follows -\n\n`;if(st&&en)out+=`${fmt12(st)} to ${fmt12(en)}\n`;const pairs=[];main.forEach(c=>{if(c.subject){const code=teacherById(c.teacherId)?.code||'';const p=c.subject+(code?'('+code+')':'');if(!pairs.includes(p))pairs.push(p)}});if(pairs.length)out+=`\nSubject:- ${pairs.join(', ')}\n`;if(main.some(c=>c.end==='16:30')&&!d.some(c=>c.start==='16:30'))out+=`\n_*4:30 PM - 6:00 PM: Doubt Session*_\n`;d.forEach(c=>out+=`\n_*${fmt12(c.start)} - ${fmt12(c.end)}: Doubt Session*_\n`);return out+'\nThank You';}
 /* ================= Reports ================= */
 function inRange(date, from, to){ return date>=from && date<=to; }
 function conductedClasses(teacherId, from, to){
@@ -1012,6 +851,7 @@ function teacherStats(teacherId, from, to){
 /* ================= Rendering ================= */
 const NAV_ITEMS = [
   {id:'schedule', label:'Schedule', ic:'📅'},
+  {id:'aiimport', label:'AI Import', ic:'🤖'},
   {id:'faculty', label:'Faculty Timetables', ic:'🧑‍🏫'},
   {id:'students', label:'Student Timetables', ic:'🎓'},
   {id:'predict', label:'Weekly Plan', ic:'🔮'},
@@ -1019,45 +859,16 @@ const NAV_ITEMS = [
   {id:'setup', label:'Teachers & Batches', ic:'⚙️'},
 ];
 
-function currentAccessLabel(){
-  if(ACCESS.role==='teacher'){ const t=teacherById(ACCESS.teacherId); return t ? 'Teacher · '+t.code : 'Teacher'; }
-  return 'Admin';
-}
-function isAdmin(){ return ACCESS.role==='admin'; }
-function teacherScopeId(){ return ACCESS.role==='teacher' ? ACCESS.teacherId : null; }
-function setAccess(role, teacherId){ ACCESS.role=role; ACCESS.teacherId=teacherId||null; localStorage.setItem('pace_access_v1',JSON.stringify(ACCESS)); if(role==='teacher'){UI.tab='faculty';UI.facultyTeacher=teacherId;} else UI.tab='schedule'; render(); }
-function openAccess(){
-  const ov=document.getElementById('accessOverlay'); const sel=document.getElementById('accessTeacher');
-  sel.innerHTML=STATE.teachers.map(t=>`<option value="${t.id}">${esc(t.name)} (${esc(t.code)})</option>`).join('');
-  sel.value=ACCESS.teacherId || (STATE.teachers[0]&&STATE.teachers[0].id) || '';
-  document.getElementById('roleAdmin').classList.toggle('active',ACCESS.role==='admin');
-  document.getElementById('roleTeacher').classList.toggle('active',ACCESS.role==='teacher');
-  document.getElementById('teacherAccessField').style.display=ACCESS.role==='teacher'?'block':'none';
-  ov.style.display='flex';
-}
-function installAccessHandlers(){
-  const ov=document.getElementById('accessOverlay'); if(!ov) return;
-  document.getElementById('accessBtn').onclick=openAccess;
-  document.getElementById('roleAdmin').onclick=()=>{ACCESS.role='admin';document.getElementById('roleAdmin').classList.add('active');document.getElementById('roleTeacher').classList.remove('active');document.getElementById('teacherAccessField').style.display='none';};
-  document.getElementById('roleTeacher').onclick=()=>{ACCESS.role='teacher';document.getElementById('roleTeacher').classList.add('active');document.getElementById('roleAdmin').classList.remove('active');document.getElementById('teacherAccessField').style.display='block';};
-  document.getElementById('accessCancel').onclick=()=>ov.style.display='none';
-  document.getElementById('accessContinue').onclick=()=>{ const tid=document.getElementById('accessTeacher').value; setAccess(ACCESS.role,tid); ov.style.display='none'; };
-}
-function shareWhatsApp(text){ if(!text)return; const url='https://wa.me/?text='+encodeURIComponent(text); window.open(url,'_blank'); }
-function messageButtons(text,label){ return `<div class="wa-row"><button class="btn ghost" data-copymsg="1">Copy Message</button><button class="btn primary" data-sharemsg="1">Share on WhatsApp</button></div>`; }
-function wireMessageButtons(root,text,label){ const c=root.querySelector('[data-copymsg]'); const w=root.querySelector('[data-sharemsg]'); if(c)c.onclick=()=>copyText(text,label||'Message'); if(w)w.onclick=()=>shareWhatsApp(text); }
-
 function render(){
   const now = new Date();
-  document.getElementById('accessLabel').textContent = currentAccessLabel();
   document.getElementById('todaylabel').textContent = `${dayName(todayStr())}, ${fmtDateLong(todayStr())}`;
-  const navItem = NAV_ITEMS.find(n=>n.id===UI.tab) || NAV_ITEMS[1];
-  if(!isAdmin() && !['faculty','students'].includes(navItem.id)) UI.tab='faculty';
-  document.getElementById('pagetitle').textContent = (NAV_ITEMS.find(n=>n.id===UI.tab)||NAV_ITEMS[1]).label;
+  document.getElementById('pagetitle').textContent = NAV_ITEMS.find(n=>n.id===UI.tab).label;
+  const rs=document.getElementById('roleSelect'),ts=document.getElementById('teacherSelectTop'),ab=document.getElementById('accessBadge'); if(rs){rs.value=UI.accessRole;ts.innerHTML=STATE.teachers.map(t=>`<option value=\"${t.id}\">${esc(t.name)} (${esc(t.code)})</option>`).join('');ts.value=UI.accessTeacher||STATE.teachers[0]?.id||'';ts.style.display=UI.accessRole==='teacher'?'inline-block':'none';ab.textContent=UI.accessRole==='teacher'?'Teacher view':'Admin';rs.onchange=()=>{UI.accessRole=rs.value;UI.accessTeacher=ts.value;if(UI.accessRole==='teacher')UI.tab='faculty';render()};ts.onchange=()=>{UI.accessTeacher=ts.value;render()};}
 
   const nav = document.getElementById('nav');
   nav.innerHTML = '';
-  NAV_ITEMS.filter(item=> isAdmin() || ['faculty','students'].includes(item.id)).forEach(item=>{
+  NAV_ITEMS.forEach(item=>{
+    if(UI.accessRole==='teacher' && !['faculty','students'].includes(item.id)) return;
     const btn = document.createElement('button');
     btn.className = item.id===UI.tab ? 'active' : '';
     btn.innerHTML = `<span class="ic">${item.ic}</span> ${item.label}`;
@@ -1067,7 +878,8 @@ function render(){
 
   const mt = document.getElementById('mobiletabs');
   mt.innerHTML = '';
-  NAV_ITEMS.filter(item=> isAdmin() || ['faculty','students'].includes(item.id)).forEach(item=>{
+  NAV_ITEMS.forEach(item=>{
+    if(UI.accessRole==='teacher' && !['faculty','students'].includes(item.id)) return;
     const btn = document.createElement('button');
     btn.className = item.id===UI.tab ? 'active' : '';
     btn.textContent = item.label;
@@ -1076,9 +888,9 @@ function render(){
   });
 
   const view = document.getElementById('view');
-  if(!isAdmin() && !['faculty','students'].includes(UI.tab)) UI.tab='faculty';
   if(UI.tab==='schedule') view.innerHTML = '';
   if(UI.tab==='schedule') renderSchedule(view);
+  else if(UI.tab==='aiimport') renderAIImport(view);
   else if(UI.tab==='faculty') renderFaculty(view);
   else if(UI.tab==='students') renderStudents(view);
   else if(UI.tab==='predict') renderPredict(view);
@@ -1328,15 +1140,6 @@ function renderSchedule(view){
 
 function renderFaculty(view){
   const date = UI.facultyDate;
-  if(!isAdmin()) UI.facultyTeacher = ACCESS.teacherId;
-  if(!UI.facultyTeacher && STATE.teachers.length) UI.facultyTeacher = STATE.teachers[0].id;
-  const selected = teacherById(UI.facultyTeacher) || STATE.teachers[0];
-  if(selected) UI.facultyTeacher = selected.id;
-
-  const entries = selected ? classesFor(date).filter(c=>c.teacherId===selected.id).sort((a,b)=>a.start.localeCompare(b.start)) : [];
-  const regular = entries.filter(c=>!c.isDoubt);
-  const doubts = entries.filter(c=>c.isDoubt);
-
   view.innerHTML = `
     <div class="card" style="margin-bottom:18px;">
       <div class="row" style="align-items:flex-end;">
@@ -1347,151 +1150,59 @@ function renderFaculty(view){
         <div class="muted" style="padding-bottom:9px;">${dayName(date)} · ${relLabel(date)||''}</div>
       </div>
     </div>
-
-    <div class="person-layout">
-      <div class="card">
-        <div class="cardhead"><h2>Faculty</h2></div>
-        <div class="person-list" id="facultyList">
-          ${STATE.teachers.map(t=>{
-            const count=classesFor(date).filter(c=>c.teacherId===t.id).length;
-            return `<button class="person-btn ${t.id===UI.facultyTeacher?'active':''}" data-faculty="${t.id}">
-              <span>${esc(t.name)}<span class="sub" style="display:block;">${esc(t.code)} · ${esc(t.salutation||'Sir')}</span></span>
-              <span class="pill ${count?'vasai':''}">${count}</span>
-            </button>`;
-          }).join('')}
-        </div>
-      </div>
-
-      <div>
-        <div class="card" style="margin-bottom:18px;">
-          ${selected ? `
-            <div class="cardhead">
-              <div>
-                <div class="schedule-title">${esc(selected.name)} (${esc(selected.code)})</div>
-                <div class="schedule-subtitle">${dayName(date)}, ${fmtDateLong(date)} · Faculty schedule</div>
-              </div>
-              ${entries.length ? `<button class="btn ghost" id="copyFacultyMsg">Copy message</button>`:''}
-            </div>
-            <div class="schedule-summary">
-              <div class="mini"><b>${regular.length}</b><br>Classes</div>
-              <div class="mini"><b>${doubts.length}</b><br>Doubt sessions</div>
-              <div class="mini"><b>${regular.reduce((m,c)=>m+durMin(c.start,c.end),0)/60 % 1 ? (regular.reduce((m,c)=>m+durMin(c.start,c.end),0)/60).toFixed(1) : regular.reduce((m,c)=>m+durMin(c.start,c.end),0)/60}</b><br>Teaching hours</div>
-            </div>
-            ${entries.length ? `
-              <div style="overflow:auto;">
-                <table class="schedule-table">
-                  <thead><tr><th>Time</th><th>Centre</th><th>Batch</th><th>Subject</th><th>Chapter / Topic</th></tr></thead>
-                  <tbody>
-                    ${entries.map(c=>{
-                      const b=batchById(c.batchId);
-                      const center=b?b.center:(c.customCenter||'—');
-                      const label=c.customBatchLabel||(b?b.label:'—');
-                      return `<tr>
-                        <td class="time">${fmt12(c.start)} – ${fmt12(c.end)}</td>
-                        <td class="center"><span class="pill ${center==='Vasai'||center==='VASAI'?'vasai':'virar'}">${esc(center)}</span></td>
-                        <td><div class="batch-name">${esc(label)}</div></td>
-                        <td>${c.isDoubt?'<span class="pill doubt">Doubt Session</span>':esc(c.subject||'—')}</td>
-                        <td><div class="detail">${esc(chapterLabel(c,false)||c.topic||'—')}</div></td>
-                      </tr>`;
-                    }).join('')}
-                  </tbody>
-                </table>
-              </div>
-            ` : `<div class="schedule-empty">No classes scheduled for ${esc(selected.name)} on this date.</div>`}
-          ` : `<div class="schedule-empty">No faculty found.</div>`}
-        </div>
-
-        ${selected && entries.length ? `<div class="msg-card">
-          <div class="msg-head"><span class="who">Automatic faculty message</span></div>
-          <div class="msg-body">${esc(facultyMessage(selected.id,date)).replace(/\*(.+?)\*/g,'<b>$1</b>')}</div>${messageButtons(facultyMessage(selected.id,date),'Faculty message')}
-        </div>`:''}
-      </div>
-    </div>
+    <div id="facList"></div>
   `;
-
-  document.getElementById('facDate').onchange=(e)=>{UI.facultyDate=e.target.value;render();};
-  view.querySelectorAll('[data-faculty]').forEach(btn=>btn.onclick=()=>{UI.facultyTeacher=btn.getAttribute('data-faculty');render();});
-  const copy=document.getElementById('copyFacultyMsg');
-  if(copy && selected) copy.onclick=()=>copyText(facultyMessage(selected.id,date),selected.name+"'s message");
-  const msgRoot=view.querySelector('.msg-card'); if(msgRoot) wireMessageButtons(msgRoot,facultyMessage(selected.id,date),selected.name+"'s message");
+  document.getElementById('facDate').onchange = (e)=>{ UI.facultyDate=e.target.value; render(); };
+  const list = document.getElementById('facList');
+  const teachersForView=UI.accessRole==='teacher'&&UI.accessTeacher?STATE.teachers.filter(t=>t.id===UI.accessTeacher):STATE.teachers;
+  teachersForView.forEach(t=>{
+    const msg = facultyMessage(t.id, date);
+    const box = document.createElement('div');
+    box.className = 'msg-card';
+    box.innerHTML = `
+      <div class="msg-head">
+        <span class="who">${esc(t.name)} (${esc(t.code)})</span>
+        ${msg ? `<div class="share-row"><button class="btn ghost" data-copy="${t.id}">Copy message</button><button class="btn ghost" data-wa="${t.id}">WhatsApp</button></div>` : ''}
+      </div>
+      ${msg ? `<div class="msg-body">${esc(msg).replace(/\*(.+?)\*/g,'<b>$1</b>')}</div>` : `<div class="msg-empty">No classes scheduled for this date.</div>`}
+    `;
+    list.appendChild(box);
+  });
+  list.querySelectorAll('[data-copy]').forEach(btn=>btn.onclick=()=>{const t=teacherById(btn.getAttribute('data-copy'));copyText(facultyMessage(t.id,date),t.name+' message');});
+  list.querySelectorAll('[data-wa]').forEach(btn=>btn.onclick=()=>shareWhatsApp(facultyMessage(btn.getAttribute('data-wa'),date)));
 }
 
 function renderStudents(view){
   const date = UI.studentDate;
-  if(!UI.studentBatch && STATE.batches.length) UI.studentBatch = STATE.batches[0].id;
-  const selected = batchById(UI.studentBatch) || STATE.batches[0];
-  if(selected) UI.studentBatch=selected.id;
-
-  const entries = selected ? classesFor(date).filter(c=>c.batchId===selected.id).sort((a,b)=>a.start.localeCompare(b.start)) : [];
-  const regular=entries.filter(c=>!c.isDoubt);
-  const doubts=entries.filter(c=>c.isDoubt);
-  const centers=[...new Set(STATE.batches.map(b=>b.center))];
-  const visibleBatches=centers.flatMap(center=>STATE.batches.filter(b=>b.center===center));
-
-  view.innerHTML=`
+  view.innerHTML = `
     <div class="card" style="margin-bottom:18px;">
       <div class="row" style="align-items:flex-end;">
-        <div class="field" style="max-width:220px;"><label>Date</label><input type="date" id="stuDate" value="${date}"></div>
+        <div class="field" style="max-width:220px;">
+          <label>Date</label>
+          <input type="date" id="stuDate" value="${date}">
+        </div>
         <div class="muted" style="padding-bottom:9px;">${dayName(date)} · ${relLabel(date)||''}</div>
       </div>
     </div>
-
-    <div class="person-layout">
-      <div class="card">
-        <div class="cardhead"><h2>Student Batches</h2></div>
-        <div class="person-list" id="studentList">
-          ${centers.map(center=>`<div style="font-size:11px;font-weight:700;color:var(--text-muted);padding:5px 3px 2px;">${esc(center)} CENTER</div>${visibleBatches.filter(b=>b.center===center).map(b=>{
-            const count=classesFor(date).filter(c=>c.batchId===b.id).length;
-            return `<button class="person-btn ${b.id===UI.studentBatch?'active':''}" data-student="${b.id}">
-              <span>${esc(b.label)}<span class="sub" style="display:block;">${esc(b.short)} · ${esc(b.name)}</span></span>
-              <span class="pill ${count?'vasai':''}">${count}</span>
-            </button>`;
-          }).join('')}`).join('')}
-        </div>
-      </div>
-
-      <div>
-        <div class="card" style="margin-bottom:18px;">
-          ${selected ? `
-            <div class="cardhead">
-              <div>
-                <div class="schedule-title">${esc(selected.label)} (${esc(selected.short)})</div>
-                <div class="schedule-subtitle">${esc(selected.center)} Center · ${dayName(date)}, ${fmtDateLong(date)}</div>
-              </div>
-              ${entries.length ? `<button class="btn ghost" id="copyStudentMsg">Copy message</button>`:''}
-            </div>
-            <div class="schedule-summary">
-              <div class="mini"><b>${regular.length}</b><br>Classes</div>
-              <div class="mini"><b>${doubts.length}</b><br>Doubt sessions</div>
-              <div class="mini"><b>${regular.reduce((m,c)=>m+durMin(c.start,c.end),0)/60 % 1 ? (regular.reduce((m,c)=>m+durMin(c.start,c.end),0)/60).toFixed(1) : regular.reduce((m,c)=>m+durMin(c.start,c.end),0)/60}</b><br>Class hours</div>
-            </div>
-            ${entries.length ? `<div style="overflow:auto;"><table class="schedule-table">
-              <thead><tr><th>Time</th><th>Faculty</th><th>Subject</th><th>Chapter / Topic</th></tr></thead>
-              <tbody>${entries.map(c=>{
-                const t=teacherById(c.teacherId);
-                return `<tr>
-                  <td class="time">${fmt12(c.start)} – ${fmt12(c.end)}</td>
-                  <td><div class="batch-name">${t?esc(t.name)+' ('+esc(t.code)+')':'—'}</div></td>
-                  <td>${c.isDoubt?'<span class="pill doubt">Doubt Session</span>':esc(c.subject||'—')}</td>
-                  <td><div class="detail">${esc(chapterLabel(c,false)||c.topic||'—')}</div></td>
-                </tr>`;
-              }).join('')}</tbody>
-            </table></div>` : `<div class="schedule-empty">No classes scheduled for ${esc(selected.label)} on this date.</div>`}
-          ` : `<div class="schedule-empty">No student batches found.</div>`}
-        </div>
-
-        ${selected && entries.length ? `<div class="msg-card">
-          <div class="msg-head"><span class="who">Automatic student message</span></div>
-          <div class="msg-body">${esc(studentMessage(selected.id,date)).replace(/_\*(.+?)\*_/g,'<b><i>$1</i></b>')}</div>
-        </div>`:''}
-      </div>
-    </div>
+    <div id="stuList"></div>
   `;
-
-  document.getElementById('stuDate').onchange=(e)=>{UI.studentDate=e.target.value;render();};
-  view.querySelectorAll('[data-student]').forEach(btn=>btn.onclick=()=>{UI.studentBatch=btn.getAttribute('data-student');render();});
-  const copy=document.getElementById('copyStudentMsg');
-  if(copy && selected) copy.onclick=()=>copyText(studentMessage(selected.id,date),selected.label+" student message");
+  document.getElementById('stuDate').onchange = (e)=>{ UI.studentDate=e.target.value; render(); };
+  const list = document.getElementById('stuList');
+  STATE.batches.forEach(b=>{
+    const msg = studentMessage(b.id, date);
+    const box = document.createElement('div');
+    box.className = 'msg-card';
+    box.innerHTML = `
+      <div class="msg-head">
+        <span class="who">${esc(b.name)} — ${esc(b.label)}</span>
+        ${msg ? `<div class="share-row"><button class="btn ghost" data-copy="${b.id}">Copy message</button><button class="btn ghost" data-wa="${b.id}">WhatsApp</button></div>` : ''}
+      </div>
+      ${msg ? `<div class="msg-body">${esc(msg).replace(/_\*(.+?)\*_/g,'<b><i>$1</i></b>')}</div>` : `<div class="msg-empty">No classes scheduled for this date.</div>`}
+    `;
+    list.appendChild(box);
+  });
+  list.querySelectorAll('[data-copy]').forEach(btn=>btn.onclick=()=>{const b=batchById(btn.getAttribute('data-copy'));copyText(studentMessage(b.id,date),b.name+' message');});
+  list.querySelectorAll('[data-wa]').forEach(btn=>btn.onclick=()=>shareWhatsApp(studentMessage(btn.getAttribute('data-wa'),date)));
 }
 
 function renderReports(view){
@@ -1798,6 +1509,15 @@ function renderWeekPreview(sub){
   };
 }
 
+function renderAIImport(view){
+ view.innerHTML=`<div class="ai-import-grid"><div class="card"><div class="cardhead"><h2>AI Handwritten Timetable Import</h2></div><div class="muted" style="font-size:12px;margin-bottom:12px">Upload a timetable photo/PDF. AI extracts only what it can see clearly.</div><div id="aiDrop" class="ai-drop"><input id="aiFile" type="file" accept="image/*,.pdf" style="display:none"><button class="btn primary" id="aiChoose">Choose image / PDF</button><div class="muted" style="font-size:12px;margin-top:7px">or drag & drop</div></div><div class="field" style="margin-top:14px"><label>Fallback date</label><input id="aiDate" type="date" value="${todayStr()}"></div><div class="row"><div class="field"><label>Centre</label><select id="aiCenter"><option>Auto detect</option><option>Vasai</option><option>Virar</option><option>Both</option></select></div><div class="field"><label>Schedule</label><select id="aiMode"><option value="daily">Daily</option><option value="weekly">Weekly</option></select></div></div><button class="btn primary" id="aiRead">🤖 Read timetable</button><div id="aiMsg" class="muted" style="font-size:12px;margin-top:10px">${UI.aiRows.length?UI.aiRows.length+' rows ready for review.':'No file read yet.'}</div></div><div class="card"><div class="cardhead"><div><h2>Review & publish</h2><div class="muted" style="font-size:12px">Nothing is added to Schedule until you confirm.</div></div></div><div id="aiTable"></div><div class="row" style="margin-top:14px"><button class="btn ghost" id="aiClear">Clear</button><button class="btn primary" id="aiPublish">Confirm & Add to Schedule</button></div></div></div>`;
+ const file=document.getElementById('aiFile');document.getElementById('aiChoose').onclick=()=>file.click();
+ document.getElementById('aiRead').onclick=async()=>{const f=file.files[0];if(!f){toast('Choose an image or PDF first');return}const msg=document.getElementById('aiMsg');msg.textContent='Reading timetable with AI…';const fd=new FormData();fd.append('file',f);fd.append('fallbackDate',document.getElementById('aiDate').value);fd.append('fallbackCenter',document.getElementById('aiCenter').value);fd.append('mode',document.getElementById('aiMode').value);try{const resp=await fetch('https://fzgftorhxxpnihpimix.supabase.co/functions/v1/ai-timetable-reader',{method:'POST',body:fd});if(!resp.ok)throw new Error(await resp.text());const data=await resp.json();UI.aiRows=(data.rows||[]).map(r=>({date:r.date||'',center:r.center||'',batch:r.batch||'',teacherCode:r.teacherCode||'',subject:r.subject||'',chapter:r.chapter||'',lectureNo:r.lectureNo||'',start:normAiTime(r.start),end:normAiTime(r.end),confidence:r.confidence||'review'}));renderAIImport(view)}catch(e){msg.textContent='AI reader failed: '+(e.message||e)}};
+ const renderTable=()=>{const el=document.getElementById('aiTable');if(!UI.aiRows.length){el.innerHTML='<div class="empty">No extracted rows yet.</div>';return}el.innerHTML=`<div class="ai-table"><table><thead><tr><th>#</th><th>Date</th><th>Center</th><th>Batch</th><th>Teacher</th><th>Subject</th><th>Start</th><th>End</th><th>Status</th></tr></thead><tbody>${UI.aiRows.map((r,i)=>{const b=STATE.batches.find(x=>x.label.toLowerCase()===(r.batch||'').toLowerCase()&&x.center.toLowerCase()===(r.center||'').toLowerCase())||STATE.batches.find(x=>x.label.toLowerCase()===(r.batch||'').toLowerCase());const t=STATE.teachers.find(x=>x.code.toLowerCase()===(r.teacherCode||'').toLowerCase());const bad=!r.date||!r.start||!r.end||!b||!t;return `<tr><td>${i+1}</td><td><input data-ai="date" data-i="${i}" value="${esc(r.date)}"></td><td><input data-ai="center" data-i="${i}" value="${esc(r.center)}"></td><td><select data-ai="batch" data-i="${i}">${STATE.batches.map(x=>`<option value="${x.id}" ${b&&x.id===b.id?'selected':''}>${esc(x.center+' '+x.label)}</option>`).join('')}</select></td><td><select data-ai="teacher" data-i="${i}">${STATE.teachers.map(x=>`<option value="${x.id}" ${t&&x.id===t.id?'selected':''}>${esc(x.code+' — '+x.name)}</option>`).join('')}</select></td><td><input data-ai="subject" data-i="${i}" value="${esc(r.subject)}"></td><td><input type="time" data-ai="start" data-i="${i}" value="${esc(r.start)}"></td><td><input type="time" data-ai="end" data-i="${i}" value="${esc(r.end)}"></td><td><span class="ai-status ${bad?'ai-review':'ai-ok'}">${bad?'Needs review':'Ready'}</span></td></tr>`}).join('')}</tbody></table></div>`;el.querySelectorAll('[data-ai]').forEach(x=>x.onchange=()=>{const i=+x.dataset.i,k=x.dataset.ai;if(k==='batch'){const b=batchById(x.value);UI.aiRows[i].batch=b.label;UI.aiRows[i].center=b.center}else if(k==='teacher'){UI.aiRows[i].teacherCode=teacherById(x.value).code}else UI.aiRows[i][k]=x.value;renderAIImport(view)})};renderTable();
+ document.getElementById('aiClear').onclick=()=>{UI.aiRows=[];render()};document.getElementById('aiPublish').onclick=()=>{if(!UI.aiRows.length){toast('Nothing to import');return}const ns=structuredClone(STATE),add=[];for(const r of UI.aiRows){const b=STATE.batches.find(x=>x.label.toLowerCase()===(r.batch||'').toLowerCase()&&x.center.toLowerCase()===(r.center||'').toLowerCase())||STATE.batches.find(x=>x.label.toLowerCase()===(r.batch||'').toLowerCase());const t=STATE.teachers.find(x=>x.code.toLowerCase()===(r.teacherCode||'').toLowerCase());if(!r.date||!r.start||!r.end||!b||!t){toast('Resolve all Needs review rows first');return}add.push({id:uid('ai'),date:r.date,batchId:b.id,customBatchLabel:null,customCenter:null,teacherId:t.id,subject:r.subject||'',chapter:r.chapter||'',lectureNo:parseInt(r.lectureNo,10)||null,chapterCompleted:false,topic:'',start:r.start,end:r.end,isDoubt:false})}add.forEach(c=>ns.classes.push(c));persist(ns);UI.aiRows=[];UI.tab='schedule';UI.scheduleDate=add[0].date};
+}
+function normAiTime(v){if(!v)return '';const m=String(v).trim().toUpperCase().replace(/\s+/g,'').match(/^(\d{1,2})(?::(\d{2}))?(AM|PM)?$/);if(!m)return String(v);let h=+m[1],mi=m[2]||'00';if(m[3]==='PM'&&h<12)h+=12;if(m[3]==='AM'&&h===12)h=0;return String(h).padStart(2,'0')+':'+mi;}
+
 function renderSetup(view){
   view.innerHTML = `
     <div class="grid2">
@@ -1885,23 +1605,8 @@ function renderSetup(view){
   view.querySelectorAll('[data-delsub]').forEach(b=> b.onclick = ()=> removeSubject(b.getAttribute('data-delsub')));
 }
 
-installAccessHandlers();
 render();
 </script>
 
 
-
-<div id="accessOverlay" class="access-overlay" style="display:none">
-  <div class="access-box">
-    <h2>PACE Timetable Access</h2>
-    <p>Select how you are using the app on this device. Admins can manage the complete timetable. A teacher profile only exposes that teacher's own timetable and holiday option.</p>
-    <div class="access-role">
-      <button id="roleAdmin" type="button">🛠️ Admin</button>
-      <button id="roleTeacher" type="button">🧑‍🏫 Teacher</button>
-    </div>
-    <div id="teacherAccessField" style="display:none" class="field"><label>Teacher</label><select id="accessTeacher"></select></div>
-    <div class="row" style="justify-content:flex-end;margin-top:18px"><button class="btn ghost" id="accessCancel" type="button">Cancel</button><button class="btn primary" id="accessContinue" type="button">Continue</button></div>
-    <div style="font-size:11px;color:var(--text-muted);margin-top:12px">Current version uses a local access profile. Supabase Auth + RLS can replace this layer when the production accounts are wired.</div>
-  </div>
-</div>
 </body></html>
