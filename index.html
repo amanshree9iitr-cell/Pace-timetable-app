@@ -1,285 +1,1746 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#0f172a">
-<title>PACE IIT & Medical — Timetable Manager</title>
+<!DOCTYPE html>
+<html lang="en" __gcrremoteframetoken="c9016a972f52a5e543bb01bf2ef33178" data-theme="light" style="color-scheme: light;" data-frame-refused-watch=""><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PACE IIT &amp; Medical — Timetable</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<script id="app-state" type="application/json">{"teachers":[{"id":"t1","name":"Devendra Shukla","code":"DC","salutation":"Sir"},{"id":"t2","name":"Nitish Kumar","code":"NC","salutation":"Sir"},{"id":"t3","name":"Gajendra Kumar","code":"GM","salutation":"Sir"},{"id":"t4","name":"Aman Shree","code":"AP","salutation":"Sir"},{"id":"t5","name":"Rashmi Singh","code":"RB","salutation":"Ma'am"},{"id":"t6","name":"Priyanka Maurya","code":"MB","salutation":"Ma'am"},{"id":"t7","name":"Pranay Jha","code":"PB","salutation":"Sir"},{"name":"Vijay shrivastava","code":"VP","salutation":"Sir","id":"t_mu9nlkxe5bds"},{"id":"t_sm1","name":"Sanjana Simmy","code":"SM","salutation":"Ma'am"}],"batches":[{"id":"b1","center":"Vasai","label":"XII JEE 1","name":"Vasai 12th 1","short":"VS"},{"id":"b2","center":"Vasai","label":"XII JEE 2","name":"Vasai 12th 2","short":"VS"},{"id":"b3","center":"Vasai","label":"XII NEET","name":"Vasai 12th NEET","short":"VS"},{"id":"b4","center":"Vasai","label":"XI JEE","name":"Vasai 11th JEE","short":"VS"},{"id":"b5","center":"Vasai","label":"XI NEET","name":"Vasai 11th NEET","short":"VS"},{"id":"b6","center":"Virar","label":"XII JEE 1","name":"Virar 12th 1","short":"VR"},{"id":"b7","center":"Virar","label":"XII JEE 2","name":"Virar 12th 2","short":"VR"},{"id":"b8","center":"Virar","label":"XII NEET","name":"Virar 12th NEET","short":"VR"},{"id":"b9","center":"Virar","label":"XI JEE","name":"Virar 11th JEE","short":"VR"},{"id":"b10","center":"Virar","label":"XI NEET","name":"Virar 11th NEET","short":"VR"},{"name":"Foundation 9th","center":"VASAI","label":"9th FB","short":"VS","id":"b_mu5u6nydmt5z"},{"name":"FOUNDATION 10TH","center":"VASAI","label":"10TH FB","short":"VS","id":"b_mu5u7qzizy79"},{"name":"FOUNDATION 10TH","center":"VIRAR","label":"10TH FB","short":"VR","id":"b_mu5u8ecqnvc6"},{"name":"FOUNDATION 9TH","center":"VIRAR","label":"9TH FB","short":"VR","id":"b_mu5u9572p32o"}],"subjects":["Physics","Chemistry","Maths","Biology","Full Test","Feedback"],"classes":[{"id":"d2","date":"2026-09-18","batchId":"b2","customBatchLabel":null,"customCenter":null,"teacherId":"t4","subject":"Physics","topic":"","start":"09:30","end":"12:45","isDoubt":false,"chapter":"Electromagnetic Induction","lectureNo":3,"chapterCompleted":false},{"id":"d4","date":"2026-09-18","batchId":"b3","customBatchLabel":null,"customCenter":null,"teacherId":"t2","subject":"Chemistry","topic":"","start":"09:30","end":"12:45","isDoubt":false,"chapter":"POC","lectureNo":2,"chapterCompleted":false},{"id":"d6","date":"2026-09-18","batchId":"b8","customBatchLabel":null,"customCenter":null,"teacherId":"t6","subject":"Biology","topic":"","start":"09:30","end":"12:45","isDoubt":false},{"id":"d1","date":"2026-09-18","batchId":"b6","customBatchLabel":null,"customCenter":null,"teacherId":"t1","subject":"Chemistry","topic":"Held at Vasai Center (not Virar)","start":"10:30","end":"16:30","isDoubt":false,"chapter":"Carbonyl Compounds","lectureNo":3,"chapterCompleted":false},{"id":"d3","date":"2026-09-18","batchId":"b2","customBatchLabel":null,"customCenter":null,"teacherId":"t2","subject":"Chemistry","topic":"","start":"13:15","end":"16:30","isDoubt":false,"chapter":"Solid State","lectureNo":4,"chapterCompleted":false},{"id":"d5","date":"2026-09-18","batchId":"b3","customBatchLabel":null,"customCenter":null,"teacherId":"t4","subject":"Physics","topic":"","start":"13:15","end":"16:30","isDoubt":false,"chapter":"Electromagnetic Induction","lectureNo":3,"chapterCompleted":false},{"id":"e1","date":"2026-09-19","batchId":"b3","customBatchLabel":null,"customCenter":null,"teacherId":"t1","subject":"Chemistry","chapter":"Carboxylic Acid and Derivative","lectureNo":2,"chapterCompleted":false,"topic":"","start":"09:30","end":"12:45","isDoubt":false},{"id":"e2","date":"2026-09-19","batchId":"b3","customBatchLabel":null,"customCenter":null,"teacherId":"t5","subject":"Biology","chapter":null,"lectureNo":null,"chapterCompleted":false,"topic":"","start":"13:15","end":"16:30","isDoubt":false},{"id":"e3","date":"2026-09-19","batchId":"b2","customBatchLabel":null,"customCenter":null,"teacherId":"t1","subject":"Chemistry","chapter":"Carbonyl Compounds","lectureNo":2,"chapterCompleted":false,"topic":"","start":"13:00","end":"17:00","isDoubt":false},{"id":"e4","date":"2026-09-19","batchId":"b9","customBatchLabel":null,"customCenter":null,"teacherId":"t4","subject":"Physics","chapter":"Friction","lectureNo":4,"chapterCompleted":false,"topic":"","start":"09:30","end":"11:30","isDoubt":false},{"id":"e5","date":"2026-09-19","batchId":"b9","customBatchLabel":null,"customCenter":null,"teacherId":"t2","subject":"Chemistry","chapter":"Thermodynamics","lectureNo":5,"chapterCompleted":false,"topic":"","start":"12:00","end":"14:00","isDoubt":false},{"id":"e6","date":"2026-09-19","batchId":"b10","customBatchLabel":null,"customCenter":null,"teacherId":"t2","subject":"Chemistry","chapter":"Thermodynamics","lectureNo":5,"chapterCompleted":false,"topic":"","start":"09:30","end":"11:30","isDoubt":false},{"id":"e7","date":"2026-09-19","batchId":"b10","customBatchLabel":null,"customCenter":null,"teacherId":"t4","subject":"Physics","chapter":"Friction","lectureNo":4,"chapterCompleted":false,"topic":"","start":"12:00","end":"14:00","isDoubt":false},{"id":"e8","date":"2026-09-19","batchId":"b_mu5u9572p32o","customBatchLabel":null,"customCenter":null,"teacherId":"t2","subject":"Chemistry","chapter":null,"lectureNo":null,"chapterCompleted":false,"topic":"","start":"16:30","end":"18:00","isDoubt":false},{"id":"e9","date":"2026-09-19","batchId":"b_mu5u9572p32o","customBatchLabel":null,"customCenter":null,"teacherId":"t4","subject":"Physics","chapter":null,"lectureNo":null,"chapterCompleted":false,"topic":"","start":"18:15","end":"19:45","isDoubt":false},{"id":"e10","date":"2026-09-19","batchId":"b_mu5u8ecqnvc6","customBatchLabel":null,"customCenter":null,"teacherId":"t4","subject":"Physics","chapter":null,"lectureNo":null,"chapterCompleted":false,"topic":"","start":"16:30","end":"18:00","isDoubt":false},{"id":"e11","date":"2026-09-19","batchId":"b_mu5u8ecqnvc6","customBatchLabel":null,"customCenter":null,"teacherId":"t2","subject":"Chemistry","chapter":null,"lectureNo":null,"chapterCompleted":false,"topic":"","start":"18:15","end":"19:45","isDoubt":false},{"id":"f1","date":"2026-09-20","batchId":"b4","customBatchLabel":null,"customCenter":null,"teacherId":"t1","subject":"Chemistry","chapter":"Chemical Bonding","lectureNo":7,"chapterCompleted":false,"topic":"","start":"09:30","end":"12:45","isDoubt":false},{"id":"f2","date":"2026-09-20","batchId":"b4","customBatchLabel":null,"customCenter":null,"teacherId":"t2","subject":"Chemistry","chapter":"Thermodynamics","lectureNo":3,"chapterCompleted":false,"topic":"","start":"13:15","end":"16:30","isDoubt":false},{"id":"f3","date":"2026-09-20","batchId":"b5","customBatchLabel":null,"customCenter":null,"teacherId":"t7","subject":"Biology","chapter":null,"lectureNo":null,"chapterCompleted":false,"topic":"","start":"09:30","end":"12:45","isDoubt":false},{"id":"f4","date":"2026-09-20","batchId":"b5","customBatchLabel":null,"customCenter":null,"teacherId":"t1","subject":"Chemistry","chapter":"Chemical Bonding","lectureNo":7,"chapterCompleted":false,"topic":"","start":"13:15","end":"16:30","isDoubt":false},{"id":"f5","date":"2026-09-20","batchId":"b1","customBatchLabel":null,"customCenter":null,"teacherId":"t4","subject":"Physics","chapter":"Electromagnetic Induction","lectureNo":4,"chapterCompleted":false,"topic":"","start":"09:30","end":"12:45","isDoubt":false},{"id":"f6","date":"2026-09-20","batchId":"b1","customBatchLabel":null,"customCenter":null,"teacherId":"t3","subject":"Maths","chapter":null,"lectureNo":null,"chapterCompleted":false,"topic":"","start":"13:15","end":"16:30","isDoubt":false},{"id":"g1","date":"2026-09-20","batchId":"b6","customBatchLabel":null,"customCenter":null,"teacherId":"t2","subject":"Chemistry","chapter":"S Block","lectureNo":3,"chapterCompleted":false,"topic":"","start":"09:30","end":"12:45","isDoubt":false},{"id":"g2","date":"2026-09-20","batchId":"b6","customBatchLabel":null,"customCenter":null,"teacherId":"t4","subject":"Physics","chapter":"Magnetic Material","lectureNo":2,"chapterCompleted":false,"topic":"","start":"13:15","end":"16:30","isDoubt":false},{"id":"g3","date":"2026-09-20","batchId":"b7","customBatchLabel":null,"customCenter":null,"teacherId":"t2","subject":"Chemistry","chapter":"S Block","lectureNo":3,"chapterCompleted":false,"topic":"","start":"09:30","end":"12:45","isDoubt":false},{"id":"g4","date":"2026-09-20","batchId":"b7","customBatchLabel":null,"customCenter":null,"teacherId":"t4","subject":"Physics","chapter":"Magnetic Material","lectureNo":2,"chapterCompleted":false,"topic":"","start":"13:15","end":"16:30","isDoubt":false},{"id":"g6","date":"2026-09-20","batchId":"b8","customBatchLabel":null,"customCenter":null,"teacherId":"t4","subject":"Physics","chapter":"Magnetic Material","lectureNo":2,"chapterCompleted":false,"topic":"","start":"13:15","end":"16:30","isDoubt":false},{"id":"h1","date":"2026-09-21","batchId":"b1","customBatchLabel":null,"customCenter":null,"teacherId":"t2","subject":"Chemistry","chapter":"Solid State","lectureNo":5,"chapterCompleted":false,"topic":"","start":"12:00","end":"14:00","isDoubt":false},{"id":"h2","date":"2026-09-21","batchId":"b1","customBatchLabel":null,"customCenter":null,"teacherId":"t1","subject":"Chemistry","chapter":"Polymer","lectureNo":2,"chapterCompleted":false,"topic":"","start":"14:30","end":"16:30","isDoubt":false},{"id":"h3","date":"2026-09-21","batchId":"b2","customBatchLabel":null,"customCenter":null,"teacherId":"t1","subject":"Chemistry","chapter":"Carbonyl Compounds","lectureNo":3,"chapterCompleted":false,"topic":"","start":"12:00","end":"14:00","isDoubt":false},{"id":"h4","date":"2026-09-21","batchId":"b2","customBatchLabel":null,"customCenter":null,"teacherId":"t2","subject":"Chemistry","chapter":"Solid State","lectureNo":5,"chapterCompleted":false,"topic":"","start":"14:30","end":"16:30","isDoubt":false},{"id":"h5","date":"2026-09-21","batchId":"b3","customBatchLabel":null,"customCenter":null,"teacherId":"t_mu9nlkxe5bds","subject":"Physics","chapter":"Modern Physics","lectureNo":3,"chapterCompleted":false,"topic":"","start":"12:00","end":"14:00","isDoubt":false},{"id":"h6","date":"2026-09-21","batchId":"b3","customBatchLabel":null,"customCenter":null,"teacherId":"t_mu9nlkxe5bds","subject":"Physics","chapter":"Modern Physics","lectureNo":3,"chapterCompleted":false,"topic":"","start":"14:30","end":"16:30","isDoubt":false},{"id":"i2","date":"2026-09-22","batchId":"b4","customBatchLabel":null,"customCenter":null,"teacherId":"t1","subject":"Chemistry","chapter":"Chemical Bonding","lectureNo":8,"chapterCompleted":false,"topic":"","start":"13:15","end":"16:30","isDoubt":false,"online":false},{"id":"i3","date":"2026-09-22","batchId":"b5","customBatchLabel":null,"customCenter":null,"teacherId":"t1","subject":"Chemistry","chapter":"Chemical Bonding","lectureNo":8,"chapterCompleted":false,"topic":"","start":"09:30","end":"12:45","isDoubt":false,"online":false},{"id":"i4","date":"2026-09-22","batchId":"b5","customBatchLabel":null,"customCenter":null,"teacherId":"t5","subject":"Biology","chapter":null,"lectureNo":null,"chapterCompleted":false,"topic":"","start":"13:15","end":"16:30","isDoubt":false,"online":false},{"id":"i5","date":"2026-09-22","batchId":"b_mu5u6nydmt5z","customBatchLabel":null,"customCenter":null,"teacherId":"t5","subject":"Biology","chapter":null,"lectureNo":null,"chapterCompleted":false,"topic":"","start":"16:30","end":"17:30","isDoubt":false,"online":false},{"id":"i6","date":"2026-09-22","batchId":"b_mu5u6nydmt5z","customBatchLabel":null,"customCenter":null,"teacherId":"t4","subject":"Physics","chapter":null,"lectureNo":null,"chapterCompleted":false,"topic":"","start":"17:30","end":"18:30","isDoubt":false,"online":false},{"id":"i7","date":"2026-09-22","batchId":"b_mu5u7qzizy79","customBatchLabel":null,"customCenter":null,"teacherId":"t4","subject":"Physics","chapter":null,"lectureNo":null,"chapterCompleted":false,"topic":"","start":"16:30","end":"17:30","isDoubt":false,"online":false},{"id":"i8","date":"2026-09-22","batchId":"b_mu5u7qzizy79","customBatchLabel":null,"customCenter":null,"teacherId":"t5","subject":"Biology","chapter":null,"lectureNo":null,"chapterCompleted":false,"topic":"","start":"17:30","end":"18:30","isDoubt":false,"online":false},{"id":"i13","date":"2026-09-22","batchId":"b_mu5u9572p32o","customBatchLabel":null,"customCenter":null,"teacherId":"t2","subject":"Chemistry","chapter":null,"lectureNo":null,"chapterCompleted":false,"topic":"","start":"19:00","end":"21:00","isDoubt":false,"online":true},{"id":"j1","date":"2026-09-22","batchId":"b4","customBatchLabel":null,"customCenter":null,"teacherId":"t3","subject":"Maths","chapter":"Binomial Theorem","lectureNo":1,"chapterCompleted":false,"topic":"","start":"09:30","end":"12:45","isDoubt":false,"online":false},{"id":"j2","date":"2026-09-22","batchId":"b9","customBatchLabel":null,"customCenter":null,"teacherId":"t2","subject":"Chemistry","chapter":"Thermodynamics","lectureNo":6,"chapterCompleted":false,"topic":"","start":"09:30","end":"11:30","isDoubt":false,"online":true},{"id":"j3","date":"2026-09-22","batchId":"b9","customBatchLabel":null,"customCenter":null,"teacherId":"t4","subject":"Physics","chapter":"Friction","lectureNo":5,"chapterCompleted":false,"topic":"","start":"12:00","end":"14:00","isDoubt":false,"online":true},{"id":"j4","date":"2026-09-22","batchId":"b10","customBatchLabel":null,"customCenter":null,"teacherId":"t7","subject":"Biology","chapter":null,"lectureNo":null,"chapterCompleted":false,"topic":"","start":"09:30","end":"11:30","isDoubt":false,"online":true},{"id":"j5","date":"2026-09-22","batchId":"b10","customBatchLabel":null,"customCenter":null,"teacherId":"t2","subject":"Chemistry","chapter":"Thermodynamics","lectureNo":6,"chapterCompleted":false,"topic":"","start":"12:00","end":"14:00","isDoubt":false,"online":true},{"id":"k1","date":"2026-09-23","batchId":"b2","customBatchLabel":null,"customCenter":null,"teacherId":"t3","subject":"Maths","chapter":"Vector and 3D","lectureNo":6,"chapterCompleted":false,"topic":"","start":"09:30","end":"12:45","isDoubt":false,"online":false},{"id":"k2","date":"2026-09-23","batchId":"b2","customBatchLabel":null,"customCenter":null,"teacherId":"t1","subject":"Chemistry","chapter":"Carbonyl Compounds","lectureNo":4,"chapterCompleted":false,"topic":"","start":"13:15","end":"16:30","isDoubt":false,"online":false},{"id":"k3","date":"2026-09-23","batchId":"b3","customBatchLabel":null,"customCenter":null,"teacherId":"t1","subject":"Chemistry","chapter":"Carboxylic Acid and Derivative","lectureNo":3,"chapterCompleted":false,"topic":"","start":"09:30","end":"12:45","isDoubt":false,"online":false},{"id":"k4","date":"2026-09-23","batchId":"b3","customBatchLabel":null,"customCenter":null,"teacherId":"t2","subject":"Chemistry","chapter":"POC","lectureNo":3,"chapterCompleted":false,"topic":"","start":"13:15","end":"16:30","isDoubt":false,"online":false},{"id":"k5","date":"2026-09-23","batchId":"b6","customBatchLabel":null,"customCenter":null,"teacherId":"t2","subject":"Chemistry","chapter":"S Block","lectureNo":4,"chapterCompleted":false,"topic":"","start":"09:30","end":"12:45","isDoubt":false,"online":false},{"id":"k6","date":"2026-09-23","batchId":"b6","customBatchLabel":null,"customCenter":null,"teacherId":"t4","subject":"Physics","chapter":"Alternating Current","lectureNo":1,"chapterCompleted":false,"topic":"","start":"15:00","end":"17:00","isDoubt":false,"online":false},{"id":"k7","date":"2026-09-23","batchId":"b7","customBatchLabel":null,"customCenter":null,"teacherId":"t2","subject":"Chemistry","chapter":"S Block","lectureNo":4,"chapterCompleted":false,"topic":"","start":"09:30","end":"12:45","isDoubt":false,"online":false},{"id":"k8","date":"2026-09-23","batchId":"b7","customBatchLabel":null,"customCenter":null,"teacherId":"t4","subject":"Physics","chapter":"Alternating Current","lectureNo":1,"chapterCompleted":false,"topic":"","start":"15:00","end":"17:00","isDoubt":false,"online":false},{"id":"k9","date":"2026-09-23","batchId":"b8","customBatchLabel":null,"customCenter":null,"teacherId":"t4","subject":"Physics","chapter":"Alternating Current","lectureNo":1,"chapterCompleted":false,"topic":"","start":"15:00","end":"17:00","isDoubt":false,"online":false},{"id":"l1","date":"2026-09-23","batchId":"b4","customBatchLabel":null,"customCenter":null,"teacherId":null,"subject":null,"chapter":null,"lectureNo":null,"chapterCompleted":false,"topic":"","start":"10:00","end":"13:00","isDoubt":false,"online":false,"isTest":true,"testTopics":[{"subject":"Physics","topic":"Kinematics"},{"subject":"Chemistry","topic":"Periodic Table"},{"subject":"Maths","topic":"Sequence and Series"}]},{"id":"l2","date":"2026-09-23","batchId":"b5","customBatchLabel":null,"customCenter":null,"teacherId":null,"subject":null,"chapter":null,"lectureNo":null,"chapterCompleted":false,"topic":"","start":"10:00","end":"13:00","isDoubt":false,"online":false,"isTest":true,"testTopics":[{"subject":"Physics","topic":"Kinematics"},{"subject":"Chemistry","topic":"Periodic Table"},{"subject":"Botany","topic":"Plant Kingdom"},{"subject":"Zoology","topic":"Animal Kingdom"}]},{"id":"m1","date":"2026-09-24","batchId":"b9","customBatchLabel":null,"customCenter":null,"teacherId":"t4","subject":"Physics","chapter":"Friction","lectureNo":6,"chapterCompleted":false,"topic":"","start":"09:30","end":"12:45","isDoubt":false,"online":true},{"id":"m2","date":"2026-09-24","batchId":"b9","customBatchLabel":null,"customCenter":null,"teacherId":null,"subject":null,"chapter":null,"lectureNo":null,"chapterCompleted":false,"topic":"","start":"13:15","end":"16:15","isDoubt":false,"online":true,"isTest":true,"testTopics":[{"subject":"Physics","topic":"Kinematics"},{"subject":"Chemistry","topic":"Periodic Table"},{"subject":"Maths","topic":"Sequence and Series"}]},{"id":"m3","date":"2026-09-24","batchId":"b10","customBatchLabel":null,"customCenter":null,"teacherId":null,"subject":null,"chapter":null,"lectureNo":null,"chapterCompleted":false,"topic":"","start":"09:30","end":"12:45","isDoubt":false,"online":true,"isTest":true,"testTopics":[{"subject":"Physics","topic":"Kinematics"},{"subject":"Chemistry","topic":"Periodic Table"},{"subject":"Botany","topic":"Plant Kingdom"},{"subject":"Zoology","topic":"Animal Kingdom"}]},{"id":"m4","date":"2026-09-24","batchId":"b10","customBatchLabel":null,"customCenter":null,"teacherId":"t4","subject":"Physics","chapter":"Friction","lectureNo":6,"chapterCompleted":false,"topic":"","start":"13:15","end":"16:30","isDoubt":false,"online":true},{"id":"m5","date":"2026-09-24","batchId":"b1","customBatchLabel":null,"customCenter":null,"teacherId":"t3","subject":"Maths","chapter":"Vector and 3D","lectureNo":7,"chapterCompleted":false,"topic":"","start":"11:00","end":"17:00","isDoubt":false,"online":false},{"id":"n1","date":"2026-09-25","batchId":"b4","customBatchLabel":null,"customCenter":null,"teacherId":"t4","subject":"Physics","chapter":"Friction","lectureNo":5,"chapterCompleted":false,"topic":"","start":"08:30","end":"10:30","isDoubt":false,"online":false},{"id":"n2","date":"2026-09-25","batchId":"b4","customBatchLabel":null,"customCenter":null,"teacherId":"t1","subject":"Chemistry","chapter":"Gaseous State","lectureNo":1,"chapterCompleted":false,"topic":"","start":"11:00","end":"13:00","isDoubt":false,"online":false},{"id":"n3","date":"2026-09-25","batchId":"b5","customBatchLabel":null,"customCenter":null,"teacherId":"t1","subject":"Chemistry","chapter":"Gaseous State","lectureNo":1,"chapterCompleted":false,"topic":"","start":"08:30","end":"10:30","isDoubt":false,"online":false},{"id":"n4","date":"2026-09-25","batchId":"b5","customBatchLabel":null,"customCenter":null,"teacherId":"t4","subject":"Physics","chapter":"Friction","lectureNo":3,"chapterCompleted":false,"topic":"","start":"11:00","end":"13:00","isDoubt":false,"online":false},{"id":"n5","date":"2026-09-25","batchId":"b6","customBatchLabel":null,"customCenter":null,"teacherId":"t3","subject":"Maths","chapter":"Determinant and Matrix","lectureNo":2,"chapterCompleted":false,"topic":"","start":"09:30","end":"13:15","isDoubt":false,"online":false},{"id":"n6","date":"2026-09-25","batchId":"b7","customBatchLabel":null,"customCenter":null,"teacherId":"t3","subject":"Maths","chapter":"Determinant and Matrix","lectureNo":2,"chapterCompleted":false,"topic":"","start":"09:30","end":"13:15","isDoubt":false,"online":false},{"id":"n7","date":"2026-09-25","batchId":"b8","customBatchLabel":null,"customCenter":null,"teacherId":"t2","subject":"Chemistry","chapter":null,"lectureNo":null,"chapterCompleted":false,"topic":"","start":"09:30","end":"13:15","isDoubt":false,"online":false},{"id":"n8","date":"2026-09-25","batchId":"b6","customBatchLabel":null,"customCenter":null,"teacherId":"t2","subject":"Chemistry","chapter":"POC","lectureNo":1,"chapterCompleted":false,"topic":"","start":"13:45","end":"16:30","isDoubt":false,"online":false},{"id":"n9","date":"2026-09-25","batchId":"b7","customBatchLabel":null,"customCenter":null,"teacherId":"t4","subject":"Physics","chapter":"Alternating Current","lectureNo":2,"chapterCompleted":false,"topic":"","start":"13:45","end":"16:30","isDoubt":false,"online":false},{"id":"n10","date":"2026-09-25","batchId":"b8","customBatchLabel":null,"customCenter":null,"teacherId":"t4","subject":"Physics","chapter":"Alternating Current","lectureNo":2,"chapterCompleted":false,"topic":"","start":"13:45","end":"16:30","isDoubt":false,"online":false},{"id":"o1","date":"2026-09-26","batchId":"b1","customBatchLabel":null,"customCenter":null,"teacherId":"t2","subject":"Chemistry","chapter":"Solid State","lectureNo":6,"chapterCompleted":false,"topic":"","start":"09:30","end":"12:45","isDoubt":false,"online":false},{"id":"o2","date":"2026-09-26","batchId":"b1","customBatchLabel":null,"customCenter":null,"teacherId":"t4","subject":"Physics","chapter":"Alternating Current","lectureNo":1,"chapterCompleted":false,"topic":"","start":"13:15","end":"16:30","isDoubt":false,"online":false},{"id":"o3","date":"2026-09-26","batchId":"b2","customBatchLabel":null,"customCenter":null,"teacherId":"t_mu9nlkxe5bds","subject":"Physics","chapter":null,"lectureNo":null,"chapterCompleted":false,"topic":"","start":"09:30","end":"12:45","isDoubt":false,"online":false},{"id":"o4","date":"2026-09-26","batchId":"b2","customBatchLabel":null,"customCenter":null,"teacherId":"t2","subject":"Chemistry","chapter":"Solid State","lectureNo":6,"chapterCompleted":false,"topic":"","start":"13:15","end":"16:30","isDoubt":false,"online":false},{"id":"o5","date":"2026-09-26","batchId":"b9","customBatchLabel":null,"customCenter":null,"teacherId":"t1","subject":"Chemistry","chapter":"Chemical Bonding","lectureNo":7,"chapterCompleted":false,"topic":"","start":"09:30","end":"12:45","isDoubt":false,"online":true},{"id":"o6","date":"2026-09-26","batchId":"b9","customBatchLabel":null,"customCenter":null,"teacherId":"t3","subject":"Maths","chapter":"Binomial Theorem","lectureNo":2,"chapterCompleted":false,"topic":"","start":"13:15","end":"16:30","isDoubt":false,"online":true},{"id":"o7","date":"2026-09-26","batchId":"b10","customBatchLabel":null,"customCenter":null,"teacherId":"t7","subject":"Biology","chapter":null,"lectureNo":null,"chapterCompleted":false,"topic":"","start":"09:30","end":"12:45","isDoubt":false,"online":true},{"id":"o8","date":"2026-09-26","batchId":"b10","customBatchLabel":null,"customCenter":null,"teacherId":"t5","subject":"Biology","chapter":"Morphology of flowering plants","lectureNo":2,"chapterCompleted":false,"topic":"","start":"13:15","end":"16:30","isDoubt":false,"online":true},{"id":"o9","date":"2026-09-26","batchId":"b_mu5u9572p32o","customBatchLabel":null,"customCenter":null,"teacherId":"t3","subject":"Maths","chapter":null,"lectureNo":null,"chapterCompleted":false,"topic":"","start":"16:30","end":"18:00","isDoubt":false,"online":true},{"id":"o10","date":"2026-09-26","batchId":"b_mu5u9572p32o","customBatchLabel":null,"customCenter":null,"teacherId":"t5","subject":"Biology","chapter":"Diversity in living organism","lectureNo":1,"chapterCompleted":false,"topic":"","start":"18:15","end":"19:45","isDoubt":false,"online":true},{"id":"o11","date":"2026-09-26","batchId":"b_mu5u8ecqnvc6","customBatchLabel":null,"customCenter":null,"teacherId":"t5","subject":"Biology","chapter":"Cell Division","lectureNo":1,"chapterCompleted":false,"topic":"","start":"16:30","end":"18:00","isDoubt":false,"online":true},{"id":"o12","date":"2026-09-26","batchId":"b_mu5u8ecqnvc6","customBatchLabel":null,"customCenter":null,"teacherId":"t3","subject":"Maths","chapter":null,"lectureNo":null,"chapterCompleted":false,"topic":"","start":"18:15","end":"19:45","isDoubt":false,"online":true},{"id":"p1","date":"2026-09-27","batchId":"b4","customBatchLabel":null,"customCenter":null,"teacherId":"t4","subject":"Physics","chapter":"Friction","lectureNo":6,"chapterCompleted":false,"topic":"","start":"13:30","end":"16:00","isDoubt":false},{"id":"p3","date":"2026-09-27","batchId":"b_mu5u9572p32o","customBatchLabel":null,"customCenter":null,"teacherId":"t4","subject":"Physics","chapter":null,"lectureNo":null,"chapterCompleted":false,"topic":"","start":"16:30","end":"18:00","isDoubt":false},{"id":"p4","date":"2026-09-27","batchId":"b_mu5u9572p32o","customBatchLabel":null,"customCenter":null,"teacherId":"t2","subject":"Chemistry","chapter":null,"lectureNo":null,"chapterCompleted":false,"topic":"","start":"18:15","end":"19:45","isDoubt":false},{"id":"p5","date":"2026-09-27","batchId":"b_mu5u8ecqnvc6","customBatchLabel":null,"customCenter":null,"teacherId":"t2","subject":"Chemistry","chapter":null,"lectureNo":null,"chapterCompleted":false,"topic":"","start":"16:30","end":"18:00","isDoubt":false},{"id":"p6","date":"2026-09-27","batchId":"b_mu5u8ecqnvc6","customBatchLabel":null,"customCenter":null,"teacherId":"t4","subject":"Physics","chapter":null,"lectureNo":null,"chapterCompleted":false,"topic":"","start":"18:15","end":"19:45","isDoubt":false},{"id":"q1","date":"2026-09-27","batchId":"b5","customBatchLabel":null,"customCenter":null,"teacherId":"t_sm1","subject":"Maths","chapter":"Basics of Mathematics","lectureNo":1,"chapterCompleted":false,"topic":"","start":"13:30","end":"16:00","isDoubt":false},{"id":"q2","date":"2026-09-27","batchId":"b2","customBatchLabel":null,"customCenter":null,"teacherId":"t4","subject":"Physics","chapter":"Electromagnetic Induction","lectureNo":3,"chapterCompleted":false,"topic":"","start":"09:30","end":"13:00","isDoubt":false},{"id":"q3","date":"2026-09-27","batchId":"b2","customBatchLabel":null,"customCenter":null,"teacherId":null,"subject":null,"chapter":null,"lectureNo":null,"chapterCompleted":false,"topic":"","start":"13:30","end":"14:30","isDoubt":false,"isTest":true,"testTopics":[]},{"id":"q4","date":"2026-09-27","batchId":"b6","customBatchLabel":null,"customCenter":null,"teacherId":"t1","subject":"Chemistry","chapter":"Carbonyl Compounds","lectureNo":4,"chapterCompleted":false,"topic":"","start":"09:30","end":"12:45","isDoubt":false},{"id":"q5","date":"2026-09-27","batchId":"b6","customBatchLabel":null,"customCenter":null,"teacherId":"t3","subject":"Maths","chapter":"Determinant and Matrix","lectureNo":3,"chapterCompleted":false,"topic":"","start":"13:15","end":"16:30","isDoubt":false},{"id":"q6","date":"2026-09-27","batchId":"b7","customBatchLabel":null,"customCenter":null,"teacherId":"t2","subject":"Chemistry","chapter":"POC","lectureNo":1,"chapterCompleted":false,"topic":"","start":"09:30","end":"12:45","isDoubt":false},{"id":"q7","date":"2026-09-27","batchId":"b7","customBatchLabel":null,"customCenter":null,"teacherId":"t3","subject":"Maths","chapter":"Determinant and Matrix","lectureNo":3,"chapterCompleted":false,"topic":"","start":"13:15","end":"16:30","isDoubt":false},{"id":"q8","date":"2026-09-27","batchId":"b8","customBatchLabel":null,"customCenter":null,"teacherId":"t1","subject":"Chemistry","chapter":"Biomolecules","lectureNo":2,"chapterCompleted":false,"topic":"","start":"13:00","end":"17:00","isDoubt":false},{"id":"r1","date":"2026-09-28","batchId":"b1","customBatchLabel":null,"customCenter":null,"teacherId":"t2","subject":"Chemistry","chapter":"POC","lectureNo":2,"chapterCompleted":false,"topic":"","start":"09:30","end":"12:45","isDoubt":false},{"id":"r2","date":"2026-09-28","batchId":"b1","customBatchLabel":null,"customCenter":null,"teacherId":"t3","subject":"Maths","chapter":"Vector and 3D","lectureNo":8,"chapterCompleted":false,"topic":"","start":"13:15","end":"16:30","isDoubt":false},{"id":"r3","date":"2026-09-28","batchId":"b2","customBatchLabel":null,"customCenter":null,"teacherId":"t4","subject":"Physics","chapter":"Electromagnetic Induction","lectureNo":4,"chapterCompleted":false,"topic":"","start":"09:30","end":"12:45","isDoubt":false},{"id":"r4","date":"2026-09-28","batchId":"b2","customBatchLabel":null,"customCenter":null,"teacherId":"t1","subject":"Chemistry","chapter":"Carbonyl Compounds","lectureNo":5,"chapterCompleted":false,"topic":"","start":"13:15","end":"16:30","isDoubt":false},{"id":"r5","date":"2026-09-28","batchId":"b3","customBatchLabel":null,"customCenter":null,"teacherId":"t1","subject":"Chemistry","chapter":"Carboxylic Acid and Derivative","lectureNo":4,"chapterCompleted":false,"topic":"","start":"09:30","end":"12:45","isDoubt":false},{"id":"r6","date":"2026-09-28","batchId":"b3","customBatchLabel":null,"customCenter":null,"teacherId":"t2","subject":"Chemistry","chapter":"POC","lectureNo":4,"chapterCompleted":false,"topic":"","start":"13:15","end":"16:30","isDoubt":false},{"id":"s1","date":"2026-09-29","batchId":"b4","customBatchLabel":null,"customCenter":null,"teacherId":"t4","subject":"Physics","chapter":"Friction","lectureNo":8,"chapterCompleted":false,"topic":"","start":"09:30","end":"12:45","isDoubt":false},{"id":"s2","date":"2026-09-29","batchId":"b4","customBatchLabel":null,"customCenter":null,"teacherId":"t2","subject":"Chemistry","chapter":"Thermodynamics","lectureNo":4,"chapterCompleted":false,"topic":"","start":"13:15","end":"16:30","isDoubt":false},{"id":"s3","date":"2026-09-29","batchId":"b5","customBatchLabel":null,"customCenter":null,"teacherId":"t5","subject":"Biology","chapter":"Cell the unit of life","lectureNo":2,"chapterCompleted":false,"topic":"","start":"09:30","end":"12:45","isDoubt":false},{"id":"s4","date":"2026-09-29","batchId":"b5","customBatchLabel":null,"customCenter":null,"teacherId":"t4","subject":"Physics","chapter":"Friction","lectureNo":5,"chapterCompleted":false,"topic":"","start":"13:15","end":"16:30","isDoubt":false},{"id":"s5","date":"2026-09-29","batchId":"b9","customBatchLabel":null,"customCenter":null,"teacherId":"t1","subject":"Chemistry","chapter":"Chemical Bonding","lectureNo":8,"chapterCompleted":false,"topic":"","start":"09:30","end":"12:45","isDoubt":false},{"id":"s6","date":"2026-09-29","batchId":"b9","customBatchLabel":null,"customCenter":null,"teacherId":"t3","subject":"Maths","chapter":"Binomial Theorem","lectureNo":3,"chapterCompleted":false,"topic":"","start":"13:15","end":"16:30","isDoubt":false},{"id":"s7","date":"2026-09-29","batchId":"b10","customBatchLabel":null,"customCenter":null,"teacherId":"t2","subject":"Chemistry","chapter":"Thermodynamics","lectureNo":7,"chapterCompleted":false,"topic":"","start":"09:30","end":"12:45","isDoubt":false},{"id":"s8","date":"2026-09-29","batchId":"b10","customBatchLabel":null,"customCenter":null,"teacherId":"t1","subject":"Chemistry","chapter":"Chemical Bonding","lectureNo":8,"chapterCompleted":false,"topic":"","start":"13:15","end":"16:30","isDoubt":false},{"id":"u1","date":"2026-09-30","batchId":"b1","customBatchLabel":null,"customCenter":null,"teacherId":null,"subject":null,"chapter":null,"lectureNo":null,"chapterCompleted":false,"topic":"","start":"09:30","end":"12:45","isDoubt":false,"isTest":true,"testTopics":[]},{"id":"u2","date":"2026-09-30","batchId":"b1","customBatchLabel":null,"customCenter":null,"teacherId":"t4","subject":"Physics","chapter":"Alternating Current","lectureNo":2,"chapterCompleted":false,"topic":"","start":"13:15","end":"16:30","isDoubt":false},{"id":"u3","date":"2026-09-30","batchId":"b4","customBatchLabel":null,"customCenter":null,"teacherId":"t1","subject":"Chemistry","chapter":"Gaseous State","lectureNo":2,"chapterCompleted":false,"topic":"","start":"09:30","end":"12:45","isDoubt":false},{"id":"u4","date":"2026-09-30","batchId":"b4","customBatchLabel":null,"customCenter":null,"teacherId":"t2","subject":"Chemistry","chapter":"Thermodynamics","lectureNo":5,"chapterCompleted":false,"topic":"","start":"13:15","end":"16:30","isDoubt":false},{"id":"u5","date":"2026-09-30","batchId":"b5","customBatchLabel":null,"customCenter":null,"teacherId":"t2","subject":"Chemistry","chapter":"Thermodynamics","lectureNo":5,"chapterCompleted":false,"topic":"","start":"09:30","end":"12:45","isDoubt":false},{"id":"u6","date":"2026-09-30","batchId":"b5","customBatchLabel":null,"customCenter":null,"teacherId":"t4","subject":"Physics","chapter":"Friction","lectureNo":6,"chapterCompleted":false,"topic":"","start":"13:15","end":"16:30","isDoubt":false},{"id":"u7","date":"2026-09-30","batchId":"b6","customBatchLabel":null,"customCenter":null,"teacherId":"t4","subject":"Physics","chapter":"Alternating Current","lectureNo":3,"chapterCompleted":false,"topic":"","start":"09:30","end":"12:45","isDoubt":false},{"id":"u8","date":"2026-09-30","batchId":"b6","customBatchLabel":null,"customCenter":null,"teacherId":"t3","subject":"Maths","chapter":"Determinant and Matrix","lectureNo":4,"chapterCompleted":false,"topic":"","start":"13:15","end":"16:30","isDoubt":false},{"id":"u9","date":"2026-09-30","batchId":"b7","customBatchLabel":null,"customCenter":null,"teacherId":"t4","subject":"Physics","chapter":"Alternating Current","lectureNo":3,"chapterCompleted":false,"topic":"","start":"09:30","end":"12:45","isDoubt":false},{"id":"u10","date":"2026-09-30","batchId":"b7","customBatchLabel":null,"customCenter":null,"teacherId":"t3","subject":"Maths","chapter":"Determinant and Matrix","lectureNo":4,"chapterCompleted":false,"topic":"","start":"13:15","end":"16:30","isDoubt":false},{"id":"u11","date":"2026-09-30","batchId":"b8","customBatchLabel":null,"customCenter":null,"teacherId":"t_mu9nlkxe5bds","subject":"Physics","chapter":null,"lectureNo":null,"chapterCompleted":false,"topic":"","start":"09:30","end":"12:45","isDoubt":false},{"id":"u12","date":"2026-09-30","batchId":"b8","customBatchLabel":null,"customCenter":null,"teacherId":"t1","subject":"Chemistry","chapter":"Biomolecules","lectureNo":3,"chapterCompleted":false,"topic":"","start":"13:15","end":"16:30","isDoubt":false},{"id":"v1","date":"2026-10-01","batchId":"b9","customBatchLabel":null,"customCenter":null,"teacherId":"t4","subject":"Physics","chapter":"Friction","lectureNo":7,"chapterCompleted":false,"topic":"","start":"09:30","end":"12:45","isDoubt":false},{"id":"v2","date":"2026-10-01","batchId":"b9","customBatchLabel":null,"customCenter":null,"teacherId":"t2","subject":"Chemistry","chapter":"Thermodynamics","lectureNo":3,"chapterCompleted":false,"topic":"","start":"13:15","end":"16:30","isDoubt":false},{"id":"v3","date":"2026-10-01","batchId":"b10","customBatchLabel":null,"customCenter":null,"teacherId":"t7","subject":"Biology","chapter":null,"lectureNo":null,"chapterCompleted":false,"topic":"","start":"09:30","end":"12:45","isDoubt":false},{"id":"v4","date":"2026-10-01","batchId":"b10","customBatchLabel":null,"customCenter":null,"teacherId":"t4","subject":"Physics","chapter":"Friction","lectureNo":7,"chapterCompleted":false,"topic":"","start":"13:15","end":"16:30","isDoubt":false},{"id":"v5","date":"2026-10-01","batchId":"b1","customBatchLabel":null,"customCenter":null,"teacherId":"t3","subject":"Maths","chapter":"Vector and 3D","lectureNo":9,"chapterCompleted":false,"topic":"","start":"13:00","end":"17:00","isDoubt":false},{"id":"v6","date":"2026-10-01","batchId":"b2","customBatchLabel":null,"customCenter":null,"teacherId":"t2","subject":"Chemistry","chapter":"Surface Chemistry","lectureNo":3,"chapterCompleted":false,"topic":"","start":"09:30","end":"12:45","isDoubt":false},{"id":"v7","date":"2026-10-01","batchId":"b2","customBatchLabel":null,"customCenter":null,"teacherId":"t1","subject":"Chemistry","chapter":"Carbonyl Compounds","lectureNo":6,"chapterCompleted":false,"topic":"","start":"13:15","end":"16:30","isDoubt":false},{"id":"v8","date":"2026-10-01","batchId":"b3","customBatchLabel":null,"customCenter":null,"teacherId":"t1","subject":"Chemistry","chapter":"Carboxylic Acid and Derivative","lectureNo":5,"chapterCompleted":false,"topic":"","start":"09:30","end":"12:45","isDoubt":false},{"id":"v9","date":"2026-10-01","batchId":"b3","customBatchLabel":null,"customCenter":null,"teacherId":"t5","subject":"Biology","chapter":"Ecosystem","lectureNo":1,"chapterCompleted":false,"topic":"","start":"13:15","end":"16:30","isDoubt":false},{"id":"v10","date":"2026-10-01","batchId":"b_mu5u6nydmt5z","customBatchLabel":null,"customCenter":null,"teacherId":"t5","subject":"Biology","chapter":"Diversity in living organism","lectureNo":1,"chapterCompleted":false,"topic":"","start":"16:30","end":"18:30","isDoubt":false}],"topicDefaults":{},"chapterProgress":{"t4|b1":{"chapter":"Alternating Current","lectureNo":2,"completed":false},"t4|b2":{"chapter":"Electromagnetic Induction","lectureNo":4,"completed":false},"t4|b3":{"chapter":"Electromagnetic Induction","lectureNo":2,"completed":false},"t4|b4":{"chapter":"Friction","lectureNo":8,"completed":false},"t4|b5":{"chapter":"Friction","lectureNo":6,"completed":false},"t4|b6":{"chapter":"Alternating Current","lectureNo":3,"completed":false},"t4|b7":{"chapter":"Alternating Current","lectureNo":3,"completed":false},"t4|b8":{"chapter":"Alternating Current","lectureNo":2,"completed":false},"t4|b9":{"chapter":"Friction","lectureNo":7,"completed":false},"t4|b10":{"chapter":"Friction","lectureNo":7,"completed":false},"t2|b4":{"chapter":"Thermodynamics","lectureNo":3,"completed":false},"t2|b5":{"chapter":"Thermodynamics","lectureNo":4,"completed":false},"t2|b1":{"chapter":"POC","lectureNo":2,"completed":false},"t2|b2":{"chapter":"Surface Chemistry","lectureNo":3,"completed":false},"t2|b3":{"chapter":"NO CLASS ASSIGNED","lectureNo":0,"completed":true},"t2|b9":{"chapter":"Thermodynamics","lectureNo":3,"completed":false},"t2|b10":{"chapter":"Thermodynamics","lectureNo":3,"completed":false},"t2|b6":{"chapter":"POC","lectureNo":2,"completed":false},"t2|b7":{"chapter":"POC","lectureNo":2,"completed":false},"t2|b8":{"chapter":"NO CLASS ASSIGNED","lectureNo":0,"completed":true},"t1|b1":{"chapter":"Polymer","lectureNo":2,"completed":false},"t1|b2":{"chapter":"Carbonyl Compounds","lectureNo":6,"completed":false},"t1|b3":{"chapter":"Carboxylic Acid and Derivative","lectureNo":5,"completed":false},"t1|b4":{"chapter":"Gaseous State","lectureNo":2,"completed":false},"t1|b5":{"chapter":"Gaseous State","lectureNo":1,"completed":false},"t1|b6":{"chapter":"Carbonyl Compounds","lectureNo":4,"completed":false},"t1|b7":{"chapter":"Carbonyl Compounds","lectureNo":1,"completed":false},"t1|b8":{"chapter":"Biomolecules","lectureNo":3,"completed":false},"t1|b9":{"chapter":"Chemical Bonding","lectureNo":8,"completed":false},"t1|b10":{"chapter":"Chemical Bonding","lectureNo":8,"completed":false},"t_mu9nlkxe5bds|b3":{"chapter":"Modern Physics","lectureNo":3,"completed":false},"t3|b1":{"chapter":"Vector and 3D","lectureNo":9,"completed":false},"t3|b2":{"chapter":"Vector and 3D","lectureNo":6,"completed":false},"t3|b4":{"chapter":"Binomial Theorem","lectureNo":2,"completed":false},"t3|b6":{"chapter":"Determinant and Matrix","lectureNo":4,"completed":false},"t3|b7":{"chapter":"Determinant and Matrix","lectureNo":4,"completed":false},"t3|b9":{"chapter":"Binomial Theorem","lectureNo":3,"completed":false},"t5|b5":{"chapter":"Cell the unit of life","lectureNo":2,"completed":false},"t5|b3":{"chapter":"Ecosystem","lectureNo":1,"completed":false},"t5|b_mu5u6nydmt5z":{"chapter":"Diversity in living organism","lectureNo":1,"completed":false},"t5|b_mu5u7qzizy79":{"chapter":"Reproduction","lectureNo":1,"completed":false},"t5|b10":{"chapter":"Morphology of flowering plants","lectureNo":2,"completed":false},"t5|b_mu5u8ecqnvc6":{"chapter":"Cell Division","lectureNo":1,"completed":false},"t5|b_mu5u9572p32o":{"chapter":"Diversity in living organism","lectureNo":1,"completed":false},"t_sm1|b5":{"chapter":"Basics of Mathematics","lectureNo":1,"completed":false}},"weeklyPattern":{"b4":{"tue":[{"id":"ps_t3_0930","teacherId":"t3","subject":"Maths","start":"09:30","end":"12:45","online":false},{"id":"ps_t4_1315","teacherId":"t4","subject":"Physics","start":"13:15","end":"16:30","online":false}],"fri":[{"id":"ps_t4_0930","teacherId":"t4","subject":"Physics","start":"09:30","end":"12:45","online":false},{"id":"ps_t2_1315","teacherId":"t2","subject":"Chemistry","start":"13:15","end":"16:30","online":false}],"sun":[{"id":"ps_t3_0930","teacherId":"t3","subject":"Maths","start":"09:30","end":"12:45","online":false},{"id":"ps_t1_1315","teacherId":"t1","subject":"Chemistry","start":"13:15","end":"16:30","online":false}]},"b5":{"tue":[{"id":"ps_t4_0930","teacherId":"t4","subject":"Physics","start":"09:30","end":"12:45","online":false},{"id":"ps_t5_1315","teacherId":"t5","subject":"Biology","start":"13:15","end":"16:30","online":false}],"fri":[{"id":"ps_t2_0930","teacherId":"t2","subject":"Chemistry","start":"09:30","end":"12:45","online":false},{"id":"ps_t4_1315","teacherId":"t4","subject":"Physics","start":"13:15","end":"16:30","online":false}],"sun":[{"id":"ps_t1_0930","teacherId":"t1","subject":"Chemistry","start":"09:30","end":"12:45","online":false},{"id":"ps_t5_1315","teacherId":"t5","subject":"Biology","start":"13:15","end":"16:30","online":false}]},"b9":{"tue":[{"id":"ps_t2_0930","teacherId":"t2","subject":"Chemistry","start":"09:30","end":"12:45","online":true},{"id":"ps_t3_1315","teacherId":"t3","subject":"Maths","start":"13:15","end":"16:30","online":true}],"thu":[{"id":"ps_t4_0930","teacherId":"t4","subject":"Physics","start":"09:30","end":"12:45","online":true},{"id":"ps_t1_1315","teacherId":"t1","subject":"Chemistry","start":"13:15","end":"16:30","online":true}],"sat":[{"id":"ps_t3_0930","teacherId":"t3","subject":"Maths","start":"09:30","end":"12:45","online":true},{"id":"ps_t4_1315","teacherId":"t4","subject":"Physics","start":"13:15","end":"16:30","online":true}]},"b10":{"tue":[{"id":"ps_t5_0930","teacherId":"t5","subject":"Biology","start":"09:30","end":"12:45","online":true},{"id":"ps_t2_1315","teacherId":"t2","subject":"Chemistry","start":"13:15","end":"16:30","online":true}],"thu":[{"id":"ps_t1_0930","teacherId":"t1","subject":"Chemistry","start":"09:30","end":"12:45","online":true},{"id":"ps_t4_1315","teacherId":"t4","subject":"Physics","start":"13:15","end":"16:30","online":true}],"sat":[{"id":"ps_t4_0930","teacherId":"t4","subject":"Physics","start":"09:30","end":"12:45","online":true},{"id":"ps_t5_1315","teacherId":"t5","subject":"Biology","start":"13:15","end":"16:30","online":true}]}},"holidays":[]}</script>
 <style>
-:root{--nav:#0f172a;--blue:#155eef;--green:#15803d;--bg:#f4f7fb;--card:#fff;--line:#dfe5ee;--muted:#64748b;--red:#b42318;--amber:#9a6700}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#172033;font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-header{background:var(--nav);color:#fff;padding:15px 18px;position:sticky;top:0;z-index:10}.head{max-width:1400px;margin:auto;display:flex;justify-content:space-between;align-items:center}.brand{font-size:21px;font-weight:800}.sub{font-size:12px;color:#aab6c9}
-main{max-width:1400px;margin:auto;padding:15px}.nav{display:flex;gap:7px;overflow:auto;margin-bottom:15px}.nav button{white-space:nowrap;border:1px solid var(--line);background:#fff;padding:10px 13px;border-radius:9px;font-weight:700}.nav .active{background:var(--nav);color:#fff}
-.page.hidden{display:none}.card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:17px;margin-bottom:15px;box-shadow:0 5px 20px #0f172a0b}
-h2,h3{margin:0 0 7px}.muted{color:var(--muted);font-size:13px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.stat{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:14px}.stat b{display:block;font-size:25px;margin-top:3px}
-.row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.between{justify-content:space-between}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-button{border:0;border-radius:9px;padding:10px 14px;font-weight:700;cursor:pointer}.primary{background:var(--blue);color:#fff}.green{background:var(--green);color:#fff}.secondary{background:#e9eef5}.danger{background:#fee4e2;color:var(--red)}.amber{background:#fff1c2;color:var(--amber)}
-input,select,textarea{font:inherit;border:1px solid #cbd5e1;border-radius:8px;padding:9px;background:#fff;width:100%}
-label{font-size:12px;font-weight:700}.field{display:grid;gap:5px}.notice{padding:11px 13px;border-radius:9px;margin:10px 0;background:#eef6ff;color:#174ea6}.notice.green{background:#ecfdf3;color:#087443}.notice.red{background:#fff0ef;color:#9b2219}
-.scroll{overflow:auto}table{border-collapse:collapse;width:100%;min-width:1050px}th,td{padding:8px;border-bottom:1px solid #e8edf3;text-align:left;font-size:13px}th{background:#f7f9fc;font-size:12px}.badge{display:inline-block;padding:4px 8px;border-radius:20px;font-size:11px;font-weight:800}.ok{background:#dcfce7;color:#166534}.warn{background:#fef3c7;color:#92400e}.bad{background:#fee2e2;color:#991b1b}
-.message{white-space:pre-wrap;background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:15px;line-height:1.65}.teachergrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.batchgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.personcard{border:1px solid var(--line);border-radius:12px;padding:14px}.daygrid{display:grid;grid-template-columns:repeat(7,minmax(180px,1fr));gap:9px;overflow:auto}.day{background:#f8fafc;border:1px solid var(--line);border-radius:11px;padding:10px;min-height:170px}.event{background:#fff;border-left:4px solid var(--blue);border-radius:8px;padding:8px;margin:7px 0;font-size:12px}
-.small{font-size:12px}.pill{padding:5px 8px;border-radius:99px;background:#eef2ff;color:#3730a3;font-size:11px;font-weight:800}
-@media(max-width:900px){.grid{grid-template-columns:1fr 1fr}.grid3,.grid4,.teachergrid,.batchgrid{grid-template-columns:1fr}}@media(max-width:600px){.grid{grid-template-columns:1fr}}
+  :root{
+    --ink:#152238;
+    --ink-2:#2B3E63;
+    --paper:#F5F6F9;
+    --card:#FFFFFF;
+    --amber:#DC9A2E;
+    --amber-ink:#5C3D0A;
+    --teal:#2E8B7E;
+    --coral:#C6465B;
+    --line:#E3E6EE;
+    --text:#1B2333;
+    --text-muted:#626C82;
+    --shadow: 0 1px 2px rgba(21,34,56,.06), 0 4px 14px rgba(21,34,56,.05);
+    --radius: 10px;
+  }
+  :root:not([data-theme="light"]) {
+    @media (prefers-color-scheme: dark){
+      --ink:#EDEFF5;
+      --ink-2:#C9D2E8;
+      --paper:#12151F;
+      --card:#1B1F2C;
+      --amber:#E6AC46;
+      --amber-ink:#1A1206;
+      --teal:#4FB3A4;
+      --coral:#E17185;
+      --line:#2B3040;
+      --text:#E7E9F1;
+      --text-muted:#9AA2B8;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#EDEFF5; --ink-2:#C9D2E8; --paper:#12151F; --card:#1B1F2C;
+    --amber:#E6AC46; --amber-ink:#1A1206; --teal:#4FB3A4; --coral:#E17185;
+    --line:#2B3040; --text:#E7E9F1; --text-muted:#9AA2B8;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--text);
+    font-family:'Inter',system-ui,-apple-system,sans-serif;
+    font-size:14.5px;
+    line-height:1.5;
+    min-height:100vh;
+  }
+  h1,h2,h3,.display{ font-family:'Space Grotesk',system-ui,sans-serif; letter-spacing:-0.01em; }
+  ::selection{ background: color-mix(in srgb, var(--amber) 35%, transparent); }
+
+  a{ color:var(--ink-2); }
+
+  #shell{ display:flex; min-height:100vh; }
+
+  /* ---------- Sidebar ---------- */
+  #sidebar{
+    width:220px; flex:none;
+    background:var(--ink);
+    color:#EDEFF5;
+    display:flex; flex-direction:column;
+    padding:22px 14px;
+    position:sticky; top:0; height:100vh;
+  }
+  #brand{ padding:0 8px 22px 8px; }
+  #brand .mark{ font-family:'Space Grotesk'; font-weight:700; font-size:19px; color:#fff; line-height:1.15; }
+  #brand .sub{ font-size:11.5px; color:#9AA6C4; margin-top:3px; letter-spacing:.02em; }
+  nav{ display:flex; flex-direction:column; gap:2px; margin-top:8px; }
+  nav button{
+    all:unset; cursor:pointer;
+    display:flex; align-items:center; gap:10px;
+    padding:9px 10px; border-radius:8px;
+    color:#C4CCE2; font-size:13.5px; font-weight:500;
+  }
+  nav button .ic{ font-size:15px; width:18px; text-align:center; }
+  nav button:hover{ background:rgba(255,255,255,.06); color:#fff; }
+  nav button.active{ background:rgba(220,154,46,.16); color:#F3D9A7; }
+  #sidefoot{ margin-top:auto; font-size:11px; color:#6E7896; padding:0 8px; }
+
+  /* ---------- Main ---------- */
+  #main{ flex:1; min-width:0; padding:26px 30px 60px; }
+  .topbar{ display:flex; align-items:baseline; justify-content:space-between; margin-bottom:22px; flex-wrap:wrap; gap:10px; }
+  .topbar h1{ font-size:21px; margin:0; color:var(--ink); }
+  .topbar .today{ font-size:12.5px; color:var(--text-muted); }
+  .topbar-right{ display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; }
+
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:18px 20px;
+  }
+  .cardhead{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; gap:10px; flex-wrap:wrap; }
+  .cardhead h2{ font-size:15px; margin:0; color:var(--ink); }
+  .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  @media (max-width: 980px){ .grid2{ grid-template-columns:1fr; } }
+
+  label{ display:block; font-size:12px; color:var(--text-muted); margin-bottom:4px; font-weight:500; }
+  input,select,textarea{
+    width:100%; padding:8px 10px; border-radius:7px; border:1px solid var(--line);
+    background:var(--paper); color:var(--text); font-size:13.5px; font-family:inherit;
+  }
+  input:focus,select:focus,textarea:focus{ outline:2px solid color-mix(in srgb, var(--amber) 55%, transparent); outline-offset:1px; border-color:var(--amber); }
+  .row{ display:flex; gap:10px; flex-wrap:wrap; }
+  .field{ margin-bottom:12px; flex:1; min-width:120px; }
+  .checkfield{ display:flex; align-items:center; gap:7px; margin-bottom:12px; }
+  .checkfield input{ width:auto; }
+  .checkfield label{ margin:0; }
+
+  button.btn{
+    all:unset; cursor:pointer; display:inline-flex; align-items:center; gap:6px;
+    padding:8px 15px; border-radius:7px; font-size:13px; font-weight:600;
+    background:var(--ink); color:#fff;
+  }
+  button.btn:hover{ background:var(--ink-2); }
+  button.btn.primary{ background:var(--amber); color:var(--amber-ink); }
+  button.btn.primary:hover{ filter:brightness(1.05); }
+  button.btn.ghost{ background:transparent; color:var(--ink-2); border:1px solid var(--line); }
+  button.btn.ghost:hover{ background:var(--paper); }
+  button.btn.danger{ background:transparent; color:var(--coral); }
+  button.btn.danger:hover{ background:color-mix(in srgb, var(--coral) 12%, transparent); }
+  button.btn:disabled{ opacity:.5; cursor:default; }
+  button.icon{ all:unset; cursor:pointer; padding:4px 7px; border-radius:6px; color:var(--text-muted); font-size:13px; }
+  button.icon:hover{ background:var(--paper); color:var(--ink); }
+
+  table{ width:100%; border-collapse:collapse; font-size:13.3px; }
+  th{ text-align:left; font-size:11.5px; text-transform:none; color:var(--text-muted); font-weight:600; padding:7px 8px; border-bottom:1px solid var(--line); }
+  td{ padding:8px 8px; border-bottom:1px solid var(--line); vertical-align:middle; }
+  tr:last-child td{ border-bottom:none; }
+  .muted{ color:var(--text-muted); }
+  .pill{ display:inline-block; padding:2px 9px; border-radius:99px; font-size:11.5px; font-weight:600; }
+  .pill.vasai{ background:color-mix(in srgb, var(--teal) 16%, transparent); color:var(--teal); }
+  .pill.virar{ background:color-mix(in srgb, var(--ink-2) 14%, transparent); color:var(--ink-2); }
+  .pill.doubt{ background:color-mix(in srgb, var(--amber) 22%, transparent); color:var(--amber-ink); }
+  .empty{ text-align:center; color:var(--text-muted); padding:26px 10px; font-size:13px; }
+
+  .msg-card{ border:1px solid var(--line); border-radius:var(--radius); background:var(--card); box-shadow:var(--shadow); margin-bottom:16px; overflow:hidden; }
+  .msg-head{ display:flex; align-items:center; justify-content:space-between; padding:11px 16px; border-bottom:1px solid var(--line); background:var(--paper); }
+  .msg-head .who{ font-weight:600; font-size:13.5px; color:var(--ink); }
+  .msg-body{ padding:16px; white-space:pre-wrap; font-family:'Inter',sans-serif; font-size:13.5px; line-height:1.65; }
+  .msg-body b{ font-weight:700; }
+  .msg-empty{ padding:16px; color:var(--text-muted); font-size:13px; font-style:italic; }
+
+  .tabbar{ display:flex; gap:6px; margin-bottom:18px; border-bottom:1px solid var(--line); }
+  .tabbar button{ all:unset; cursor:pointer; padding:9px 4px; margin-right:14px; font-size:13.5px; font-weight:600; color:var(--text-muted); border-bottom:2px solid transparent; }
+  .tabbar button.active{ color:var(--ink); border-bottom-color:var(--amber); }
+
+  .toast{
+    position:fixed; bottom:22px; left:50%; transform:translateX(-50%);
+    background:var(--ink); color:#fff; padding:9px 18px; border-radius:99px; font-size:13px;
+    box-shadow:var(--shadow); opacity:0; pointer-events:none; transition:opacity .2s, transform .2s;
+    z-index:50;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(-4px); }
+
+  .stat{ display:flex; flex-direction:column; gap:3px; }
+  .stat .n{ font-family:'Space Grotesk'; font-size:22px; font-weight:700; color:var(--ink); }
+  .stat .l{ font-size:11.5px; color:var(--text-muted); }
+  .statrow{ display:flex; gap:26px; flex-wrap:wrap; margin-bottom:18px; }
+
+  .center-block{ margin-bottom:16px; }
+  .center-block:last-child{ margin-bottom:0; }
+  .center-title{ font-size:11.5px; font-weight:700; color:var(--text-muted); margin-bottom:6px; }
+
+  #saveflag{ font-size:12px; color:var(--text-muted); display:flex; align-items:center; gap:6px; }
+  .dot{ width:7px; height:7px; border-radius:99px; background:var(--teal); }
+
+  #mobiletabs{ display:none; }
+  @media (max-width: 780px){
+    #sidebar{ display:none; }
+    #mobiletabs{
+      display:flex; position:sticky; top:0; z-index:20; overflow-x:auto;
+      background:var(--ink); padding:10px 10px; gap:6px;
+    }
+    #mobiletabs button{ all:unset; cursor:pointer; color:#C4CCE2; font-size:12.5px; font-weight:600; padding:7px 12px; border-radius:99px; white-space:nowrap; }
+    #mobiletabs button.active{ background:var(--amber); color:var(--amber-ink); }
+    #main{ padding:18px 16px 50px; }
+    .statrow{ gap:16px; }
+  }
+
+  details.topicbox summary{ cursor:pointer; color:var(--ink-2); font-size:12.5px; font-weight:600; padding:6px 0; list-style:none; }
+  details.topicbox summary::-webkit-details-marker{ display:none; }
+  details.topicbox summary:before{ content:"▸ "; }
+  details.topicbox[open] summary:before{ content:"▾ "; }
+  .subrow td{ background:var(--paper); }
 </style>
-<script>
-window.PACE_CONFIG = {
-  supabaseFunctionUrl: "https://fzgtforhxxpnihipmiix.supabase.co/functions/v1/quick-function"
-};
-</script>
+
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#152238">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PACE Timetable">
+<link rel="apple-touch-icon" href="icon-180.png">
 </head>
 <body>
-<header><div class="head"><div><div class="brand">PACE IIT & Medical</div><div class="sub">Timetable • Faculty • Batches • Topic Hours</div></div><div class="sub">Admin Schedule Manager</div></div></header>
-<main>
-<div class="nav">
-<button class="active" onclick="show('dashboard',this)">Dashboard</button>
-<button onclick="show('schedule',this)">Schedule</button>
-<button onclick="show('faculty',this)">Faculty</button>
-<button onclick="show('batches',this)">Batches</button>
-<button onclick="show('hours',this)">Hours & Topics</button>
-<button onclick="show('messages',this)">Messages</button>
-<button onclick="show('access',this)">Access</button>
+<div id="shell">
+  <div id="sidebar">
+    <div id="brand">
+      <div class="mark">PACE<br>IIT &amp; Medical</div>
+      <div class="sub">Vasai &amp; Virar Centers</div>
+    </div>
+    <nav id="nav"><button class=""><span class="ic">📅</span> Schedule</button><button class=""><span class="ic">🧑‍🏫</span> Faculty Timetables</button><button class=""><span class="ic">🎓</span> Student Timetables</button><button class=""><span class="ic">📊</span> Hours &amp; Reports</button><button class="active"><span class="ic">⚙️</span> Teachers &amp; Batches</button></nav>
+    <div id="sidefoot">Timetable &amp; class-hours tracker</div>
+  </div>
+
+  <div id="main">
+    <div id="mobiletabs"><button class="">Schedule</button><button class="">Faculty Timetables</button><button class="">Student Timetables</button><button class="">Hours &amp; Reports</button><button class="active">Teachers &amp; Batches</button></div>
+    <div class="topbar">
+      <h1 id="pagetitle">Teachers &amp; Batches</h1>
+      <div class="topbar-right">
+        <span class="today" id="todaylabel">Sunday, 20th Sep 2026</span>
+        <span id="saveflag"><span class="dot" style="background: var(--amber);"></span><span id="saveflagtext">Saving…</span></span>
+      </div>
+    </div>
+    <div id="view">
+    <div class="grid2">
+      <div class="card">
+        <div class="cardhead"><h2>Teachers</h2></div>
+        <table>
+          <thead><tr><th>Name</th><th>Code</th><th>Title</th><th></th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Devendra Shukla</td><td>DC</td><td>Sir</td>
+              <td style="text-align:right;"><button class="icon" data-deltea="t1">🗑️</button></td>
+            </tr><tr>
+              <td>Nitish Kumar</td><td>NC</td><td>Sir</td>
+              <td style="text-align:right;"><button class="icon" data-deltea="t2">🗑️</button></td>
+            </tr><tr>
+              <td>Gajendra Kumar</td><td>GM</td><td>Sir</td>
+              <td style="text-align:right;"><button class="icon" data-deltea="t3">🗑️</button></td>
+            </tr><tr>
+              <td>Aman Shree</td><td>AP</td><td>Sir</td>
+              <td style="text-align:right;"><button class="icon" data-deltea="t4">🗑️</button></td>
+            </tr><tr>
+              <td>Rashmi Singh</td><td>RB</td><td>Ma'am</td>
+              <td style="text-align:right;"><button class="icon" data-deltea="t5">🗑️</button></td>
+            </tr><tr>
+              <td>Priyanka Maurya</td><td>MB</td><td>Ma'am</td>
+              <td style="text-align:right;"><button class="icon" data-deltea="t6">🗑️</button></td>
+            </tr><tr>
+              <td>Pranay Jha</td><td>PB</td><td>Sir</td>
+              <td style="text-align:right;"><button class="icon" data-deltea="t7">🗑️</button></td>
+            </tr>
+          </tbody>
+        </table>
+        <form id="teacherForm" style="margin-top:14px;" __gcruniqueid="9">
+          <div class="row">
+            <div class="field"><label>Full name</label><input id="nt_name" required="" __gcruniqueid="10"></div>
+            <div class="field" style="max-width:90px;"><label>Code</label><input id="nt_code" maxlength="4" required="" __gcruniqueid="11"></div>
+            <div class="field" style="max-width:110px;"><label>Title</label>
+              <select id="nt_sal" __gcruniqueid="12"><option>Sir</option><option>Ma'am</option></select>
+            </div>
+          </div>
+          <button class="btn ghost" type="submit">+ Add teacher</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="cardhead"><h2>Batches</h2></div>
+        <table>
+          <thead><tr><th>Batch</th><th>Center</th><th>Label</th><th></th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Vasai 12th 1</td><td>Vasai</td><td>XII JEE 1 (VS)</td>
+              <td style="text-align:right;"><button class="icon" data-delbat="b1">🗑️</button></td>
+            </tr><tr>
+              <td>Vasai 12th 2</td><td>Vasai</td><td>XII JEE 2 (VS)</td>
+              <td style="text-align:right;"><button class="icon" data-delbat="b2">🗑️</button></td>
+            </tr><tr>
+              <td>Vasai 12th NEET</td><td>Vasai</td><td>XII NEET (VS)</td>
+              <td style="text-align:right;"><button class="icon" data-delbat="b3">🗑️</button></td>
+            </tr><tr>
+              <td>Vasai 11th JEE</td><td>Vasai</td><td>XI JEE (VS)</td>
+              <td style="text-align:right;"><button class="icon" data-delbat="b4">🗑️</button></td>
+            </tr><tr>
+              <td>Vasai 11th NEET</td><td>Vasai</td><td>XI NEET (VS)</td>
+              <td style="text-align:right;"><button class="icon" data-delbat="b5">🗑️</button></td>
+            </tr><tr>
+              <td>Virar 12th 1</td><td>Virar</td><td>XII JEE 1 (VR)</td>
+              <td style="text-align:right;"><button class="icon" data-delbat="b6">🗑️</button></td>
+            </tr><tr>
+              <td>Virar 12th 2</td><td>Virar</td><td>XII JEE 2 (VR)</td>
+              <td style="text-align:right;"><button class="icon" data-delbat="b7">🗑️</button></td>
+            </tr><tr>
+              <td>Virar 12th NEET</td><td>Virar</td><td>XII NEET (VR)</td>
+              <td style="text-align:right;"><button class="icon" data-delbat="b8">🗑️</button></td>
+            </tr><tr>
+              <td>Virar 11th JEE</td><td>Virar</td><td>XI JEE (VR)</td>
+              <td style="text-align:right;"><button class="icon" data-delbat="b9">🗑️</button></td>
+            </tr><tr>
+              <td>Virar 11th NEET</td><td>Virar</td><td>XI NEET (VR)</td>
+              <td style="text-align:right;"><button class="icon" data-delbat="b10">🗑️</button></td>
+            </tr><tr>
+              <td>Foundation 9th</td><td>VASAI</td><td>9th FB (VS)</td>
+              <td style="text-align:right;"><button class="icon" data-delbat="b_mu5u6nydmt5z">🗑️</button></td>
+            </tr><tr>
+              <td>FOUNDATION 10TH</td><td>VASAI</td><td>10TH FB (VS)</td>
+              <td style="text-align:right;"><button class="icon" data-delbat="b_mu5u7qzizy79">🗑️</button></td>
+            </tr><tr>
+              <td>FOUNDATION 10TH</td><td>VIRAR</td><td>10TH FB (VR)</td>
+              <td style="text-align:right;"><button class="icon" data-delbat="b_mu5u8ecqnvc6">🗑️</button></td>
+            </tr><tr>
+              <td>FOUNDATION 9TH</td><td>VIRAR</td><td>9TH FB (VR)</td>
+              <td style="text-align:right;"><button class="icon" data-delbat="b_mu5u9572p32o">🗑️</button></td>
+            </tr>
+          </tbody>
+        </table>
+        <form id="batchForm" style="margin-top:14px;" __gcruniqueid="13">
+          <div class="row">
+            <div class="field"><label>Internal name</label><input id="nb_name" placeholder="e.g. Vasai 12th 3" required="" __gcruniqueid="14"></div>
+            <div class="field"><label>Center</label><input id="nb_center" placeholder="Vasai" required="" __gcruniqueid="15"></div>
+          </div>
+          <div class="row">
+            <div class="field"><label>Display label</label><input id="nb_label" placeholder="e.g. XII JEE 3" required="" __gcruniqueid="16"></div>
+            <div class="field" style="max-width:90px;"><label>Short code</label><input id="nb_short" placeholder="VS" maxlength="4" required="" __gcruniqueid="17"></div>
+          </div>
+          <button class="btn ghost" type="submit">+ Add batch</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+      <div class="cardhead"><h2>Subjects</h2></div>
+      <div class="row" style="margin-bottom:10px;">
+        <span class="pill vasai" style="display:flex;align-items:center;gap:6px;">Physics <button class="icon" style="padding:0;" data-delsub="Physics">✕</button></span><span class="pill vasai" style="display:flex;align-items:center;gap:6px;">Chemistry <button class="icon" style="padding:0;" data-delsub="Chemistry">✕</button></span><span class="pill vasai" style="display:flex;align-items:center;gap:6px;">Maths <button class="icon" style="padding:0;" data-delsub="Maths">✕</button></span><span class="pill vasai" style="display:flex;align-items:center;gap:6px;">Biology <button class="icon" style="padding:0;" data-delsub="Biology">✕</button></span><span class="pill vasai" style="display:flex;align-items:center;gap:6px;">Full Test <button class="icon" style="padding:0;" data-delsub="Full Test">✕</button></span><span class="pill vasai" style="display:flex;align-items:center;gap:6px;">Feedback <button class="icon" style="padding:0;" data-delsub="Feedback">✕</button></span>
+      </div>
+      <form id="subjectForm" class="row" style="align-items:flex-end;" __gcruniqueid="18">
+        <div class="field" style="max-width:220px;"><label>New subject</label><input id="ns_name" required="" __gcruniqueid="19"></div>
+        <button class="btn ghost" type="submit">+ Add</button>
+      </form>
+    </div>
+  </div>
+  </div>
 </div>
+<div class="toast" id="toast"></div>
 
-<section id="dashboard" class="page">
-<div class="grid">
-<div class="stat">Classes<b id="statClasses">0</b></div><div class="stat">Faculty Assignments<b id="statFaculty">0</b></div>
-<div class="stat">Teaching Hours<b id="statHours">0.0</b></div><div class="stat">Topics<b id="statTopics">0</b></div>
-</div>
-<div class="card"><div class="row between"><div><h2>Schedule for date</h2><div class="muted">Teacher and batch conflicts are flagged automatically.</div></div><input id="dashDate" type="date" style="max-width:180px" onchange="renderAll()"></div><div id="dash"></div></div>
-</section>
-
-<section id="schedule" class="page hidden">
-<div class="card">
-<h2>🤖 AI Timetable Import</h2>
-<div class="muted">Upload a timetable image. The Supabase Edge Function reads it; Gemini stays server-side.</div>
-<div class="grid4" style="margin-top:12px">
-  <div class="field"><label>Timetable image</label><input id="aiFile" type="file" accept="image/*"></div>
-  <div class="field"><label>Fallback date</label><input id="aiDate" type="date"></div>
-  <div class="field"><label>Fallback centre</label><select id="aiCentre"><option>Auto detect</option><option>Vasai</option><option>Virar</option><option>Both</option></select></div>
-  <div class="field"><label>Schedule</label><select id="aiMode"><option value="daily">Daily</option><option value="weekly">Weekly</option></select></div>
-</div>
-<div class="row" style="margin-top:12px">
-  <button class="primary" onclick="readAITimetable()">🤖 Read timetable</button>
-  <span id="aiStatus" class="muted"></span>
-</div>
-<div id="aiReview" style="margin-top:12px"></div>
-</div>
-<div class="card"><h2>Add class</h2><div class="muted">If the activity is College, leave Faculty blank. College lectures do not count as faculty teaching hours.</div>
-<div class="grid4" style="margin-top:12px">
-<div class="field"><label>Date</label><input id="date" type="date"></div>
-<div class="field"><label>Centre</label><select id="centre"><option>Vasai</option><option>Virar</option></select></div>
-<div class="field"><label>Batch</label><select id="batch"></select></div>
-<div class="field"><label>Faculty</label><select id="teacher"></select></div>
-<div class="field"><label>Subject / Activity</label><input id="subject" placeholder="Physics / College"></div>
-<div class="field"><label>Topic / Chapter</label><input id="topic" placeholder="Kinematics"></div>
-<div class="field"><label>Start</label><input id="start" type="time"></div>
-<div class="field"><label>End</label><input id="end" type="time"></div>
-</div><div class="row" style="margin-top:12px"><button class="primary" onclick="addClass()">Add Class</button><button class="secondary" onclick="sample()">Load Sample</button></div><div id="addMsg"></div></div>
-<div class="card"><div class="row between"><h2>All scheduled classes</h2><div class="row"><input id="filterDate" type="date" style="width:160px" onchange="renderAll()"><select id="filterTeacher" style="width:190px" onchange="renderAll()"><option value="">All faculty</option></select><select id="filterBatch" style="width:190px" onchange="renderAll()"><option value="">All batches</option></select></div></div><div id="all"></div></div>
-</section>
-
-<section id="faculty" class="page hidden"><div class="card"><div class="row between"><div><h2>Faculty Timetables</h2><div class="muted">Each faculty member gets only their assigned lectures in their message/view.</div></div><input id="facultyDate" type="date" style="max-width:180px" onchange="renderFaculty()"></div><div id="facultyCards" class="teachergrid" style="margin-top:12px"></div></div></section>
-
-<section id="batches" class="page hidden"><div class="card"><div class="row between"><div><h2>Batch Timetables</h2><div class="muted">Student-facing schedule for each batch.</div></div><input id="batchDate" type="date" style="max-width:180px" onchange="renderBatches()"></div><div id="batchCards" class="batchgrid" style="margin-top:12px"></div></div></section>
-
-<section id="hours" class="page hidden">
-<div class="card"><h2>Hours by Faculty & Topic</h2><div class="muted">Actual hours are calculated from start/end times. Same teacher + same topic is accumulated automatically.</div><div id="hoursTable" style="margin-top:12px"></div></div>
-<div class="card"><h2>Teacher's own view</h2><select id="ownTeacher" onchange="renderOwnTeacher()" style="max-width:320px"></select><div id="own"></div></div>
-</section>
-
-<section id="messages" class="page hidden"><div class="card"><h2>WhatsApp Message Generator</h2><div class="row"><select id="msgType" onchange="messagePicker()"><option value="faculty">Faculty</option><option value="batch">Batch</option></select><select id="msgWho" style="min-width:250px"></select><input id="msgDate" type="date"><button class="primary" onclick="generateMessage()">Generate</button></div><div id="messageOut" style="margin-top:12px"></div></div></section>
-
-<section id="access" class="page hidden"><div class="card"><h2>Access Structure</h2><div class="muted">This prototype stores access locally. For a live multi-user version, connect Supabase Auth + Row Level Security.</div><div class="grid3" style="margin-top:12px"><div class="personcard"><b>Admin</b><p class="muted">Can see all faculty, all batches, hours, topics and schedules.</p></div><div class="personcard"><b>Scheduler</b><p class="muted">Can create/edit schedules and generate messages.</p></div><div class="personcard"><b>Faculty</b><p class="muted">Should see only their own timetable and their own teaching/topic hours.</p></div></div></div></section>
-</main>
 <script>
-const TEACHERS=[
-["DC","Devendra Shukla","Devendra Sir"],["NC","Nitish Kumar","Nitish Sir"],["GM","Gajendra Kumar","Gajendra Sir"],["AP","Aman Shree","Aman Sir"],["RB","Rashmi Singh","Rashmi Mam"],["MB","Priyanka Maurya","Priyanka Mam"],["PB","Pranay Jha","Pranay Sir"]];
-const BATCHES=[
-["V12J1","Vasai 12th 1","XII JEE 1","Vasai"],["V12J2","Vasai 12th 2","XII JEE 2","Vasai"],["V12N","Vasai 12th NEET","XII NEET","Vasai"],["V11J","Vasai 11th JEE","XI JEE","Vasai"],["V11N","Vasai 11th NEET","XI NEET","Vasai"],
-["R12J1","Virar 12th 1","XII JEE 1","Virar"],["R12J2","Virar 12th 2","XII JEE 2","Virar"],["R12N","Virar 12th NEET","XII NEET","Virar"],["R11J","Virar 11th JEE","XI JEE","Virar"],["R11N","Virar 11th NEET","XI NEET","Virar"]];
-let data=JSON.parse(localStorage.getItem("PACE_TIMETABLE_V2")||"[]");
-const $=x=>document.getElementById(x), today=()=>new Date().toISOString().slice(0,10);
-function esc(s=""){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-function T(c){return TEACHERS.find(x=>x[0]===c)} function B(c){return BATCHES.find(x=>x[0]===c)}
-function mins(x){let [h,m]=String(x||"0:0").split(":").map(Number);return h*60+m} function hours(c){return Math.max(0,(mins(c.end)-mins(c.start))/60)}
-function save(){localStorage.setItem("PACE_TIMETABLE_V2",JSON.stringify(data))}
-function init(){
-["dashDate","facultyDate","batchDate","msgDate","date"].forEach(x=>$(x).value=today());
-$("batch").innerHTML=BATCHES.map(b=>`<option value="${b[0]}">${b[1]}</option>`).join("");
-$("teacher").innerHTML='<option value="">College / No faculty</option>'+TEACHERS.map(t=>`<option value="${t[0]}">${t[1]} (${t[0]})</option>`).join("");
-$("filterTeacher").innerHTML='<option value="">All faculty</option>'+TEACHERS.map(t=>`<option value="${t[0]}">${t[1]} (${t[0]})</option>`).join("");
-$("filterBatch").innerHTML='<option value="">All batches</option>'+BATCHES.map(b=>`<option value="${b[0]}">${b[1]}</option>`).join("");
-$("ownTeacher").innerHTML=TEACHERS.map(t=>`<option value="${t[0]}">${t[1]} (${t[0]})</option>`).join("");
-messagePicker();renderAll()
-}
-function show(id,btn){document.querySelectorAll(".page").forEach(x=>x.classList.add("hidden"));$(id).classList.remove("hidden");document.querySelectorAll(".nav button").forEach(x=>x.classList.remove("active"));btn?.classList.add("active");renderAll()}
-function conflict(c){return data.some(x=>x.id!==c.id&&x.date===c.date&&x.teacher&&c.teacher&&x.teacher===c.teacher&&mins(x.start)<mins(c.end)&&mins(c.start)<mins(x.end))}
-function addClass(){
-let c={id:Date.now(),date:$("date").value,centre:$("centre").value,batch:$("batch").value,teacher:$("teacher").value,subject:$("subject").value.trim(),topic:$("topic").value.trim(),start:$("start").value,end:$("end").value};
-let b=B(c.batch);c.centre=b[3];
-if(!c.date||!c.batch||!c.start||!c.end){$("addMsg").innerHTML='<div class="notice red">Date, batch and timings are required.</div>';return}
-if(!c.teacher)c.subject=c.subject||"College";
-let same=data.filter(x=>x.date===c.date&&x.teacher&&c.teacher&&x.teacher===c.teacher&&mins(x.start)<mins(c.end)&&mins(c.start)<mins(x.end));
-if(same.length&&!confirm("This teacher is already assigned to another class at the same time. Could this be a combined class? Press OK to continue as a combined class."))return;
-c.combined=!!same.length;data.push(c);save();$("addMsg").innerHTML='<div class="notice green">Class added.</div>';renderAll()
-}
-function del(id){data=data.filter(x=>x.id!==id);save();renderAll()}
-function sample(){
-let d=$("date").value||today();data.push(
-{id:Date.now(),date:d,centre:"Vasai",batch:"V12J2",teacher:"DC",subject:"Chemistry",topic:"Chemical Bonding",start:"09:30",end:"12:45"},
-{id:Date.now()+1,date:d,centre:"Vasai",batch:"V12N",teacher:"MB",subject:"Biology",topic:"Human Reproduction",start:"09:30",end:"12:45"},
-{id:Date.now()+2,date:d,centre:"Vasai",batch:"V12J1",teacher:"",subject:"College",topic:"",start:"12:45",end:"13:45"});save();renderAll()
-}
-function table(arr){
-if(!arr.length)return '<div class="muted" style="margin-top:12px">No classes.</div>';
-return `<div class="scroll" style="margin-top:12px"><table><tr><th>Date</th><th>Time</th><th>Centre</th><th>Batch</th><th>Faculty</th><th>Subject</th><th>Topic</th><th>Hours</th><th>Status</th><th></th></tr>${arr.slice().sort((a,b)=>mins(a.start)-mins(b.start)).map(c=>{let t=T(c.teacher),b=B(c.batch),co=conflict(c);return `<tr><td>${c.date}</td><td>${c.start}–${c.end}</td><td>${b?.[3]}</td><td>${b?.[1]}</td><td>${t?esc(t[1])+" ("+t[0]+")":"College"}</td><td>${esc(c.subject)}</td><td>${esc(c.topic)}</td><td>${hours(c).toFixed(2)}</td><td>${c.combined?'<span class="badge warn">Combined</span> ':''}${co?'<span class="badge bad">Teacher overlap</span>':'<span class="badge ok">OK</span>'}</td><td><button class="danger" onclick="del(${c.id})">Delete</button></td></tr>`}).join("")}</table></div>`
-}
-function renderAll(){
-let d=$("dashDate").value||today();$("statClasses").textContent=data.length;$("statFaculty").textContent=data.filter(x=>x.teacher).length;$("statHours").textContent=data.filter(x=>x.teacher).reduce((s,x)=>s+hours(x),0).toFixed(2);$("statTopics").textContent=new Set(data.filter(x=>x.teacher&&x.topic).map(x=>x.teacher+"|"+x.topic)).size;
-$("dash").innerHTML=table(data.filter(x=>x.date===d));
-let fd=$("filterDate").value,ft=$("filterTeacher").value,fb=$("filterBatch").value;$("all").innerHTML=table(data.filter(x=>(!fd||x.date===fd)&&(!ft||x.teacher===ft)&&(!fb||x.batch===fb)));
-renderFaculty();renderBatches();renderHours();renderOwnTeacher()
-}
-function facultyRows(code,date){return data.filter(x=>x.teacher===code&&x.date===date).sort((a,b)=>mins(a.start)-mins(b.start))}
-function facultyMsg(code,date){
-let t=T(code),rs=facultyRows(code,date),dt=new Date(date+"T00:00:00"),day=dt.toLocaleDateString("en-IN",{weekday:"long"}),ds=dt.toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"});
-let by={};rs.forEach(c=>(by[c.centre]??=[]).push(c));let lines=`Good Evening\\n*${t[2]}*\\nDate :- ${ds}\\nDay :- ${day}\\n\\n`;
-for(let center of ["Vasai","Virar"]){if(!by[center])continue;lines+=`*${center} Center*\\n`;by[center].forEach(c=>{let b=B(c.batch);lines+=`${c.start} AM to ${c.end} PM : ${b[2]}${c.subject?" — "+c.subject:""}${c.topic?" ("+c.topic+")":""}\\n`});lines+="\\n"}return lines+"Thank you.";
-}
-function renderFaculty(){let d=$("facultyDate").value||today();$("facultyCards").innerHTML=TEACHERS.map(t=>{let rs=facultyRows(t[0],d);return `<div class="personcard"><div class="row between"><h3>${t[1]} (${t[0]})</h3><span class="pill">${rs.length} classes · ${rs.reduce((s,x)=>s+hours(x),0).toFixed(2)} h</span></div><div class="message">${esc(facultyMsg(t[0],d))}</div><button class="secondary" style="margin-top:8px" onclick='copyText(${JSON.stringify(facultyMsg(t[0],d))})'>Copy Message</button></div>`}).join("")}
-function batchRows(id,date){return data.filter(x=>x.batch===id&&x.date===date).sort((a,b)=>mins(a.start)-mins(b.start))}
-function batchMsg(id,date){
-let b=B(id),rs=batchRows(id,date),dt=new Date(date+"T00:00:00"),day=dt.toLocaleDateString("en-IN",{weekday:"long"}),ds=dt.toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"});
-let lines=`Good Evening\\nDear Students\\n(${b[2]}) ${b[3].slice(0,1)}S\\n\\nTomorrow ${ds} ${day}\\nClass timings are as follows -\\n`;
-if(!rs.length)return lines+"No class scheduled.\\n\\nThank You";
-let start=Math.min(...rs.map(x=>mins(x.start))),end=Math.max(...rs.map(x=>mins(x.end)));
-let fmt=m=>{let h=Math.floor(m/60),mm=m%60,ap=h>=12?"PM":"AM";h=h%12||12;return h+":"+String(mm).padStart(2,"0")+" "+ap};lines+=`${fmt(start)} - ${fmt(end)}\\n\\n`;
-rs.forEach(c=>{let t=T(c.teacher);lines+=`${c.start} - ${c.end}: ${c.subject||"Class"}${t?" ("+t[0]+")":""}${c.topic?" — "+c.topic:""}\\n`});return lines+"\\nThank You";
-}
-function renderBatches(){let d=$("batchDate").value||today();$("batchCards").innerHTML=BATCHES.map(b=>{let rs=batchRows(b[0],d);return `<div class="personcard"><div class="row between"><h3>${b[1]}</h3><span class="pill">${rs.length} classes · ${rs.reduce((s,x)=>s+hours(x),0).toFixed(2)} h</span></div><div class="message">${esc(batchMsg(b[0],d))}</div><button class="secondary" style="margin-top:8px" onclick='copyText(${JSON.stringify(batchMsg(b[0],d))})'>Copy Message</button></div>`}).join("")}
-function renderHours(){
-let map={};data.filter(c=>c.teacher&&c.topic).forEach(c=>{let k=c.teacher+"|"+c.topic;if(!map[k])map[k]={teacher:c.teacher,topic:c.topic,h:0,classes:0};map[k].h+=hours(c);map[k].classes++});
-$("hoursTable").innerHTML=Object.values(map).length?`<div class="scroll"><table><tr><th>Faculty</th><th>Topic / Chapter</th><th>Classes</th><th>Hours Taken</th></tr>${Object.values(map).map(x=>`<tr><td>${T(x.teacher)[1]} (${x.teacher})</td><td>${esc(x.topic)}</td><td>${x.classes}</td><td><b>${x.h.toFixed(2)}</b></td></tr>`).join("")}</table></div>`:'<div class="muted">No topic data yet.</div>'
-}
-function renderOwnTeacher(){let code=$("ownTeacher").value||"DC",rs=data.filter(x=>x.teacher===code),t=T(code);let total=rs.reduce((s,x)=>s+hours(x),0);let topics={};rs.filter(x=>x.topic).forEach(x=>topics[x.topic]=(topics[x.topic]||0)+hours(x));$("own").innerHTML=`<div class="row" style="margin:12px 0"><span class="pill">${rs.length} classes</span><span class="pill">${total.toFixed(2)} teaching hours</span></div>`+(Object.keys(topics).length?`<div class="scroll"><table><tr><th>Topic</th><th>Hours taken</th></tr>${Object.entries(topics).map(([k,v])=>`<tr><td>${esc(k)}</td><td>${v.toFixed(2)}</td></tr>`).join("")}</table></div>`:'<div class="muted">No topic hours recorded.</div>')}
-function messagePicker(){let type=$("msgType").value;$("msgWho").innerHTML=type==="faculty"?TEACHERS.map(t=>`<option value="${t[0]}">${t[1]} (${t[0]})</option>`).join(""):BATCHES.map(b=>`<option value="${b[0]}">${b[1]}</option>`).join("")}
-function generateMessage(){let type=$("msgType").value,id=$("msgWho").value,d=$("msgDate").value||today(),m=type==="faculty"?facultyMsg(id,d):batchMsg(id,d);$("messageOut").innerHTML=`<div class="message">${esc(m)}</div><button class="secondary" style="margin-top:8px" onclick='copyText(${JSON.stringify(m)})'>Copy</button>`}
-function copyText(x){navigator.clipboard?.writeText(x);alert("Message copied")}
-function renderManage(){}
-function clearAll(){if(confirm("Delete all schedule data?")){data=[];save();renderAll()}}
-function exportData(){let blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="PACE-timetable.json";a.click()}
+/* ================= State ================= */
+let STATE = JSON.parse(document.getElementById('app-state').textContent);
+if(!STATE.topicDefaults) STATE.topicDefaults = {};
+if(!STATE.chapterProgress) STATE.chapterProgress = {};
+if(!STATE.weeklyPattern) STATE.weeklyPattern = {};
+if(!STATE.holidays) STATE.holidays = [];
+const UI = {
+  tab: 'schedule',
+  scheduleDate: todayStr(),
+  facultyDate: tomorrowStr(),
+  studentDate: tomorrowStr(),
+  reportRange: 'month',
+  reportFrom: monthStartStr(),
+  reportTo: todayStr(),
+  reportTeacher: '',
+  editingId: null,
+  predictSubTab: 'pattern',
+  patternBatch: '',
+  patternDay: 'mon',
+  weekStart: '',
+  holidayTeacher: '',
+  holidayDate: '',
+  previewBatchFilter: '',
+};
 
-function fileToBase64(file){
-  return new Promise((resolve,reject)=>{
-    const r=new FileReader();
-    r.onload=()=>resolve(String(r.result).split(",")[1]);
-    r.onerror=reject;
-    r.readAsDataURL(file);
+/* ================= Helpers ================= */
+function pad(n){ return n<10 ? '0'+n : ''+n; }
+function todayDateObj(){ return new Date(); }
+function todayStr(){ const d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+function tomorrowStr(){ const d=new Date(); d.setDate(d.getDate()+1); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+function monthStartStr(){ const d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-01'; }
+function weekStartStr(){ const d=new Date(); const day=d.getDay(); const diff = (day===0?6:day-1); d.setDate(d.getDate()-diff); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+function ordinal(n){ const s=["th","st","nd","rd"], v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]); }
+const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+function fmtDateLong(dateStr){ const d=new Date(dateStr+'T00:00:00'); return `${ordinal(d.getDate())} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`; }
+function dayName(dateStr){ const d=new Date(dateStr+'T00:00:00'); return DAYS[d.getDay()]; }
+function fmt12(hhmm){ if(!hhmm) return ''; let [h,m]=hhmm.split(':').map(Number); const ap=h>=12?'PM':'AM'; let h12=h%12; if(h12===0) h12=12; return `${h12}:${pad(m)} ${ap}`; }
+function durMin(start,end){ const [sh,sm]=start.split(':').map(Number),[eh,em]=end.split(':').map(Number); return (eh*60+em)-(sh*60+sm); }
+function relLabel(dateStr){ const diff=Math.round((new Date(dateStr+'T00:00:00')-new Date(todayStr()+'T00:00:00'))/86400000); if(diff===0) return 'Today'; if(diff===1) return 'Tomorrow'; if(diff===-1) return 'Yesterday'; return null; }
+function shortSubj(s){ const m={Physics:'Phy',Chemistry:'Chem',Maths:'Math',Biology:'Bio'}; return m[s]||s; }
+function timesOverlap(s1,e1,s2,e2){ return s1<e2 && s2<e1; }
+function findConflicts(entry, excludeId){
+  return STATE.classes.filter(c=>{
+    if(c.id===excludeId) return false;
+    if(c.date!==entry.date) return false;
+    if(!timesOverlap(entry.start, entry.end, c.start, c.end)) return false;
+    const sameTeacher = !!entry.teacherId && c.teacherId===entry.teacherId;
+    const sameBatch = entry.batchId ? c.batchId===entry.batchId : (entry.customBatchLabel && c.customBatchLabel===entry.customBatchLabel);
+    if(sameBatch) return true;
+    if(!sameTeacher) return false;
+    // Same teacher, different batch, but the exact same time slot = an intentional merged class, not a conflict.
+    const exactSameSlot = c.start===entry.start && c.end===entry.end;
+    return !exactSameSlot;
   });
 }
-function aiTeacherCode(v){
-  if(!v) return "";
-  const s=String(v).trim().toUpperCase();
-  const hit=TEACHERS.find(t=>t[0]===s || t[1].toUpperCase()===s || t[2].toUpperCase()===s);
-  return hit ? hit[0] : s;
+function describeConflict(c){
+  const t = teacherById(c.teacherId); const b = batchById(c.batchId);
+  return `${t?t.name:'Unknown teacher'} / ${c.customBatchLabel || (b?b.label:'Unknown batch')} at ${fmt12(c.start)}–${fmt12(c.end)}`;
 }
-function aiBatchId(v, centre){
-  if(!v) return "";
-  const s=String(v).trim().toUpperCase();
-  let hit=BATCHES.find(b=>b[0].toUpperCase()===s || b[1].toUpperCase()===s || b[2].toUpperCase()===s);
-  if(hit) return hit[0];
-  hit=BATCHES.find(b=>b[2].toUpperCase()===s && (!centre || b[3]===centre));
-  return hit ? hit[0] : "";
-}
-function aiNormTime(v){
-  if(!v) return "";
-  let s=String(v).trim().toUpperCase().replace(/\./g,":").replace(/\s+/g,"");
-  let m=s.match(/^(\d{1,2})(?::(\d{1,2}))?(AM|PM)?$/);
-  if(!m) return String(v).trim();
-  let h=Number(m[1]), mm=Number(m[2]||0), ap=m[3];
-  if(ap==="PM"&&h<12)h+=12;
-  if(ap==="AM"&&h===12)h=0;
-  return String(h).padStart(2,"0")+":"+String(mm).padStart(2,"0");
-}
-function aiDate(v){
-  if(!v) return $("aiDate").value || today();
-  if(/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
-  const m=String(v).match(/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/);
-  if(m){
-    let y=m[3].length===2?"20"+m[3]:m[3];
-    return y+"-"+String(m[2]).padStart(2,"0")+"-"+String(m[1]).padStart(2,"0");
+function teacherById(id){ return STATE.teachers.find(t=>t.id===id); }
+function batchById(id){ return STATE.batches.find(b=>b.id===id); }
+function progressKey(teacherId, entry){ return teacherId+'|'+(entry.batchId || ('custom:'+(entry.customBatchLabel||''))); }
+// Chapter hour allocations from the institute's track sheets (JEE: 11th+12th, both Vasai & Virar; NEET: Botany/Zoology/Physics/Chemistry), converted to a lecture count by dividing allotted hours by 3 (rounded to nearest whole lecture). Looked up by subject, and by JEE vs NEET based on the batch label.
+const LECTURE_PLAN = {
+  jee: {
+    maths: {
+      'basic mathematics': 3,
+      'trigo ratios and identities': 7,
+      'quadratic equations': 7,
+      'trigonometric equations': 4,
+      'inequations and logarithms': 5,
+      'sequence and series': 6,
+      'binomial theorem': 5,
+      'permutation and combination': 7,
+      'functions and itf': 8,
+      'probability': 5,
+      'straight line and posl': 7,
+      'circle': 6,
+      'limit continuity and differentiability': 7,
+      'method of differentiation': 3,
+      'parabola': 4,
+      'application of derivatives': 8,
+      'integral calculus indefinite': 4,
+      'ellipse': 4,
+      'hyperbola': 3,
+      'definite integral': 4,
+      'auc and differential equations': 5,
+      'complex numbers': 8,
+      'vector and 3d': 8,
+      'determinant and matrix': 7,
+    },
+    physics: {
+      'vectors': 4,
+      'calculus for physics': 5,
+      'kinematics': 9,
+      'unit dimension errors and measurements': 2,
+      'friction': 9,
+      'circular motion': 3,
+      'work power energy': 5,
+      'centre of mass and collisions': 7,
+      'ray optics': 7,
+      'rotational dynamics': 8,
+      'heat and thermodynamics': 7,
+      'fluid mechanics': 3,
+      'simple harmonic motion': 5,
+      'gravitation': 4,
+      'mechanical properties': 3,
+      'electrostatics and capacitors': 9,
+      'current electricity': 4,
+      'sound waves and transverse waves': 7,
+      'wave optics': 4,
+      'magnetic material': 7,
+      'electromagnetic induction': 5,
+      'modern physics': 6,
+      'alternating current': 2,
+    },
+    chemistry: {
+      'mole concept': 7,
+      'atomic structure': 7,
+      'periodic table': 3,
+      'chemical bonding': 7,
+      'gaseous state': 7,
+      'thermodynamics': 8,
+      'chemical equilibrium': 4,
+      'nomenclature': 3,
+      'goc': 9,
+      'ionic equilibrium': 7,
+      'volumetric analysis': 4,
+      'isomerism': 6,
+      'chemical kinetics': 5,
+      'electrochemistry': 7,
+      'reaction mechanism': 5,
+      'solutions': 4,
+      'hydrocarbons': 7,
+      'solid state': 5,
+      'coordination compounds': 5,
+      'aromatic hc': 4,
+      'aryl alkyl and halides': 4,
+      'alcohol ether and phenol': 5,
+      's block': 4,
+      'p block elements': 6,
+      'd and f block elements': 2,
+      'carbonyl compounds': 6,
+      'carboxylic acid and derivative': 5,
+      'biomolecules polymers and poc': 3,
+      'metallurgy and salt analysis': 7,
+      'chemistry in everyday life': 1,
+    },
+  },
+  neet: {
+    biology: {
+      'the living world': 2,
+      'biological classification': 7,
+      'structural organisation tissues': 6,
+      'animal kingdom': 8,
+      'plant kingdom': 5,
+      'cell the unit of life': 5,
+      'cell cycle and cell division': 3,
+      'cockroach and frog': 4,
+      'biomolecules': 6,
+      'breathing and exchange of gases': 4,
+      'morphology of flowering plants': 8,
+      'body fluids and circulation': 4,
+      'anatomy of flowering plants': 5,
+      'excretory products and their elimination': 4,
+      'locomotion and movement': 4,
+      'plant growth and development': 4,
+      'neural control and coordination': 5,
+      'photosynthesis': 4,
+      'chemical coordination and integration': 6,
+      'respiration in plants': 4,
+      'sexual reproduction in flowering plants': 5,
+      'human reproduction': 7,
+      'molecular basis of inheritance': 8,
+      'reproductive health': 3,
+      'principles of inheritance and variation': 8,
+      'evolution': 6,
+      'microbes in human welfare': 2,
+      'human health and diseases': 7,
+      'organisms and population': 3,
+      'biotechnology principles and processes': 4,
+      'ecosystem': 2,
+      'biotechnology and its applications': 2,
+      'biodiversity': 2,
+    },
+    physics: {
+      'vectors': 4,
+      'calculus for physics': 5,
+      'kinematics': 9,
+      'unit dimension errors and measurements': 2,
+      'friction': 9,
+      'circular motion': 3,
+      'work power energy': 5,
+      'centre of mass and collisions': 7,
+      'ray optics': 7,
+      'rotational dynamics': 9,
+      'heat and thermodynamics': 7,
+      'fluid mechanics': 3,
+      'simple harmonic motion': 5,
+      'gravitation': 4,
+      'mechanical properties': 3,
+      'electrostatics and capacitors': 9,
+      'current electricity': 4,
+      'sound waves and transverse waves': 7,
+      'wave optics': 4,
+      'magnetic material': 7,
+      'electromagnetic induction': 5,
+      'modern physics': 6,
+      'alternating current': 2,
+    },
+    chemistry: {
+      'mole concept': 7,
+      'atomic structure': 7,
+      'periodic table': 3,
+      'chemical bonding': 8,
+      'thermodynamics': 8,
+      'chemical equilibrium': 4,
+      'nomenclature': 3,
+      'goc': 9,
+      'ionic equilibrium': 7,
+      'volumetric analysis': 4,
+      'isomerism': 6,
+      'chemical kinetics': 5,
+      'electrochemistry': 7,
+      'reaction mechanism': 5,
+      'hydrocarbons': 7,
+      'solutions': 4,
+      'coordination compounds': 5,
+      'aromatic hydrocarbons': 4,
+      'aryl alkyl and halides': 4,
+      'alcohol ether and phenol': 5,
+      'p block elements': 6,
+      'd and f block elements': 2,
+      'carbonyl compounds': 6,
+      'carboxylic acid and derivative': 5,
+      'biomolecules polymers and poc': 3,
+      'salt analysis': 5,
+    },
+  },
+};
+function chapterLabel(c, showTotal){
+  if(showTotal === undefined) showTotal = true;
+  if(c.chapter){
+    const b = batchById(c.batchId);
+    const batchLabel = (c.customBatchLabel || (b ? b.label : '') || '').toLowerCase();
+    const track = batchLabel.includes('neet') ? LECTURE_PLAN.neet : LECTURE_PLAN.jee;
+    const subjTable = track[(c.subject||'').toLowerCase()] || {};
+    const total = subjTable[c.chapter.trim().toLowerCase()];
+    const lecPart = c.lectureNo ? ` (Lecture ${c.lectureNo}${(showTotal && total) ? ' out of '+total : ''})` : '';
+    return c.chapter + lecPart;
   }
-  return $("aiDate").value || today();
+  return c.topic || '';
 }
-function showAIReview(rows){
-  if(!rows.length){$("aiReview").innerHTML='<div class="notice red">AI returned no classes.</div>';return}
-  $("aiReview").innerHTML='<div class="notice">AI extracted <b>'+rows.length+'</b> rows. Review them before importing.</div>'+table(rows.map((r,i)=>({...r,id:"ai"+i})))+
-  '<div class="row" style="margin-top:10px"><button class="green" onclick="importAIRows()">Import reviewed rows</button></div>';
-  window._aiRows=rows;
+
+function classesFor(date){ return STATE.classes.filter(c=>c.date===date); }
+function esc(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function uid(prefix){ return prefix+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+
+function toast(msg){
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toast._h); toast._h=setTimeout(()=>t.classList.remove('show'), 1800);
 }
-function importAIRows(){
-  const rs=window._aiRows||[];
-  let added=0;
-  for(const r of rs){
-    if(!r.batch||!r.start||!r.end) continue;
-    const b=B(r.batch);
-    let c={id:Date.now()+added,date:r.date||today(),centre:b?.[3]||r.centre||"",batch:r.batch,teacher:r.teacher||"",subject:r.subject||"",topic:r.topic||"",start:r.start,end:r.end,combined:false};
-    const same=data.filter(x=>x.date===c.date&&x.teacher&&c.teacher&&x.teacher===c.teacher&&mins(x.start)<mins(c.end)&&mins(c.start)<mins(x.end));
-    if(same.length){
-      if(confirm("Teacher "+(T(c.teacher)?.[1]||c.teacher)+" is already assigned at "+c.start+"–"+c.end+". Is this a combined class?")) c.combined=true;
-      else continue;
-    }
-    data.push(c); added++;
+function copyText(text, label){
+  const done = ()=> toast((label||'Message')+' copied');
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done).catch(()=>fallbackCopy(text,done));
+  } else fallbackCopy(text,done);
+}
+function fallbackCopy(text, done){
+  const ta=document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); done && done(); } catch(e){ toast('Could not copy — select manually'); }
+  document.body.removeChild(ta);
+}
+
+/* ================= Persistence (artifact capability) ================= */
+let _artifactCapPromise = null;
+function waitForClaude(timeout=10000){
+  return new Promise((resolve)=>{
+    if(window.claude){ resolve(window.claude); return; }
+    const start=Date.now();
+    const iv=setInterval(()=>{
+      if(window.claude){ clearInterval(iv); resolve(window.claude); }
+      else if(Date.now()-start>timeout){ clearInterval(iv); resolve(null); }
+    },100);
+  });
+}
+function getArtifactCap(){
+  if(!_artifactCapPromise){
+    _artifactCapPromise = waitForClaude().then(c => c ? c.use('artifact').catch(()=>null) : null);
   }
-  save(); $("aiReview").innerHTML='<div class="notice green"><b>'+added+'</b> reviewed rows imported.</div>'; renderAll();
+  return _artifactCapPromise;
 }
-async function readAITimetable(){
-  const file=$("aiFile").files[0];
-  if(!file){$("aiStatus").textContent="Choose a timetable image first.";return}
-  $("aiStatus").textContent="Reading timetable…";
+function buildHtmlWithState(newState){
+  const doc = document.documentElement.cloneNode(true);
+  const stateScript = doc.querySelector('#app-state');
+  stateScript.textContent = JSON.stringify(newState);
+  return '<!DOCTYPE html>\n' + doc.outerHTML;
+}
+function setSaveFlag(mode){
+  const dot = document.querySelector('#saveflag .dot');
+  const txt = document.getElementById('saveflagtext');
+  if(mode==='saving'){ dot.style.background='var(--amber)'; txt.textContent='Saving…'; }
+  else if(mode==='error'){ dot.style.background='var(--coral)'; txt.textContent='Not saved'; }
+  else { dot.style.background='var(--teal)'; txt.textContent='Synced'; }
+}
+async function persist(newState){
+  setSaveFlag('saving');
   try{
-    const b64=await fileToBase64(file);
-    const payload={
-      imageBase64:b64,
-      mimeType:file.type||"image/jpeg",
-      fallbackDate:$("aiDate").value||today(),
-      fallbackCentre:$("aiCentre").value,
-      mode:$("aiMode").value
-    };
-    const url=window.PACE_CONFIG.supabaseFunctionUrl;
-    const resp=await fetch(url,{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify(payload)
-    });
-    const text=await resp.text();
-    let result; try{result=JSON.parse(text)}catch{throw new Error("Supabase returned non-JSON: "+text.slice(0,300))}
-    if(!resp.ok) throw new Error(result.error||result.message||("HTTP "+resp.status));
-    const raw=Array.isArray(result)?result:(result.rows||result.classes||result.timetable||[]);
-    const rows=raw.map(r=>{
-      let subject=String(r.subject||r.activity||"");
-      let college=/^\s*college\s*$/i.test(subject)||/^\s*college\s*$/i.test(String(r.teacher||""));
-      return {
-        date:aiDate(r.date||r.class_date),
-        centre:(r.centre||r.center||($("aiCentre").value==="Auto detect"?"":$("aiCentre").value)),
-        batch:aiBatchId(r.batch||r.batchName||r.batch_name,r.centre||r.center),
-        teacher:college?"":aiTeacherCode(r.teacher||r.teacherCode||r.teacher_code),
-        subject:subject||"Class",
-        topic:r.topic||r.chapter||"",
-        start:aiNormTime(r.start||r.start_time),
-        end:aiNormTime(r.end||r.end_time)
-      };
-    });
-    $("aiStatus").textContent="AI reading complete.";
-    showAIReview(rows);
+    const artifact = await getArtifactCap();
+    if(!artifact){
+      STATE = newState; render();
+      setSaveFlag('error');
+      toast('Read-only view — changes will not be saved');
+      return;
+    }
+    const html = buildHtmlWithState(newState);
+    await artifact.publish(html);
+    STATE = newState;
+    render();
+    setSaveFlag('synced');
   }catch(e){
     console.error(e);
-    $("aiStatus").textContent="AI reader error.";
-    $("aiReview").innerHTML='<div class="notice red"><b>AI reader failed.</b><br>'+esc(e.message||String(e))+'<br><span class="small">Check that the Supabase function is deployed and accepts this request format.</span></div>';
+    STATE = newState; render();
+    setSaveFlag('error');
+    toast('Could not save — try again');
   }
 }
 
-init()
+/* ================= Mutations ================= */
+function rememberChapterProgress(ns, entry){
+  if(!entry.teacherId || !entry.chapter) return;
+  if(!ns.chapterProgress) ns.chapterProgress = {};
+  ns.chapterProgress[progressKey(entry.teacherId, entry)] = {
+    chapter: entry.chapter,
+    lectureNo: entry.lectureNo || 1,
+    completed: !!entry.chapterCompleted,
+  };
+}
+function addClass(entry){
+  const ns = structuredClone(STATE);
+  entry.id = uid('c');
+  ns.classes.push(entry);
+  rememberChapterProgress(ns, entry);
+  persist(ns);
+}
+function updateClass(id, patch){
+  const ns = structuredClone(STATE);
+  const i = ns.classes.findIndex(c=>c.id===id);
+  if(i>-1){ ns.classes[i] = Object.assign({}, ns.classes[i], patch); rememberChapterProgress(ns, ns.classes[i]); }
+  persist(ns);
+}
+function deleteClass(id){
+  const ns = structuredClone(STATE);
+  ns.classes = ns.classes.filter(c=>c.id!==id);
+  persist(ns);
+}
+function duplicateDay(fromDate, toDate){
+  const ns = structuredClone(STATE);
+  const src = ns.classes.filter(c=>c.date===fromDate);
+  if(!src.length){ toast('No classes found on that date'); return; }
+  src.forEach(c=>{ ns.classes.push(Object.assign({}, c, {id: uid('c'), date: toDate})); });
+  persist(ns);
+}
+
+/* ================= Weekly Pattern & Holidays ================= */
+const WEEKDAYS = [
+  {id:'mon', label:'Monday'}, {id:'tue', label:'Tuesday'}, {id:'wed', label:'Wednesday'},
+  {id:'thu', label:'Thursday'}, {id:'fri', label:'Friday'}, {id:'sat', label:'Saturday'},
+];
+function patternSlotsFor(batchId, day){
+  return (STATE.weeklyPattern[batchId] && STATE.weeklyPattern[batchId][day]) || [];
+}
+function addPatternSlot(batchId, day, slot){
+  const ns = structuredClone(STATE);
+  if(!ns.weeklyPattern[batchId]) ns.weeklyPattern[batchId] = {};
+  if(!ns.weeklyPattern[batchId][day]) ns.weeklyPattern[batchId][day] = [];
+  slot.id = uid('ps');
+  ns.weeklyPattern[batchId][day].push(slot);
+  persist(ns);
+}
+function deletePatternSlot(batchId, day, slotId){
+  const ns = structuredClone(STATE);
+  if(ns.weeklyPattern[batchId] && ns.weeklyPattern[batchId][day]){
+    ns.weeklyPattern[batchId][day] = ns.weeklyPattern[batchId][day].filter(s=>s.id!==slotId);
+  }
+  persist(ns);
+}
+function addHoliday(entry){
+  const ns = structuredClone(STATE);
+  entry.id = uid('hol');
+  ns.holidays.push(entry);
+  persist(ns);
+}
+function deleteHoliday(id){
+  const ns = structuredClone(STATE);
+  ns.holidays = ns.holidays.filter(h=>h.id!==id);
+  persist(ns);
+}
+function isTeacherOnHoliday(teacherId, dateStr){
+  return STATE.holidays.some(h=>h.teacherId===teacherId && h.date===dateStr);
+}
+function nextChapterFor(teacherId, batchId){
+  const key = teacherId+'|'+batchId;
+  const prog = STATE.chapterProgress[key];
+  if(!prog || prog.completed) return {chapter:null, lectureNo:null};
+  return {chapter:prog.chapter, lectureNo:(prog.lectureNo||0)+1};
+}
+function generateWeekPreview(weekStartDate){
+  const days = [];
+  for(let i=0;i<6;i++){
+    const d = new Date(weekStartDate+'T00:00:00');
+    d.setDate(d.getDate()+i);
+    const dateStr = d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+    const dayId = WEEKDAYS[i].id;
+    const rows = [];
+    STATE.batches.forEach(b=>{
+      patternSlotsFor(b.id, dayId).forEach(slot=>{
+        const onHoliday = isTeacherOnHoliday(slot.teacherId, dateStr);
+        const alreadyScheduled = STATE.classes.some(c=>c.date===dateStr && c.batchId===b.id && c.teacherId===slot.teacherId && c.start===slot.start);
+        const auto = nextChapterFor(slot.teacherId, b.id);
+        rows.push({ batchId:b.id, slot, onHoliday, alreadyScheduled, auto });
+      });
+    });
+    days.push({ date:dateStr, dayLabel:WEEKDAYS[i].label, rows });
+  }
+  return days;
+}
+function applyWeekToSchedule(weekStartDate){
+  const ns = structuredClone(STATE);
+  let added = 0, skippedHoliday = 0, skippedExisting = 0;
+  for(let i=0;i<6;i++){
+    const d = new Date(weekStartDate+'T00:00:00');
+    d.setDate(d.getDate()+i);
+    const dateStr = d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+    const dayId = WEEKDAYS[i].id;
+    STATE.batches.forEach(b=>{
+      patternSlotsFor(b.id, dayId).forEach(slot=>{
+        const onHoliday = ns.holidays.some(h=>h.teacherId===slot.teacherId && h.date===dateStr);
+        if(onHoliday){ skippedHoliday++; return; }
+        const already = ns.classes.some(c=>c.date===dateStr && c.batchId===b.id && c.teacherId===slot.teacherId && c.start===slot.start);
+        if(already){ skippedExisting++; return; }
+        const key = slot.teacherId+'|'+b.id;
+        const prog = ns.chapterProgress[key];
+        let chapter = null, lectureNo = null;
+        if(prog && !prog.completed){ chapter = prog.chapter; lectureNo = (prog.lectureNo||0)+1; }
+        const entry = {
+          id: uid('c'), date: dateStr, batchId: b.id, customBatchLabel: null, customCenter: null,
+          teacherId: slot.teacherId, subject: slot.subject, chapter, lectureNo, chapterCompleted: false,
+          topic: '', start: slot.start, end: slot.end, isDoubt: false, online: !!slot.online,
+        };
+        ns.classes.push(entry);
+        if(chapter){ ns.chapterProgress[key] = {chapter, lectureNo, completed:false}; }
+        added++;
+      });
+    });
+  }
+  persist(ns);
+  toast(`Added ${added} classes` + (skippedHoliday?`, skipped ${skippedHoliday} for holidays`:'') + (skippedExisting?`, ${skippedExisting} already existed`:''));
+}
+function saveTeacher(t){
+  const ns = structuredClone(STATE);
+  if(t.id){ const i=ns.teachers.findIndex(x=>x.id===t.id); ns.teachers[i]=t; }
+  else { t.id=uid('t'); ns.teachers.push(t); }
+  persist(ns);
+}
+function deleteTeacher(id){
+  if(STATE.classes.some(c=>c.teacherId===id)){ if(!confirm('This teacher has scheduled classes. Delete anyway? Their classes will keep the old name.')) return; }
+  const ns = structuredClone(STATE);
+  ns.teachers = ns.teachers.filter(t=>t.id!==id);
+  persist(ns);
+}
+function saveBatch(b){
+  const ns = structuredClone(STATE);
+  if(b.id){ const i=ns.batches.findIndex(x=>x.id===b.id); ns.batches[i]=b; }
+  else { b.id=uid('b'); ns.batches.push(b); }
+  persist(ns);
+}
+function deleteBatch(id){
+  if(STATE.classes.some(c=>c.batchId===id)){ if(!confirm('This batch has scheduled classes. Delete anyway?')) return; }
+  const ns = structuredClone(STATE);
+  ns.batches = ns.batches.filter(b=>b.id!==id);
+  persist(ns);
+}
+function addSubject(name){
+  if(!name || STATE.subjects.includes(name)) return;
+  const ns = structuredClone(STATE); ns.subjects.push(name); persist(ns);
+}
+function removeSubject(name){
+  const ns = structuredClone(STATE); ns.subjects = ns.subjects.filter(s=>s!==name); persist(ns);
+}
+
+/* ================= Message builders ================= */
+function autoDoubtEntries(date, batchId){
+  const batchEntries = classesFor(date).filter(c=>c.batchId===batchId && !c.isDoubt);
+  const explicit = classesFor(date).some(c=>c.batchId===batchId && c.isDoubt && c.start==='16:30');
+  if(!batchEntries.length || explicit) return [];
+  const endsAt430 = batchEntries.some(c=>c.end==='16:30');
+  if(!endsAt430) return [];
+  return [{
+    id:'auto-doubt-'+batchId+'-'+date,
+    date,
+    batchId,
+    teacherId:null,
+    subject:'Doubt Session',
+    start:'16:30',
+    end:'18:00',
+    isDoubt:true,
+    autoGenerated:true
+  }];
+}
+
+function effectiveClassesForBatch(batchId, date){
+  const rows = classesFor(date).filter(c=>c.batchId===batchId);
+  return rows.concat(autoDoubtEntries(date,batchId));
+}
+
+function effectiveClassesForTeacher(teacherId, date){
+  const rows = classesFor(date).filter(c=>c.teacherId===teacherId);
+  const batchIds = [...new Set(rows.filter(c=>!c.isDoubt).map(c=>c.batchId).filter(Boolean))];
+  const auto = [];
+  batchIds.forEach(batchId=>{
+    const hasTeacherAt430 = rows.some(c=>c.batchId===batchId && !c.isDoubt && c.end==='16:30');
+    const explicitDoubt = classesFor(date).some(c=>c.batchId===batchId && c.isDoubt && c.start==='16:30');
+    if(hasTeacherAt430 && !explicitDoubt){
+      auto.push({
+        id:'auto-doubt-'+teacherId+'-'+batchId+'-'+date,
+        date,batchId,teacherId,subject:'Doubt Session',start:'16:30',end:'18:00',isDoubt:true,autoGenerated:true
+      });
+    }
+  });
+  return rows.concat(auto);
+}
+
+function facultyMessage(teacherId, date){
+  const t = teacherById(teacherId);
+  if(!t) return '';
+  const entries = effectiveClassesForTeacher(teacherId,date)
+    .sort((a,b)=>a.start.localeCompare(b.start));
+  if(!entries.length) return null;
+
+  const centers = {};
+  entries.forEach(c=>{
+    const b = batchById(c.batchId);
+    const center = b ? b.center : (c.customCenter || 'Other');
+    (centers[center] = centers[center] || []).push(c);
+  });
+  Object.values(centers).forEach(list=>list.sort((a,b)=>a.start.localeCompare(b.start)));
+  const order = ['Vasai','Virar'].filter(c=>centers[c])
+    .concat(Object.keys(centers).filter(c=>c!=='Vasai'&&c!=='Virar'));
+
+  const firstName = t.name.split(' ')[0];
+  let out = `Good Evening\n*${firstName} ${t.salutation||'Sir'}*\nDate:- ${fmtDateLong(date)}\nDay:- ${dayName(date)}\n`;
+
+  order.forEach(center=>{
+    out += `\n*${center} Center*\n`;
+    centers[center].forEach(c=>{
+      const b = batchById(c.batchId);
+      const batch = c.customBatchLabel || (b ? b.label : 'Batch');
+      if(c.isDoubt){
+        out += `_*${fmt12(c.start)} - ${fmt12(c.end)}: Doubt Session*_\n`;
+      }else{
+        out += `${fmt12(c.start)} - ${fmt12(c.end)}: ${batch}`;
+        if(c.subject) out += ` (${c.subject})`;
+        out += `\n`;
+      }
+    });
+  });
+
+  out += `\nThank you.`;
+  return out;
+}
+
+function studentMessage(batchId, date){
+  const b = batchById(batchId);
+  if(!b) return '';
+  const entries = effectiveClassesForBatch(batchId,date)
+    .sort((a,b2)=>a.start.localeCompare(b2.start));
+  if(!entries.length) return null;
+
+  const main = entries.filter(c=>!c.isDoubt);
+  const doubts = entries.filter(c=>c.isDoubt);
+  const rel = relLabel(date);
+  const dateText = fmtDateLong(date).replace(/^(\d+\w+) (\w+) (\d{4})$/,'$1 $2, $3');
+  const dateLine = `${rel ? rel+' ' : ''}${dateText} ${dayName(date)}`;
+
+  let out = `Good Evening\nDear Students\n(${b.label}) ${b.short}\n\n${dateLine}\nClass timings are as follows -\n`;
+
+  if(main.length){
+    const start = main.reduce((m,c)=>c.start<m?c.start:m, main[0].start);
+    const end = main.reduce((m,c)=>c.end>m?c.end:m, main[0].end);
+    out += `${fmt12(start)} to ${fmt12(end)}\n`;
+
+    const subjectPairs = [];
+    main.forEach(c=>{
+      const code = teacherById(c.teacherId)?.code || '';
+      const subject = c.subject || '';
+      if(!subject) return;
+      const pair = `${subject}${code ? '('+code+')' : ''}`;
+      if(!subjectPairs.includes(pair)) subjectPairs.push(pair);
+    });
+    if(subjectPairs.length) out += `\nSubject:- ${subjectPairs.join(', ')}\n`;
+  }else{
+    out += `No regular classes scheduled.\n`;
+  }
+
+  doubts.forEach(c=>{
+    out += `\n_*${fmt12(c.start)} - ${fmt12(c.end)}: Doubt Session*_\n`;
+  });
+  out += `\nThank You`;
+  return out;
+}
+
+/* ================= Reports ================= */
+function inRange(date, from, to){ return date>=from && date<=to; }
+function conductedClasses(teacherId, from, to){
+  const cap = todayStr();
+  const effTo = to < cap ? to : cap;
+  return STATE.classes.filter(c=> c.teacherId===teacherId && c.date<=cap && inRange(c.date, from, effTo));
+}
+function billableHours(c){ return Math.floor(durMin(c.start,c.end)/60); }
+function teacherStats(teacherId, from, to){
+  const list = conductedClasses(teacherId, from, to);
+  let totalHours = 0;
+  const byTopic = {};
+  const byBatch = {};
+  list.forEach(c=>{
+    const hrs = billableHours(c);
+    totalHours += hrs;
+    const b = batchById(c.batchId);
+    const bkey = c.customBatchLabel || (b ? `${b.center} ${b.label}` : 'Unknown batch');
+    const key = c.chapter ? `${c.subject?c.subject+': ':''}${c.chapter}` : ((c.subject||'General') + (c.topic ? ' — '+c.topic : ''));
+    if(!byTopic[key]) byTopic[key] = {hours:0, count:0, batches:{}};
+    byTopic[key].hours += hrs;
+    byTopic[key].count += 1;
+    if(!byTopic[key].batches[bkey]) byTopic[key].batches[bkey] = {hours:0, count:0};
+    byTopic[key].batches[bkey].hours += hrs;
+    byTopic[key].batches[bkey].count += 1;
+    if(!byBatch[bkey]) byBatch[bkey] = {hours:0, count:0};
+    byBatch[bkey].hours += hrs;
+    byBatch[bkey].count += 1;
+  });
+  return { count:list.length, hours: totalHours, byTopic, byBatch };
+}
+
+/* ================= Rendering ================= */
+const NAV_ITEMS = [
+  {id:'schedule', label:'Schedule', ic:'📅'},
+  {id:'faculty', label:'Faculty Timetables', ic:'🧑‍🏫'},
+  {id:'students', label:'Student Timetables', ic:'🎓'},
+  {id:'predict', label:'Weekly Plan', ic:'🔮'},
+  {id:'reports', label:'Hours & Reports', ic:'📊'},
+  {id:'setup', label:'Teachers & Batches', ic:'⚙️'},
+];
+
+function render(){
+  const now = new Date();
+  document.getElementById('todaylabel').textContent = `${dayName(todayStr())}, ${fmtDateLong(todayStr())}`;
+  document.getElementById('pagetitle').textContent = NAV_ITEMS.find(n=>n.id===UI.tab).label;
+
+  const nav = document.getElementById('nav');
+  nav.innerHTML = '';
+  NAV_ITEMS.forEach(item=>{
+    const btn = document.createElement('button');
+    btn.className = item.id===UI.tab ? 'active' : '';
+    btn.innerHTML = `<span class="ic">${item.ic}</span> ${item.label}`;
+    btn.onclick = ()=>{ UI.tab=item.id; render(); };
+    nav.appendChild(btn);
+  });
+
+  const mt = document.getElementById('mobiletabs');
+  mt.innerHTML = '';
+  NAV_ITEMS.forEach(item=>{
+    const btn = document.createElement('button');
+    btn.className = item.id===UI.tab ? 'active' : '';
+    btn.textContent = item.label;
+    btn.onclick = ()=>{ UI.tab=item.id; render(); };
+    mt.appendChild(btn);
+  });
+
+  const view = document.getElementById('view');
+  if(UI.tab==='schedule') view.innerHTML = '';
+  if(UI.tab==='schedule') renderSchedule(view);
+  else if(UI.tab==='faculty') renderFaculty(view);
+  else if(UI.tab==='students') renderStudents(view);
+  else if(UI.tab==='predict') renderPredict(view);
+  else if(UI.tab==='reports') renderReports(view);
+  else if(UI.tab==='setup') renderSetup(view);
+}
+
+function batchOptions(selectedId, selectedCenter){
+  return STATE.batches
+    .filter(b=> !selectedCenter || b.center===selectedCenter)
+    .map(b=>`<option value="${b.id}" ${b.id===selectedId?'selected':''}>${esc(b.name)} — ${esc(b.label)}</option>`).join('')
+    + `<option value="custom" ${selectedId==='custom'?'selected':''}>Other / custom batch…</option>`;
+}
+function teacherOptions(selectedId){
+  return STATE.teachers.map(t=>`<option value="${t.id}" ${t.id===selectedId?'selected':''}>${esc(t.name)} (${esc(t.code)})</option>`).join('');
+}
+function subjectOptions(selected){
+  return `<option value="">— none —</option>` + STATE.subjects.map(s=>`<option value="${s}" ${s===selected?'selected':''}>${esc(s)}</option>`).join('');
+}
+function centerOptions(selected){
+  const centers = Array.from(new Set(STATE.batches.map(b=>b.center)));
+  return centers.map(c=>`<option value="${c}" ${c===selected?'selected':''}>${esc(c)}</option>`).join('');
+}
+
+function renderSchedule(view){
+  const date = UI.scheduleDate;
+  const entries = classesFor(date).sort((a,b)=>a.start.localeCompare(b.start));
+  const conflictIds = new Set();
+  entries.forEach((a,i)=>{
+    entries.forEach((b,j)=>{
+      if(i>=j) return;
+      if(!timesOverlap(a.start,a.end,b.start,b.end)) return;
+      const sameTeacher = !!a.teacherId && a.teacherId===b.teacherId;
+      const sameBatch = a.batchId ? a.batchId===b.batchId : (a.customBatchLabel && a.customBatchLabel===b.customBatchLabel);
+      const exactSameSlot = a.start===b.start && a.end===b.end;
+      const flag = sameBatch || (sameTeacher && !exactSameSlot);
+      if(flag){ conflictIds.add(a.id); conflictIds.add(b.id); }
+    });
+  });
+  const editing = UI.editingId ? STATE.classes.find(c=>c.id===UI.editingId) : null;
+  const formCenter = editing ? (batchById(editing.batchId)?.center || editing.customCenter || '') : (UI._draftCenter || '');
+
+  view.innerHTML = `
+    <div class="grid2">
+      <div class="card">
+        <div class="cardhead">
+          <h2>${editing?'Edit class':'Add a class'}</h2>
+          ${editing?'<button class="btn ghost" id="cancelEdit">Cancel</button>':''}
+        </div>
+        <form id="classForm">
+          <div class="row">
+            <div class="field">
+              <label>Center</label>
+              <select id="f_center">${centerOptions(formCenter)}</select>
+            </div>
+            <div class="field">
+              <label>Batch</label>
+              <select id="f_batch">${batchOptions(editing?editing.batchId:'', formCenter)}</select>
+            </div>
+          </div>
+          <div class="field" id="customBatchWrap" style="display:none;">
+            <label>Custom batch label</label>
+            <input id="f_customBatch" placeholder="e.g. X (F.B)" value="${editing&&editing.customBatchLabel?esc(editing.customBatchLabel):''}">
+          </div>
+          <div class="row">
+            <div class="field">
+              <label>Teacher</label>
+              <select id="f_teacher">${teacherOptions(editing?editing.teacherId:'')}</select>
+            </div>
+            <div class="field">
+              <label>Subject</label>
+              <select id="f_subject">${subjectOptions(editing?editing.subject:'')}</select>
+            </div>
+          </div>
+          <div class="row">
+            <div class="field" style="flex:2;">
+              <label>Chapter (auto-continues this teacher's chapter for this batch)</label>
+              <input id="f_chapter" placeholder="e.g. Electromagnetic Induction" value="${editing&&editing.chapter?esc(editing.chapter):''}">
+            </div>
+            <div class="field" style="max-width:120px;">
+              <label>Lecture no.</label>
+              <input type="number" min="1" id="f_lecture" value="${editing&&editing.lectureNo?editing.lectureNo:1}">
+            </div>
+          </div>
+          <div class="checkfield">
+            <input type="checkbox" id="f_chapterDone" ${editing&&editing.chapterCompleted?'checked':''}>
+            <label for="f_chapterDone">Chapter completed after this lecture (next entry starts a new chapter)</label>
+          </div>
+          <div class="muted" id="chapterHint" style="font-size:11.5px; margin:-6px 0 12px;"></div>
+          <div class="row">
+            <div class="field">
+              <label>Start time</label>
+              <input type="time" id="f_start" value="${editing?editing.start:'09:30'}">
+            </div>
+            <div class="field">
+              <label>End time</label>
+              <input type="time" id="f_end" value="${editing?editing.end:'11:00'}">
+            </div>
+          </div>
+          <div class="checkfield">
+            <input type="checkbox" id="f_doubt" ${editing&&editing.isDoubt?'checked':''}>
+            <label for="f_doubt">This is a Doubt Session</label>
+          </div>
+          <button class="btn primary" type="submit">${editing?'Save changes':'Add to timetable'}</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="cardhead">
+          <h2>Timetable</h2>
+          <input type="date" id="scheduleDatePick" value="${date}" style="width:auto;">
+        </div>
+        <div class="row" style="margin-bottom:12px;">
+          <div class="field" style="flex:2;">
+            <label>Copy another day's schedule into ${fmtDateLong(date)}</label>
+            <div class="row" style="gap:8px;">
+              <input type="date" id="copyFromDate" style="width:auto;">
+              <button class="btn ghost" id="copyDayBtn" type="button">Duplicate into this date</button>
+            </div>
+          </div>
+        </div>
+        ${conflictIds.size ? `<div style="background:color-mix(in srgb, var(--coral) 12%, transparent); color:var(--coral); border-radius:7px; padding:8px 12px; font-size:12.5px; font-weight:600; margin-bottom:12px;">⚠ ${conflictIds.size} class${conflictIds.size>1?'es':''} below have overlapping times for the same teacher or batch — rows are highlighted.</div>` : ''}
+        ${entries.length ? `
+          <table>
+            <thead><tr><th>Time</th><th>Center</th><th>Batch</th><th>Teacher</th><th>Subject</th><th></th></tr></thead>
+            <tbody>
+              ${entries.map(c=>{
+                const b = batchById(c.batchId); const t = teacherById(c.teacherId);
+                const center = b?b.center:(c.customCenter||'—');
+                const flagged = conflictIds.has(c.id);
+                return `<tr${flagged?' style="background:color-mix(in srgb, var(--coral) 8%, transparent);"':''}>
+                  <td>${fmt12(c.start)}–${fmt12(c.end)}${flagged?' ⚠':''}</td>
+                  <td><span class="pill ${center==='Vasai'?'vasai':'virar'}">${esc(center)}</span></td>
+                  <td>${esc(c.customBatchLabel || (b?b.label:'—'))}</td>
+                  <td>${t?esc(t.name)+' ('+esc(t.code)+')':(c.isTest?'—':'—')}</td>
+                  <td>${c.isTest?'<span class="pill" style="background:color-mix(in srgb, var(--teal) 18%, transparent); color:var(--teal);">Test</span>'+((c.testTopics&&c.testTopics.length)?`<div class="muted" style="font-size:11.5px;">${esc(c.testTopics.map(tt=>tt.subject+': '+tt.topic).join(', '))}</div>`:''):(c.isDoubt?'<span class="pill doubt">Doubt</span>':esc(c.subject||'—')+ (chapterLabel(c)?`<div class="muted" style="font-size:11.5px;">${esc(chapterLabel(c))}</div>`:''))}</td>
+                  <td style="text-align:right; white-space:nowrap;">
+                    <button class="icon" data-edit="${c.id}" title="Edit">✏️</button>
+                    <button class="icon" data-del="${c.id}" title="Delete">🗑️</button>
+                  </td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        ` : `<div class="empty">No classes added for ${fmtDateLong(date)} yet.</div>`}
+      </div>
+    </div>
+  `;
+
+  document.getElementById('scheduleDatePick').onchange = (e)=>{ UI.scheduleDate=e.target.value; UI.editingId=null; render(); };
+  document.getElementById('copyDayBtn').onclick = ()=>{
+    const from = document.getElementById('copyFromDate').value;
+    if(!from){ toast('Pick a date to copy from'); return; }
+    duplicateDay(from, date);
+  };
+
+  const centerSel = document.getElementById('f_center');
+  const batchSel = document.getElementById('f_batch');
+  const customWrap = document.getElementById('customBatchWrap');
+  function syncBatchOptions(){
+    batchSel.innerHTML = batchOptions(editing?editing.batchId:'', centerSel.value);
+    customWrap.style.display = batchSel.value==='custom' ? 'block' : 'none';
+  }
+  if(!centerSel.value && STATE.batches.length) centerSel.value = STATE.batches[0].center;
+  syncBatchOptions();
+  if(editing && !editing.batchId) batchSel.value='custom';
+  customWrap.style.display = batchSel.value==='custom' ? 'block' : 'none';
+  centerSel.onchange = syncBatchOptions;
+  batchSel.onchange = ()=>{ customWrap.style.display = batchSel.value==='custom' ? 'block' : 'none'; };
+
+  const teacherSel = document.getElementById('f_teacher');
+  const subjectSel = document.getElementById('f_subject');
+  const chapterInput = document.getElementById('f_chapter');
+  const lectureInput = document.getElementById('f_lecture');
+  const chapterHint = document.getElementById('chapterHint');
+  function currentProgress(){
+    if(!teacherSel.value) return null;
+    const key = teacherSel.value + '|' + (batchSel.value==='custom' ? ('custom:'+(document.getElementById('f_customBatch').value.trim()||'')) : batchSel.value);
+    return (STATE.chapterProgress && STATE.chapterProgress[key]) || null;
+  }
+  function applyChapterSuggestion(force){
+    const prog = currentProgress();
+    if(!prog){ chapterHint.textContent = ''; return; }
+    const typed = chapterInput.value.trim().toLowerCase();
+    const sameChapter = typed && typed === prog.chapter.trim().toLowerCase();
+    if(force || !chapterInput.value.trim()){
+      if(!prog.completed){
+        chapterInput.value = prog.chapter;
+        lectureInput.value = prog.lectureNo + 1;
+        chapterHint.textContent = `Continuing "${prog.chapter}" — last was Lecture ${prog.lectureNo}.`;
+      } else {
+        chapterInput.value = '';
+        lectureInput.value = 1;
+        chapterHint.textContent = `Previous chapter "${prog.chapter}" was marked completed — enter the new chapter.`;
+      }
+    } else if(sameChapter){
+      lectureInput.value = prog.lectureNo + 1;
+      chapterHint.textContent = `Continuing "${prog.chapter}" — last was Lecture ${prog.lectureNo}.`;
+    } else {
+      lectureInput.value = 1;
+      chapterHint.textContent = typed ? 'New chapter for this teacher/batch — starting at Lecture 1.' : '';
+    }
+  }
+  teacherSel.addEventListener('change', ()=>applyChapterSuggestion(true));
+  batchSel.addEventListener('change', ()=>applyChapterSuggestion(true));
+  centerSel.addEventListener('change', ()=>applyChapterSuggestion(true));
+  chapterInput.addEventListener('input', ()=>applyChapterSuggestion(false));
+  if(!editing) applyChapterSuggestion(true);
+  else { const prog=currentProgress(); if(prog) chapterHint.textContent = `Last recorded for this teacher/batch: "${prog.chapter}", Lecture ${prog.lectureNo}${prog.completed?' (completed)':''}.`; }
+
+  if(editing){
+    const cancelBtn = document.getElementById('cancelEdit');
+    if(cancelBtn) cancelBtn.onclick = ()=>{ UI.editingId=null; render(); };
+  }
+
+  document.getElementById('classForm').onsubmit = (e)=>{
+    e.preventDefault();
+    const batchVal = batchSel.value;
+    const entry = {
+      date,
+      batchId: batchVal==='custom' ? null : batchVal,
+      customBatchLabel: batchVal==='custom' ? document.getElementById('f_customBatch').value.trim() : null,
+      customCenter: batchVal==='custom' ? centerSel.value : null,
+      teacherId: document.getElementById('f_teacher').value,
+      subject: document.getElementById('f_subject').value,
+      chapter: document.getElementById('f_chapter').value.trim(),
+      lectureNo: parseInt(document.getElementById('f_lecture').value, 10) || 1,
+      chapterCompleted: document.getElementById('f_chapterDone').checked,
+      start: document.getElementById('f_start').value,
+      end: document.getElementById('f_end').value,
+      isDoubt: document.getElementById('f_doubt').checked,
+    };
+    if(!entry.teacherId){ toast('Please choose a teacher'); return; }
+    if(!entry.start || !entry.end || entry.end<=entry.start){ toast('Check the start/end time'); return; }
+    const conflicts = findConflicts(entry, editing?editing.id:null);
+    if(conflicts.length){
+      const msg = 'This overlaps with:\n' + conflicts.map(describeConflict).join('\n') + '\n\nAdd it anyway?';
+      if(!confirm(msg)) return;
+    }
+    if(editing){ updateClass(editing.id, entry); UI.editingId=null; }
+    else addClass(entry);
+  };
+
+  view.querySelectorAll('[data-edit]').forEach(b=> b.onclick = ()=>{ UI.editingId=b.getAttribute('data-edit'); render(); });
+  view.querySelectorAll('[data-del]').forEach(b=> b.onclick = ()=>{ if(confirm('Delete this class?')) deleteClass(b.getAttribute('data-del')); });
+}
+
+function renderFaculty(view){
+  const date = UI.facultyDate;
+  view.innerHTML = `
+    <div class="card" style="margin-bottom:18px;">
+      <div class="row" style="align-items:flex-end;">
+        <div class="field" style="max-width:220px;">
+          <label>Date</label>
+          <input type="date" id="facDate" value="${date}">
+        </div>
+        <div class="muted" style="padding-bottom:9px;">${dayName(date)} · ${relLabel(date)||''}</div>
+      </div>
+    </div>
+    <div id="facList"></div>
+  `;
+  document.getElementById('facDate').onchange = (e)=>{ UI.facultyDate=e.target.value; render(); };
+  const list = document.getElementById('facList');
+  STATE.teachers.forEach(t=>{
+    const msg = facultyMessage(t.id, date);
+    const box = document.createElement('div');
+    box.className = 'msg-card';
+    box.innerHTML = `
+      <div class="msg-head">
+        <span class="who">${esc(t.name)} (${esc(t.code)})</span>
+        ${msg ? `<button class="btn ghost" data-copy="${t.id}">Copy message</button>` : ''}
+      </div>
+      ${msg ? `<div class="msg-body">${esc(msg).replace(/\*(.+?)\*/g,'<b>$1</b>')}</div>` : `<div class="msg-empty">No classes scheduled for this date.</div>`}
+    `;
+    list.appendChild(box);
+  });
+  list.querySelectorAll('[data-copy]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const t = teacherById(btn.getAttribute('data-copy'));
+      copyText(facultyMessage(t.id, date), t.name+"'s message");
+    };
+  });
+}
+
+function renderStudents(view){
+  const date = UI.studentDate;
+  view.innerHTML = `
+    <div class="card" style="margin-bottom:18px;">
+      <div class="row" style="align-items:flex-end;">
+        <div class="field" style="max-width:220px;">
+          <label>Date</label>
+          <input type="date" id="stuDate" value="${date}">
+        </div>
+        <div class="muted" style="padding-bottom:9px;">${dayName(date)} · ${relLabel(date)||''}</div>
+      </div>
+    </div>
+    <div id="stuList"></div>
+  `;
+  document.getElementById('stuDate').onchange = (e)=>{ UI.studentDate=e.target.value; render(); };
+  const list = document.getElementById('stuList');
+  STATE.batches.forEach(b=>{
+    const msg = studentMessage(b.id, date);
+    const box = document.createElement('div');
+    box.className = 'msg-card';
+    box.innerHTML = `
+      <div class="msg-head">
+        <span class="who">${esc(b.name)} — ${esc(b.label)}</span>
+        ${msg ? `<button class="btn ghost" data-copy="${b.id}">Copy message</button>` : ''}
+      </div>
+      ${msg ? `<div class="msg-body">${esc(msg).replace(/_\*(.+?)\*_/g,'<b><i>$1</i></b>')}</div>` : `<div class="msg-empty">No classes scheduled for this date.</div>`}
+    `;
+    list.appendChild(box);
+  });
+  list.querySelectorAll('[data-copy]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const b = batchById(btn.getAttribute('data-copy'));
+      copyText(studentMessage(b.id, date), b.name+"'s message");
+    };
+  });
+}
+
+function renderReports(view){
+  const ranges = [
+    {id:'week', label:'This week', from:weekStartStr(), to:todayStr()},
+    {id:'month', label:'This month', from:monthStartStr(), to:todayStr()},
+    {id:'all', label:'All time', from:'2000-01-01', to:todayStr()},
+    {id:'custom', label:'Custom range', from:UI.reportFrom, to:UI.reportTo},
+  ];
+  if(UI.reportRange!=='custom'){
+    const r = ranges.find(r=>r.id===UI.reportRange);
+    UI.reportFrom = r.from; UI.reportTo = r.to;
+  }
+  view.innerHTML = `
+    <div class="card" style="margin-bottom:18px;">
+      <div class="tabbar" id="rangeTabs">
+        ${ranges.map(r=>`<button class="${UI.reportRange===r.id?'active':''}" data-range="${r.id}">${r.label}</button>`).join('')}
+      </div>
+      ${UI.reportRange==='custom' ? `
+        <div class="row">
+          <div class="field" style="max-width:180px;"><label>From</label><input type="date" id="rFrom" value="${UI.reportFrom}"></div>
+          <div class="field" style="max-width:180px;"><label>To</label><input type="date" id="rTo" value="${UI.reportTo}"></div>
+        </div>
+      ` : `<div class="muted" style="font-size:12.5px;">${fmtDateLong(UI.reportFrom)} – ${fmtDateLong(UI.reportTo)} (classes counted only up to today)</div>`}
+    </div>
+    <div class="card">
+      <div class="cardhead">
+        <h2>Classes conducted &amp; hours by teacher</h2>
+        <select id="teacherFilter" style="width:auto;">
+          <option value="">All teachers</option>
+          ${STATE.teachers.map(t=>`<option value="${t.id}" ${UI.reportTeacher===t.id?'selected':''}>${esc(t.name)}</option>`).join('')}
+        </select>
+      </div>
+      <table>
+        <thead><tr><th>Teacher</th><th>Classes conducted</th><th>Hours taught</th><th></th></tr></thead>
+        <tbody id="reportBody"></tbody>
+      </table>
+    </div>
+  `;
+  document.querySelectorAll('#rangeTabs button').forEach(b=>{
+    b.onclick = ()=>{ UI.reportRange = b.getAttribute('data-range'); render(); };
+  });
+  if(UI.reportRange==='custom'){
+    document.getElementById('rFrom').onchange = (e)=>{ UI.reportFrom=e.target.value; render(); };
+    document.getElementById('rTo').onchange = (e)=>{ UI.reportTo=e.target.value; render(); };
+  }
+  document.getElementById('teacherFilter').onchange = (e)=>{ UI.reportTeacher=e.target.value; render(); };
+
+  const body = document.getElementById('reportBody');
+  const teachers = UI.reportTeacher ? STATE.teachers.filter(t=>t.id===UI.reportTeacher) : STATE.teachers;
+  if(!teachers.length){ body.innerHTML = `<tr><td colspan="4" class="empty">No teachers yet — add some in Teachers &amp; Batches.</td></tr>`; return; }
+  body.innerHTML = teachers.map(t=>{
+    const stats = teacherStats(t.id, UI.reportFrom, UI.reportTo);
+    const topicRows = Object.entries(stats.byTopic).sort((a,b)=>b[1].hours-a[1].hours);
+    const batchRows = Object.entries(stats.byBatch).sort((a,b)=>b[1].hours-a[1].hours);
+    return `
+      <tr>
+        <td>${esc(t.name)} <span class="muted">(${esc(t.code)})</span></td>
+        <td>${stats.count}</td>
+        <td>${stats.hours} hrs</td>
+        <td></td>
+      </tr>
+      <tr class="subrow"><td colspan="4" style="padding-top:0;">
+        <details class="topicbox">
+          <summary>Hours by batch (${batchRows.length})</summary>
+          ${batchRows.length ? `
+            <table style="margin-top:4px;">
+              <thead><tr><th>Batch</th><th style="text-align:right;">Lectures</th><th style="text-align:right;">Hours</th></tr></thead>
+              ${batchRows.map(([k,v])=>`<tr><td>${esc(k)}</td><td style="text-align:right;">${v.count}</td><td style="text-align:right;">${v.hours} hrs</td></tr>`).join('')}
+            </table>
+          ` : `<div class="muted" style="padding:4px 0;">No completed classes in this range.</div>`}
+        </details>
+        <details class="topicbox">
+          <summary>Lectures by chapter (${topicRows.length})</summary>
+          ${topicRows.length ? `
+            <table style="margin-top:4px;">
+              <thead><tr><th>Chapter</th><th style="text-align:right;">Lectures</th><th style="text-align:right;">Hours</th></tr></thead>
+              ${topicRows.map(([k,v])=>{
+                const batchRows2 = Object.entries(v.batches).sort((a,b)=>b[1].hours-a[1].hours);
+                const sub = batchRows2.map(([bk,bv])=>`<tr><td style="padding-left:20px; color:var(--text-muted); font-size:12px;">↳ ${esc(bk)}</td><td style="text-align:right; color:var(--text-muted); font-size:12px;">${bv.count}</td><td style="text-align:right; color:var(--text-muted); font-size:12px;">${bv.hours} hrs</td></tr>`).join('');
+                return `<tr><td><b>${esc(k)}</b></td><td style="text-align:right;"><b>${v.count}</b></td><td style="text-align:right;"><b>${v.hours} hrs</b></td></tr>${sub}`;
+              }).join('')}
+            </table>
+          ` : `<div class="muted" style="padding:4px 0;">No completed classes with chapters in this range.</div>`}
+        </details>
+      </td></tr>
+    `;
+  }).join('');
+}
+
+function nextMondayStr(){
+  const d = new Date();
+  const day = d.getDay();
+  const diff = (8 - day) % 7 || 7;
+  d.setDate(d.getDate() + diff);
+  return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+}
+
+function renderPredict(view){
+  const subTabs = [
+    {id:'pattern', label:'Weekly Pattern'},
+    {id:'holidays', label:'Holidays'},
+    {id:'preview', label:'Predict & Review'},
+  ];
+  view.innerHTML = `
+    <div class="tabbar" id="predictSubTabs">
+      ${subTabs.map(s=>`<button class="${UI.predictSubTab===s.id?'active':''}" data-sub="${s.id}">${s.label}</button>`).join('')}
+    </div>
+    <div id="predictSubView"></div>
+  `;
+  view.querySelectorAll('#predictSubTabs button').forEach(b=>{
+    b.onclick = ()=>{ UI.predictSubTab = b.getAttribute('data-sub'); render(); };
+  });
+  const sub = document.getElementById('predictSubView');
+  if(UI.predictSubTab==='pattern') renderPatternEditor(sub);
+  else if(UI.predictSubTab==='holidays') renderHolidaysEditor(sub);
+  else renderWeekPreview(sub);
+}
+
+function renderPatternEditor(sub){
+  const day = UI.patternDay;
+  if(!UI.patternBatch && STATE.batches.length) UI.patternBatch = STATE.batches[0].id;
+  const addBatch = UI.patternBatch;
+  const batchesWithSlots = STATE.batches.filter(b=>patternSlotsFor(b.id, day).length);
+  sub.innerHTML = `
+    <div class="card" style="margin-bottom:18px;">
+      <div class="cardhead"><h2>Your normal recurring week</h2></div>
+      <div class="muted" style="font-size:12.5px; margin-bottom:12px;">Set the teachers/times each batch normally has on each weekday. This is the template "Predict &amp; Review" will use to build next week's schedule.</div>
+      <div class="tabbar" id="pt_days">
+        ${WEEKDAYS.map(w=>`<button class="${day===w.id?'active':''}" data-day="${w.id}">${w.label}</button>`).join('')}
+      </div>
+    </div>
+    <div class="cardhead" style="margin-bottom:10px;"><h2>${WEEKDAYS.find(w=>w.id===day).label} — every batch</h2></div>
+    ${batchesWithSlots.length ? batchesWithSlots.map(b=>{
+      const slots = patternSlotsFor(b.id, day).slice().sort((a,c)=>a.start.localeCompare(c.start));
+      return `
+      <div class="card" style="margin-bottom:14px;">
+        <div class="cardhead"><h2>${esc(b.center)} ${esc(b.label)} <span class="muted">— ${esc(b.name)}</span></h2></div>
+        <table>
+          <thead><tr><th>Time</th><th>Teacher</th><th>Subject</th><th>Online</th><th></th></tr></thead>
+          <tbody>
+            ${slots.map(s=>{ const t=teacherById(s.teacherId); return `<tr>
+              <td>${fmt12(s.start)}–${fmt12(s.end)}</td>
+              <td>${t?esc(t.name)+' ('+esc(t.code)+')':'—'}</td>
+              <td>${esc(s.subject||'—')}</td>
+              <td>${s.online?'Yes':'—'}</td>
+              <td style="text-align:right;"><button class="icon" data-delslot="${b.id}|${s.id}">🗑️</button></td>
+            </tr>`; }).join('')}
+          </tbody>
+        </table>
+      </div>
+    `; }).join('') : `<div class="card"><div class="empty">No batch has a slot set for ${WEEKDAYS.find(w=>w.id===day).label} yet.</div></div>`}
+    <div class="card">
+      <div class="cardhead"><h2>Add a slot to ${WEEKDAYS.find(w=>w.id===day).label}</h2></div>
+      <form id="slotForm">
+        <div class="row">
+          <div class="field"><label>Batch</label><select id="ps_batch">${STATE.batches.map(b=>`<option value="${b.id}" ${b.id===addBatch?'selected':''}>${esc(b.name)} — ${esc(b.label)}</option>`).join('')}</select></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>Teacher</label><select id="ps_teacher">${teacherOptions('')}</select></div>
+          <div class="field"><label>Subject</label><select id="ps_subject">${subjectOptions('')}</select></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>Start time</label><input type="time" id="ps_start" value="09:30"></div>
+          <div class="field"><label>End time</label><input type="time" id="ps_end" value="12:45"></div>
+        </div>
+        <div class="checkfield">
+          <input type="checkbox" id="ps_online">
+          <label for="ps_online">This slot is conducted online</label>
+        </div>
+        <button class="btn primary" type="submit">+ Add slot</button>
+      </form>
+    </div>
+  `;
+  sub.querySelectorAll('#pt_days button').forEach(b=>{
+    b.onclick = ()=>{ UI.patternDay=b.getAttribute('data-day'); render(); };
+  });
+  sub.querySelectorAll('[data-delslot]').forEach(b=>{
+    b.onclick = ()=>{
+      const [batchId, slotId] = b.getAttribute('data-delslot').split('|');
+      if(confirm('Remove this slot from the weekly pattern?')) deletePatternSlot(batchId, day, slotId);
+    };
+  });
+  document.getElementById('slotForm').onsubmit = (e)=>{
+    e.preventDefault();
+    const batchId = document.getElementById('ps_batch').value;
+    const teacherId = document.getElementById('ps_teacher').value;
+    if(!teacherId){ toast('Choose a teacher'); return; }
+    UI.patternBatch = batchId;
+    addPatternSlot(batchId, day, {
+      teacherId,
+      subject: document.getElementById('ps_subject').value,
+      start: document.getElementById('ps_start').value,
+      end: document.getElementById('ps_end').value,
+      online: document.getElementById('ps_online').checked,
+    });
+  };
+}
+
+function renderHolidaysEditor(sub){
+  const upcoming = STATE.holidays.slice().sort((a,b)=>a.date.localeCompare(b.date));
+  sub.innerHTML = `
+    <div class="card" style="margin-bottom:18px;">
+      <div class="cardhead"><h2>Log a teacher's holiday</h2></div>
+      <div class="muted" style="font-size:12.5px; margin-bottom:12px;">Add every day a teacher is off — "Predict &amp; Review" will skip their slots on these dates and flag them for a substitute.</div>
+      <form id="holForm" class="row" style="align-items:flex-end;">
+        <div class="field"><label>Teacher</label><select id="h_teacher">${teacherOptions('')}</select></div>
+        <div class="field" style="max-width:180px;"><label>Date</label><input type="date" id="h_date" required></div>
+        <div class="field"><label>Reason (optional)</label><input id="h_reason" placeholder="e.g. Personal leave"></div>
+        <button class="btn primary" type="submit">+ Add</button>
+      </form>
+    </div>
+    <div class="card">
+      <div class="cardhead"><h2>Holidays (${upcoming.length})</h2></div>
+      <table>
+        <thead><tr><th>Date</th><th>Teacher</th><th>Reason</th><th></th></tr></thead>
+        <tbody>
+          ${upcoming.map(h=>{ const t=teacherById(h.teacherId); return `<tr>
+            <td>${fmtDateLong(h.date)} <span class="muted">(${dayName(h.date)})</span></td>
+            <td>${t?esc(t.name):'—'}</td>
+            <td class="muted">${esc(h.reason||'—')}</td>
+            <td style="text-align:right;"><button class="icon" data-delhol="${h.id}">🗑️</button></td>
+          </tr>`; }).join('')}
+          ${!upcoming.length ? `<tr><td colspan="4" class="empty">No holidays logged yet.</td></tr>` : ''}
+        </tbody>
+      </table>
+    </div>
+  `;
+  document.getElementById('holForm').onsubmit = (e)=>{
+    e.preventDefault();
+    const teacherId = document.getElementById('h_teacher').value;
+    const date = document.getElementById('h_date').value;
+    if(!teacherId || !date){ toast('Choose a teacher and date'); return; }
+    addHoliday({ teacherId, date, reason: document.getElementById('h_reason').value.trim() });
+  };
+  sub.querySelectorAll('[data-delhol]').forEach(b=>{
+    b.onclick = ()=>{ if(confirm('Remove this holiday?')) deleteHoliday(b.getAttribute('data-delhol')); };
+  });
+}
+
+function renderWeekPreview(sub){
+  if(!UI.weekStart) UI.weekStart = nextMondayStr();
+  const allDays = generateWeekPreview(UI.weekStart);
+  const filterBatch = UI.previewBatchFilter;
+  const days = allDays.map(d=>({ ...d, rows: filterBatch ? d.rows.filter(r=>r.batchId===filterBatch) : d.rows }));
+  const totalRows = days.reduce((s,d)=>s+d.rows.length,0);
+  const holidayRows = days.reduce((s,d)=>s+d.rows.filter(r=>r.onHoliday).length,0);
+  // "Will be added" / Apply always acts on the FULL week (all batches), regardless of the filter shown.
+  const newRowsAll = allDays.reduce((s,d)=>s+d.rows.filter(r=>!r.onHoliday && !r.alreadyScheduled).length,0);
+  sub.innerHTML = `
+    <div class="card" style="margin-bottom:18px;">
+      <div class="row" style="align-items:flex-end;">
+        <div class="field" style="max-width:200px;">
+          <label>Week starting (Monday)</label>
+          <input type="date" id="weekStartPick" value="${UI.weekStart}">
+        </div>
+        <div class="field">
+          <label>Show batch</label>
+          <select id="previewBatchPick">
+            <option value="">All batches</option>
+            ${STATE.batches.map(b=>`<option value="${b.id}" ${b.id===filterBatch?'selected':''}>${esc(b.name)} — ${esc(b.label)}</option>`).join('')}
+          </select>
+        </div>
+        <button class="btn primary" id="applyWeekBtn" style="align-self:flex-end;">Apply week to Schedule</button>
+      </div>
+      <div class="statrow" style="margin-top:14px;">
+        <div class="stat"><div class="n">${totalRows}</div><div class="l">Slots shown</div></div>
+        <div class="stat"><div class="n">${newRowsAll}</div><div class="l">Will be added (all batches)</div></div>
+        <div class="stat"><div class="n">${holidayRows}</div><div class="l">Need a substitute</div></div>
+      </div>
+      ${!totalRows ? `<div class="muted" style="margin-top:10px; font-size:12.5px;">${filterBatch ? 'No pattern slots for this batch.' : "No weekly pattern set yet — go to \"Weekly Pattern\" to define each batch's normal week first."}</div>` : ''}
+    </div>
+    ${days.map(day=>`
+      <div class="card" style="margin-bottom:14px;">
+        <div class="cardhead"><h2>${day.dayLabel} <span class="muted">— ${fmtDateLong(day.date)}</span></h2></div>
+        ${day.rows.length ? `
+          <table>
+            <thead><tr>${filterBatch?'':'<th>Batch</th>'}<th>Time</th><th>Teacher</th><th>Chapter</th><th>Status</th></tr></thead>
+            <tbody>
+              ${day.rows.map(r=>{
+                const b = batchById(r.batchId); const t = teacherById(r.slot.teacherId);
+                let status = '<span class="muted">Will be added</span>';
+                if(r.onHoliday) status = `<span class="pill" style="background:color-mix(in srgb, var(--coral) 16%, transparent); color:var(--coral);">⚠ Holiday — needs substitute</span>`;
+                else if(r.alreadyScheduled) status = `<span class="muted">Already on schedule</span>`;
+                return `<tr${r.onHoliday?' style="background:color-mix(in srgb, var(--coral) 8%, transparent);"':''}>
+                  ${filterBatch?'':`<td>${b?esc(b.center+' '+b.label):'—'}</td>`}
+                  <td>${fmt12(r.slot.start)}–${fmt12(r.slot.end)}</td>
+                  <td>${t?esc(t.name):'—'}</td>
+                  <td class="muted">${r.auto.chapter?esc(r.auto.chapter)+' (Lecture '+r.auto.lectureNo+')':'—'}</td>
+                  <td>${status}</td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        ` : `<div class="empty">No pattern slots for this weekday${filterBatch?' for this batch':''}.</div>`}
+      </div>
+    `).join('')}
+  `;
+  document.getElementById('weekStartPick').onchange = (e)=>{ UI.weekStart=e.target.value; render(); };
+  document.getElementById('previewBatchPick').onchange = (e)=>{ UI.previewBatchFilter=e.target.value; render(); };
+  document.getElementById('applyWeekBtn').onclick = ()=>{
+    if(!newRowsAll){ toast('Nothing new to add for this week'); return; }
+    if(confirm(`Add ${newRowsAll} classes to the Schedule for this week (all batches)? Holiday slots will be skipped.`)) applyWeekToSchedule(UI.weekStart);
+  };
+}
+
+function renderSetup(view){
+  view.innerHTML = `
+    <div class="grid2">
+      <div class="card">
+        <div class="cardhead"><h2>Teachers</h2></div>
+        <table>
+          <thead><tr><th>Name</th><th>Code</th><th>Title</th><th></th></tr></thead>
+          <tbody>
+            ${STATE.teachers.map(t=>`<tr>
+              <td>${esc(t.name)}</td><td>${esc(t.code)}</td><td>${esc(t.salutation||'Sir')}</td>
+              <td style="text-align:right;"><button class="icon" data-deltea="${t.id}">🗑️</button></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+        <form id="teacherForm" style="margin-top:14px;">
+          <div class="row">
+            <div class="field"><label>Full name</label><input id="nt_name" required></div>
+            <div class="field" style="max-width:90px;"><label>Code</label><input id="nt_code" maxlength="4" required></div>
+            <div class="field" style="max-width:110px;"><label>Title</label>
+              <select id="nt_sal"><option>Sir</option><option>Ma'am</option></select>
+            </div>
+          </div>
+          <button class="btn ghost" type="submit">+ Add teacher</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="cardhead"><h2>Batches</h2></div>
+        <table>
+          <thead><tr><th>Batch</th><th>Center</th><th>Label</th><th></th></tr></thead>
+          <tbody>
+            ${STATE.batches.map(b=>`<tr>
+              <td>${esc(b.name)}</td><td>${esc(b.center)}</td><td>${esc(b.label)} (${esc(b.short)})</td>
+              <td style="text-align:right;"><button class="icon" data-delbat="${b.id}">🗑️</button></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+        <form id="batchForm" style="margin-top:14px;">
+          <div class="row">
+            <div class="field"><label>Internal name</label><input id="nb_name" placeholder="e.g. Vasai 12th 3" required></div>
+            <div class="field"><label>Center</label><input id="nb_center" placeholder="Vasai" required></div>
+          </div>
+          <div class="row">
+            <div class="field"><label>Display label</label><input id="nb_label" placeholder="e.g. XII JEE 3" required></div>
+            <div class="field" style="max-width:90px;"><label>Short code</label><input id="nb_short" placeholder="VS" maxlength="4" required></div>
+          </div>
+          <button class="btn ghost" type="submit">+ Add batch</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+      <div class="cardhead"><h2>Subjects</h2></div>
+      <div class="row" style="margin-bottom:10px;">
+        ${STATE.subjects.map(s=>`<span class="pill vasai" style="display:flex;align-items:center;gap:6px;">${esc(s)} <button class="icon" style="padding:0;" data-delsub="${esc(s)}">✕</button></span>`).join('')}
+      </div>
+      <form id="subjectForm" class="row" style="align-items:flex-end;">
+        <div class="field" style="max-width:220px;"><label>New subject</label><input id="ns_name" required></div>
+        <button class="btn ghost" type="submit">+ Add</button>
+      </form>
+    </div>
+  `;
+
+  document.getElementById('teacherForm').onsubmit = (e)=>{
+    e.preventDefault();
+    saveTeacher({ name: document.getElementById('nt_name').value.trim(), code: document.getElementById('nt_code').value.trim().toUpperCase(), salutation: document.getElementById('nt_sal').value });
+  };
+  view.querySelectorAll('[data-deltea]').forEach(b=> b.onclick = ()=> deleteTeacher(b.getAttribute('data-deltea')));
+
+  document.getElementById('batchForm').onsubmit = (e)=>{
+    e.preventDefault();
+    saveBatch({
+      name: document.getElementById('nb_name').value.trim(),
+      center: document.getElementById('nb_center').value.trim(),
+      label: document.getElementById('nb_label').value.trim(),
+      short: document.getElementById('nb_short').value.trim().toUpperCase(),
+    });
+  };
+  view.querySelectorAll('[data-delbat]').forEach(b=> b.onclick = ()=> deleteBatch(b.getAttribute('data-delbat')));
+
+  document.getElementById('subjectForm').onsubmit = (e)=>{
+    e.preventDefault();
+    addSubject(document.getElementById('ns_name').value.trim());
+  };
+  view.querySelectorAll('[data-delsub]').forEach(b=> b.onclick = ()=> removeSubject(b.getAttribute('data-delsub')));
+}
+
+render();
 </script>
-</body>
-</html>
+
+
+<script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});</script>
+</body></html>
