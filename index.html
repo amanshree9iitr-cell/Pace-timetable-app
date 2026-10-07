@@ -200,12 +200,13 @@
       <div class="sub">Vasai &amp; Virar Centers</div>
     </div>
     <nav id="nav"><button class=""><span class="ic">📅</span> Schedule</button><button class=""><span class="ic">🧑‍🏫</span> Faculty Timetables</button><button class=""><span class="ic">🎓</span> Student Timetables</button><button class=""><span class="ic">📊</span> Hours &amp; Reports</button><button class="active"><span class="ic">⚙️</span> Teachers &amp; Batches</button></nav>
-    <div id="sidefoot">Timetable &amp; class-hours tracker</div>
+    <div id="sidefoot">Timetable &amp; class-hours tracker · Final Copy/WhatsApp Build</div>
   </div>
 
   <div id="main">
     <div id="mobiletabs"><button class="">Schedule</button><button class="">Faculty Timetables</button><button class="">Student Timetables</button><button class="">Hours &amp; Reports</button><button class="active">Teachers &amp; Batches</button></div>
-    <div class="topbar">
+    <div id="copyHelp" style="display:none;position:fixed;left:12px;right:12px;bottom:12px;z-index:9999;background:#152238;color:white;padding:12px 14px;border-radius:10px;font-size:13px;box-shadow:0 6px 24px rgba(0,0,0,.2)">For WhatsApp: open Faculty Timetables or Student Timetables → choose the date → tap <b>Copy Message</b>. If iPad blocks clipboard access, tap <b>Select Text</b>, then Copy.</div>
+<div class="topbar">
       <h1 id="pagetitle">Teachers &amp; Batches</h1>
       <div class="topbar-right">
         <span class="today" id="todaylabel">Sunday, 20th Sep 2026</span>
@@ -342,7 +343,7 @@ if(!STATE.chapterProgress) STATE.chapterProgress = {};
 if(!STATE.weeklyPattern) STATE.weeklyPattern = {};
 if(!STATE.holidays) STATE.holidays = [];
 const UI = {
-  tab: 'schedule',
+  tab: 'aiimport',
   scheduleDate: todayStr(),
   facultyDate: tomorrowStr(),
   studentDate: tomorrowStr(),
@@ -600,9 +601,13 @@ function toast(msg){
 }
 function copyText(text, label){
   const done = ()=> toast((label||'Message')+' copied');
-  if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(text).then(done).catch(()=>fallbackCopy(text,done));
-  } else fallbackCopy(text,done);
+  try{
+    if(navigator.clipboard && window.isSecureContext){
+      navigator.clipboard.writeText(text).then(done).catch(()=>fallbackCopy(text,done));
+    } else {
+      fallbackCopy(text,done);
+    }
+  }catch(e){ fallbackCopy(text,done); }
 }
 function shareWhatsApp(text){if(!text)return;window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank');}
 
@@ -1162,14 +1167,28 @@ function renderFaculty(view){
     box.innerHTML = `
       <div class="msg-head">
         <span class="who">${esc(t.name)} (${esc(t.code)})</span>
-        ${msg ? `<div class="share-row"><button class="btn ghost" data-copy="${t.id}">Copy message</button><button class="btn ghost" data-wa="${t.id}">WhatsApp</button></div>` : ''}
+        ${msg ? `<div class="share-row">
+          <button class="btn primary" data-copy="${t.id}">Copy Message</button>
+          <button class="btn ghost" data-select="${t.id}">Select Text</button>
+          <button class="btn ghost" data-wa="${t.id}">Share on WhatsApp</button>
+        </div>` : ''}
       </div>
-      ${msg ? `<div class="msg-body">${esc(msg).replace(/\*(.+?)\*/g,'<b>$1</b>')}</div>` : `<div class="msg-empty">No classes scheduled for this date.</div>`}
+      ${msg ? `<textarea class="wa-message" data-msg="${t.id}" readonly spellcheck="false" style="width:100%;min-height:230px;margin-top:10px;resize:vertical;font:14px/1.55 -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;white-space:pre-wrap;">${esc(msg)}</textarea>` : `<div class="msg-empty">No classes scheduled for this date.</div>`}
     `;
     list.appendChild(box);
   });
-  list.querySelectorAll('[data-copy]').forEach(btn=>btn.onclick=()=>{const t=teacherById(btn.getAttribute('data-copy'));copyText(facultyMessage(t.id,date),t.name+' message');});
-  list.querySelectorAll('[data-wa]').forEach(btn=>btn.onclick=()=>shareWhatsApp(facultyMessage(btn.getAttribute('data-wa'),date)));
+  list.querySelectorAll('[data-copy]').forEach(btn=>btn.onclick=()=>{
+    const id=btn.getAttribute('data-copy'), ta=list.querySelector(`textarea[data-msg="${id}"]`);
+    if(ta){ copyText(ta.value, 'Faculty message'); }
+  });
+  list.querySelectorAll('[data-select]').forEach(btn=>btn.onclick=()=>{
+    const id=btn.getAttribute('data-select'), ta=list.querySelector(`textarea[data-msg="${id}"]`);
+    if(ta){ ta.focus(); ta.select(); try{ta.setSelectionRange(0,ta.value.length);}catch(e){}; toast('Text selected — tap Copy if needed'); }
+  });
+  list.querySelectorAll('[data-wa]').forEach(btn=>btn.onclick=()=>{
+    const id=btn.getAttribute('data-wa'), ta=list.querySelector(`textarea[data-msg="${id}"]`);
+    if(ta) shareWhatsApp(ta.value);
+  });
 }
 
 function renderStudents(view){
@@ -1188,117 +1207,36 @@ function renderStudents(view){
   `;
   document.getElementById('stuDate').onchange = (e)=>{ UI.studentDate=e.target.value; render(); };
   const list = document.getElementById('stuList');
-  STATE.batches.forEach(b=>{
+  const batchesForView = STATE.batches;
+  batchesForView.forEach(b=>{
     const msg = studentMessage(b.id, date);
     const box = document.createElement('div');
     box.className = 'msg-card';
     box.innerHTML = `
       <div class="msg-head">
         <span class="who">${esc(b.name)} — ${esc(b.label)}</span>
-        ${msg ? `<div class="share-row"><button class="btn ghost" data-copy="${b.id}">Copy message</button><button class="btn ghost" data-wa="${b.id}">WhatsApp</button></div>` : ''}
+        ${msg ? `<div class="share-row">
+          <button class="btn primary" data-copy="${b.id}">Copy Message</button>
+          <button class="btn ghost" data-select="${b.id}">Select Text</button>
+          <button class="btn ghost" data-wa="${b.id}">Share on WhatsApp</button>
+        </div>` : ''}
       </div>
-      ${msg ? `<div class="msg-body">${esc(msg).replace(/_\*(.+?)\*_/g,'<b><i>$1</i></b>')}</div>` : `<div class="msg-empty">No classes scheduled for this date.</div>`}
+      ${msg ? `<textarea class="wa-message" data-msg="${b.id}" readonly spellcheck="false" style="width:100%;min-height:230px;margin-top:10px;resize:vertical;font:14px/1.55 -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;white-space:pre-wrap;">${esc(msg)}</textarea>` : `<div class="msg-empty">No classes scheduled for this date.</div>`}
     `;
     list.appendChild(box);
   });
-  list.querySelectorAll('[data-copy]').forEach(btn=>btn.onclick=()=>{const b=batchById(btn.getAttribute('data-copy'));copyText(studentMessage(b.id,date),b.name+' message');});
-  list.querySelectorAll('[data-wa]').forEach(btn=>btn.onclick=()=>shareWhatsApp(studentMessage(btn.getAttribute('data-wa'),date)));
-}
-
-function renderReports(view){
-  const ranges = [
-    {id:'week', label:'This week', from:weekStartStr(), to:todayStr()},
-    {id:'month', label:'This month', from:monthStartStr(), to:todayStr()},
-    {id:'all', label:'All time', from:'2000-01-01', to:todayStr()},
-    {id:'custom', label:'Custom range', from:UI.reportFrom, to:UI.reportTo},
-  ];
-  if(UI.reportRange!=='custom'){
-    const r = ranges.find(r=>r.id===UI.reportRange);
-    UI.reportFrom = r.from; UI.reportTo = r.to;
-  }
-  view.innerHTML = `
-    <div class="card" style="margin-bottom:18px;">
-      <div class="tabbar" id="rangeTabs">
-        ${ranges.map(r=>`<button class="${UI.reportRange===r.id?'active':''}" data-range="${r.id}">${r.label}</button>`).join('')}
-      </div>
-      ${UI.reportRange==='custom' ? `
-        <div class="row">
-          <div class="field" style="max-width:180px;"><label>From</label><input type="date" id="rFrom" value="${UI.reportFrom}"></div>
-          <div class="field" style="max-width:180px;"><label>To</label><input type="date" id="rTo" value="${UI.reportTo}"></div>
-        </div>
-      ` : `<div class="muted" style="font-size:12.5px;">${fmtDateLong(UI.reportFrom)} – ${fmtDateLong(UI.reportTo)} (classes counted only up to today)</div>`}
-    </div>
-    <div class="card">
-      <div class="cardhead">
-        <h2>Classes conducted &amp; hours by teacher</h2>
-        <select id="teacherFilter" style="width:auto;">
-          <option value="">All teachers</option>
-          ${STATE.teachers.map(t=>`<option value="${t.id}" ${UI.reportTeacher===t.id?'selected':''}>${esc(t.name)}</option>`).join('')}
-        </select>
-      </div>
-      <table>
-        <thead><tr><th>Teacher</th><th>Classes conducted</th><th>Hours taught</th><th></th></tr></thead>
-        <tbody id="reportBody"></tbody>
-      </table>
-    </div>
-  `;
-  document.querySelectorAll('#rangeTabs button').forEach(b=>{
-    b.onclick = ()=>{ UI.reportRange = b.getAttribute('data-range'); render(); };
+  list.querySelectorAll('[data-copy]').forEach(btn=>btn.onclick=()=>{
+    const id=btn.getAttribute('data-copy'), ta=list.querySelector(`textarea[data-msg="${id}"]`);
+    if(ta){ copyText(ta.value, 'Student message'); }
   });
-  if(UI.reportRange==='custom'){
-    document.getElementById('rFrom').onchange = (e)=>{ UI.reportFrom=e.target.value; render(); };
-    document.getElementById('rTo').onchange = (e)=>{ UI.reportTo=e.target.value; render(); };
-  }
-  document.getElementById('teacherFilter').onchange = (e)=>{ UI.reportTeacher=e.target.value; render(); };
-
-  const body = document.getElementById('reportBody');
-  const teachers = UI.reportTeacher ? STATE.teachers.filter(t=>t.id===UI.reportTeacher) : STATE.teachers;
-  if(!teachers.length){ body.innerHTML = `<tr><td colspan="4" class="empty">No teachers yet — add some in Teachers &amp; Batches.</td></tr>`; return; }
-  body.innerHTML = teachers.map(t=>{
-    const stats = teacherStats(t.id, UI.reportFrom, UI.reportTo);
-    const topicRows = Object.entries(stats.byTopic).sort((a,b)=>b[1].hours-a[1].hours);
-    const batchRows = Object.entries(stats.byBatch).sort((a,b)=>b[1].hours-a[1].hours);
-    return `
-      <tr>
-        <td>${esc(t.name)} <span class="muted">(${esc(t.code)})</span></td>
-        <td>${stats.count}</td>
-        <td>${stats.hours} hrs</td>
-        <td></td>
-      </tr>
-      <tr class="subrow"><td colspan="4" style="padding-top:0;">
-        <details class="topicbox">
-          <summary>Hours by batch (${batchRows.length})</summary>
-          ${batchRows.length ? `
-            <table style="margin-top:4px;">
-              <thead><tr><th>Batch</th><th style="text-align:right;">Lectures</th><th style="text-align:right;">Hours</th></tr></thead>
-              ${batchRows.map(([k,v])=>`<tr><td>${esc(k)}</td><td style="text-align:right;">${v.count}</td><td style="text-align:right;">${v.hours} hrs</td></tr>`).join('')}
-            </table>
-          ` : `<div class="muted" style="padding:4px 0;">No completed classes in this range.</div>`}
-        </details>
-        <details class="topicbox">
-          <summary>Lectures by chapter (${topicRows.length})</summary>
-          ${topicRows.length ? `
-            <table style="margin-top:4px;">
-              <thead><tr><th>Chapter</th><th style="text-align:right;">Lectures</th><th style="text-align:right;">Hours</th></tr></thead>
-              ${topicRows.map(([k,v])=>{
-                const batchRows2 = Object.entries(v.batches).sort((a,b)=>b[1].hours-a[1].hours);
-                const sub = batchRows2.map(([bk,bv])=>`<tr><td style="padding-left:20px; color:var(--text-muted); font-size:12px;">↳ ${esc(bk)}</td><td style="text-align:right; color:var(--text-muted); font-size:12px;">${bv.count}</td><td style="text-align:right; color:var(--text-muted); font-size:12px;">${bv.hours} hrs</td></tr>`).join('');
-                return `<tr><td><b>${esc(k)}</b></td><td style="text-align:right;"><b>${v.count}</b></td><td style="text-align:right;"><b>${v.hours} hrs</b></td></tr>${sub}`;
-              }).join('')}
-            </table>
-          ` : `<div class="muted" style="padding:4px 0;">No completed classes with chapters in this range.</div>`}
-        </details>
-      </td></tr>
-    `;
-  }).join('');
-}
-
-function nextMondayStr(){
-  const d = new Date();
-  const day = d.getDay();
-  const diff = (8 - day) % 7 || 7;
-  d.setDate(d.getDate() + diff);
-  return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+  list.querySelectorAll('[data-select]').forEach(btn=>btn.onclick=()=>{
+    const id=btn.getAttribute('data-select'), ta=list.querySelector(`textarea[data-msg="${id}"]`);
+    if(ta){ ta.focus(); ta.select(); try{ta.setSelectionRange(0,ta.value.length);}catch(e){}; toast('Text selected — tap Copy if needed'); }
+  });
+  list.querySelectorAll('[data-wa]').forEach(btn=>btn.onclick=()=>{
+    const id=btn.getAttribute('data-wa'), ta=list.querySelector(`textarea[data-msg="${id}"]`);
+    if(ta) shareWhatsApp(ta.value);
+  });
 }
 
 function renderPredict(view){
