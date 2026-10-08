@@ -190,7 +190,7 @@
   details.topicbox summary:before{ content:"▸ "; }
   details.topicbox[open] summary:before{ content:"▾ "; }
   .subrow td{ background:var(--paper); }
-<style>.role-pill{font-size:11px;padding:4px 8px;border-radius:99px;background:var(--paper);border:1px solid var(--line)}.share-row{display:flex;gap:7px;flex-wrap:wrap}.ai-import-grid{display:grid;grid-template-columns:320px 1fr;gap:18px}@media(max-width:900px){.ai-import-grid{grid-template-columns:1fr}}</style>
+<style>.role-pill{font-size:11px;padding:4px 8px;border-radius:99px;background:var(--paper);border:1px solid var(--line)}.share-row{display:flex;gap:7px;flex-wrap:wrap}.ai-import-grid{display:grid;grid-template-columns:380px 1fr;gap:18px}@media(max-width:900px){.ai-import-grid{grid-template-columns:1fr}}.ai-upload-card{border:2px solid var(--gold);box-shadow:0 8px 24px rgba(15,23,42,.10)}.ai-upload-card .cardhead h2{font-size:20px}.ai-drop{min-height:180px!important;padding:28px!important;border:2px dashed var(--gold)!important;background:linear-gradient(180deg,#fffaf0 0%,#fff 100%);display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;border-radius:14px}.ai-drop #aiChoose{font-size:16px;padding:12px 22px;box-shadow:0 4px 12px rgba(0,0,0,.08)}.ai-upload-hint{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:12px}.ai-read-rules{margin-top:12px;padding:10px 12px;border-radius:10px;background:#f8fafc;border:1px solid var(--line);font-size:12px;line-height:1.55}</style>
 </head>
 <body>
 <div id="shell">
@@ -1447,17 +1447,39 @@ function renderWeekPreview(sub){
   };
 }
 
+function normalizeAiCenter(v){
+ const x=String(v||'').trim().toUpperCase();
+ if(x.includes('VIRAR')) return 'Virar';
+ if(x.includes('VASAI')) return 'Vasai';
+ return String(v||'').trim();
+}
+function normalizeAiTeacherCode(v){return String(v||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');}
+function normalizeAiBatch(v){
+ const x=String(v||'').trim().toUpperCase().replace(/[–—]/g,'-').replace(/\s+/g,' ');
+ if(!x) return '';
+ if(/^(XII|12)(\s*-?\s*J(?:EE)?\s*-?\s*1|\s*1)$/.test(x)) return 'XII JEE 1';
+ if(/^(XII|12)(\s*-?\s*J(?:EE)?\s*-?\s*2|\s*2)$/.test(x)) return 'XII JEE 2';
+ if(/^(XII|12)\s*-?\s*NEET$/.test(x)) return 'XII NEET';
+ if(/^(XI|11)\s*-?\s*J(?:EE)?$/.test(x)) return 'XI JEE';
+ if(/^(XI|11)\s*-?\s*NEET$/.test(x)) return 'XI NEET';
+ if(/^(9|IX)\s*(?:TH)?\s*-?\s*FB$/.test(x)) return '9th FB';
+ if(/^(10|X)\s*(?:TH)?\s*-?\s*FB$/.test(x)) return '10TH FB';
+ return String(v||'').trim();
+}
+
 function renderAIImport(view){
  view.innerHTML=`<div class="ai-import-grid">
-  <div class="card">
-   <div class="cardhead"><h2>AI Handwritten Timetable Import</h2></div>
+  <div class="card ai-upload-card">
+   <div class="cardhead"><h2>📷 Upload Timetable Image</h2></div>
    <div class="muted" style="font-size:12px;margin-bottom:12px">Upload a timetable photo/PDF. AI reads the timetable and adds the classes directly to Schedule.</div>
    <div id="aiDrop" class="ai-drop">
+    <div class="ai-upload-hint">Upload the handwritten timetable photo here</div>
     <input id="aiFile" type="file" accept="image/*,.png,.jpg,.jpeg,.webp,.heic,.heif,.pdf" style="display:none">
     <label for="aiFile" class="btn primary" id="aiChoose" style="display:inline-block;cursor:pointer">Choose image / PDF</label>
     <div id="aiFileName" class="muted" style="font-size:12px;margin-top:9px">No file selected</div>
-    <div class="muted" style="font-size:12px;margin-top:7px">You can choose from Photos or Files</div>
+    <div class="muted" style="font-size:12px;margin-top:9px">You can choose from Photos or Files</div>
    </div>
+   <div class="ai-read-rules"><b>AI will read:</b> teacher code, centre section (VASAI/VIRAR), batch and class timings. Batch names such as <b>XII J-1</b>, <b>XII-J-2</b>, <b>XII-1</b> and <b>XII-2</b> are matched to the corresponding JEE batch.</div>
    <div class="field" style="margin-top:14px"><label>Fallback date</label><input id="aiDate" type="date" value="${todayStr()}"></div>
    <div class="row">
     <div class="field"><label>Centre</label><select id="aiCenter"><option>Auto detect</option><option>Vasai</option><option>Virar</option><option>Both</option></select></div>
@@ -1508,9 +1530,9 @@ function renderAIImport(view){
 
    UI.aiRows=(data.rows||[]).map(r=>({
     date:r.date||document.getElementById('aiDate').value,
-    center:r.center||'',
-    batch:r.batch||'',
-    teacherCode:r.teacherCode||'',
+    center:normalizeAiCenter(r.center||document.getElementById('aiCenter').value),
+    batch:normalizeAiBatch(r.batch),
+    teacherCode:normalizeAiTeacherCode(r.teacherCode),
     subject:r.subject||'',
     chapter:r.chapter||'',
     lectureNo:r.lectureNo||'',
@@ -1527,8 +1549,8 @@ function renderAIImport(view){
 
    const ns=structuredClone(STATE),add=[],failed=[];
    for(const r of UI.aiRows){
-    const center=(r.center||'').trim().toLowerCase();
-    const batchLabel=(r.batch||'').trim().toLowerCase();
+    const center=normalizeAiCenter(r.center).toLowerCase();
+    const batchLabel=normalizeAiBatch(r.batch).toLowerCase();
 
     let b=STATE.batches.find(x=>
       x.label.toLowerCase()===batchLabel &&
@@ -1540,7 +1562,7 @@ function renderAIImport(view){
       if(centerBatches.length===1) b=centerBatches[0];
     }
 
-    const t=STATE.teachers.find(x=>x.code.toLowerCase()===(r.teacherCode||'').trim().toLowerCase());
+    const t=STATE.teachers.find(x=>x.code.toLowerCase()===normalizeAiTeacherCode(r.teacherCode).toLowerCase());
 
     if(!r.date||!r.start||!r.end||!b||!t){
       failed.push(r);
