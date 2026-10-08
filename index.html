@@ -683,6 +683,16 @@ function deleteClass(id){
   ns.classes = ns.classes.filter(c=>c.id!==id);
   persist(ns);
 }
+function deleteDaySchedule(date){
+  const count = STATE.classes.filter(c=>c.date===date).length;
+  if(!count){ toast('No classes found for this date'); return; }
+  if(!confirm(`Delete all ${count} class${count===1?'':'es'} scheduled for ${fmtDateLong(date)}?`)) return;
+  const ns = structuredClone(STATE);
+  ns.classes = ns.classes.filter(c=>c.date!==date);
+  persist(ns);
+  UI.editingId=null;
+  toast(`Deleted ${count} class${count===1?'':'es'} for ${fmtDateLong(date)}`);
+}
 function duplicateDay(fromDate, toDate){
   const ns = structuredClone(STATE);
   const src = ns.classes.filter(c=>c.date===fromDate);
@@ -1014,6 +1024,7 @@ function renderSchedule(view){
             <div class="row" style="gap:8px;">
               <input type="date" id="copyFromDate" style="width:auto;">
               <button class="btn ghost" id="copyDayBtn" type="button">Duplicate into this date</button>
+              <button class="btn" id="deleteDayBtn" type="button" style="background:var(--coral);color:white;">🗑️ Delete entire day</button>
             </div>
           </div>
         </div>
@@ -1051,6 +1062,7 @@ function renderSchedule(view){
     if(!from){ toast('Pick a date to copy from'); return; }
     duplicateDay(from, date);
   };
+  document.getElementById('deleteDayBtn').onclick = ()=>{ deleteDaySchedule(date); };
 
   const centerSel = document.getElementById('f_center');
   const batchSel = document.getElementById('f_batch');
@@ -1479,7 +1491,7 @@ function renderAIImport(view){
     <div id="aiFileName" class="muted" style="font-size:12px;margin-top:9px">No file selected</div>
     <div class="muted" style="font-size:12px;margin-top:9px">You can choose from Photos or Files</div>
    </div>
-   <div class="ai-read-rules"><b>AI will read:</b> teacher code, centre section (VASAI/VIRAR), batch and class timings. If a timing is not written, PACE regular timings are used automatically. Batch names such as <b>XII J-1</b>, <b>XII-J-2</b>, <b>XII-1</b> and <b>XII-2</b> are matched to the corresponding JEE batch.</div>
+   <div class="ai-read-rules"><b>AI will read:</b> teacher code, centre section (VASAI/VIRAR), batch and class timings. Batch names such as <b>XII J-1</b>, <b>XII-J-2</b>, <b>XII-1</b> and <b>XII-2</b> are matched to the corresponding JEE batch.</div>
    <div class="field" style="margin-top:14px"><label>Fallback date</label><input id="aiDate" type="date" value="${todayStr()}"></div>
    <div class="row">
     <div class="field"><label>Centre</label><select id="aiCenter"><option>Auto detect</option><option>Vasai</option><option>Virar</option><option>Both</option></select></div>
@@ -1492,11 +1504,60 @@ function renderAIImport(view){
    <div class="cardhead"><div><h2>Automatic Import</h2><div class="muted" style="font-size:12px">No review or confirmation is required. The teacher, centre, batch and timing are taken from the timetable image and added directly to Schedule.</div></div></div>
    <div id="aiTable"><div class="empty">Upload a timetable and press <b>Read & Add to Schedule</b>.</div></div>
   </div>
+ </div>
+ <div class="card" style="margin-top:16px;">
+  <div class="cardhead"><div><h2>✍️ Add Class Manually</h2><div class="muted" style="font-size:12px">Use this when a class is missing from the handwritten timetable or you want to enter a class directly.</div></div></div>
+  <form id="manualClassForm">
+   <div class="row">
+    <div class="field"><label>Date</label><input id="mc_date" type="date" value="${todayStr()}" required></div>
+    <div class="field"><label>Centre</label><select id="mc_center">${centerOptions('')}</select></div>
+    <div class="field"><label>Batch</label><select id="mc_batch">${batchOptions('', '')}</select></div>
+   </div>
+   <div class="row">
+    <div class="field"><label>Teacher</label><select id="mc_teacher">${teacherOptions('')}</select></div>
+    <div class="field"><label>Subject</label><select id="mc_subject">${subjectOptions('')}</select></div>
+    <div class="field"><label>Chapter / Topic</label><input id="mc_chapter" placeholder="Optional"></div>
+   </div>
+   <div class="row">
+    <div class="field"><label>Start time</label><input id="mc_start" type="time" value="09:30" required></div>
+    <div class="field"><label>End time</label><input id="mc_end" type="time" value="12:45" required></div>
+    <div class="field" style="max-width:130px;"><label>Lecture No.</label><input id="mc_lecture" type="number" min="1" value="1"></div>
+   </div>
+   <button class="btn primary" type="submit">＋ Add Class to Schedule</button>
+  </form>
  </div>`;
 
  const file=document.getElementById('aiFile');
  const fileName=document.getElementById('aiFileName');
  file.addEventListener('change',()=>{const f=file.files&&file.files[0];fileName.textContent=f?`Selected: ${f.name}`:'No file selected';});
+
+ const mcCenter=document.getElementById('mc_center');
+ const mcBatch=document.getElementById('mc_batch');
+ mcCenter.onchange=()=>{ mcBatch.innerHTML=batchOptions('',mcCenter.value); };
+ document.getElementById('manualClassForm').onsubmit=(e)=>{
+  e.preventDefault();
+  const entry={
+   date:document.getElementById('mc_date').value,
+   batchId:document.getElementById('mc_batch').value==='custom'?null:document.getElementById('mc_batch').value,
+   customBatchLabel:document.getElementById('mc_batch').value==='custom'?'Custom batch':null,
+   customCenter:document.getElementById('mc_batch').value==='custom'?mcCenter.value:null,
+   teacherId:document.getElementById('mc_teacher').value,
+   subject:document.getElementById('mc_subject').value,
+   chapter:document.getElementById('mc_chapter').value.trim(),
+   lectureNo:parseInt(document.getElementById('mc_lecture').value,10)||1,
+   chapterCompleted:false, topic:'',
+   start:document.getElementById('mc_start').value,
+   end:document.getElementById('mc_end').value,
+   isDoubt:false
+  };
+  if(!entry.date||!entry.batchId||!entry.teacherId||!entry.start||!entry.end){toast('Please fill Date, Batch, Teacher and timings');return;}
+  if(entry.end<=entry.start){toast('Check the start/end time');return;}
+  const conflicts=findConflicts(entry,null);
+  if(conflicts.length && !confirm('This class overlaps an existing class. Add it anyway?')) return;
+  addClass(entry);
+  UI.scheduleDate=entry.date;
+  UI.tab='schedule';
+ };
 
  document.getElementById('aiRead').onclick=async()=>{
   const f=file.files&&file.files[0];
@@ -1528,35 +1589,7 @@ function renderAIImport(view){
    if(!resp.ok)throw new Error(await resp.text());
    const data=await resp.json();
 
-   // Apply PACE regular timings only when the timetable image does not specify a time.
-   // Written timings always take priority. lectureNo 1 = first class, 2 = second class.
-   function aiDefaultTiming(row){
-    if(row.start && row.end) return row;
-    const center=normalizeAiCenter(row.center||document.getElementById('aiCenter').value).toLowerCase();
-    const batch=normalizeAiBatch(row.batch||'').toLowerCase();
-    const lecture=String(row.lectureNo||'').trim().toLowerCase().replace(/\s+/g,'');
-    const isFoundation=/^(9th fb|10th fb|9th foundation|10th foundation)$/.test(batch);
-    const isSenior=/^(xi jee|xi neet|xii jee 1|xii jee 2|xii neet)$/.test(batch);
-    let timing=null;
-    if(isSenior){
-      if(/^(1|1st|first)$/.test(lecture)) timing=['09:30','12:45'];
-      else if(/^(2|2nd|second)$/.test(lecture)) timing=['13:15','16:30'];
-    }else if(isFoundation){
-      if(center==='virar'){
-       if(/^(1|1st|first)$/.test(lecture)) timing=['16:30','18:00'];
-       else if(/^(2|2nd|second)$/.test(lecture)) timing=['18:15','19:45'];
-      }else if(center==='vasai'){
-       if(/^(1|1st|first)$/.test(lecture)) timing=['16:30','17:30'];
-       else if(/^(2|2nd|second)$/.test(lecture)) timing=['17:30','18:30'];
-      }
-    }
-    if(timing){ row.start=timing[0]; row.end=timing[1]; }
-    return row;
-   }
-
-   UI.aiRows=(data.rows||[]).map(raw=>{
-    const r=aiDefaultTiming({...raw});
-    return {
+   UI.aiRows=(data.rows||[]).map(r=>({
     date:r.date||document.getElementById('aiDate').value,
     center:normalizeAiCenter(r.center||document.getElementById('aiCenter').value),
     batch:normalizeAiBatch(r.batch),
@@ -1567,8 +1600,7 @@ function renderAIImport(view){
     start:normAiTime(r.start),
     end:normAiTime(r.end),
     confidence:r.confidence||'auto'
-    };
-   });
+   }));
 
    if(!UI.aiRows.length){
     msg.textContent='No classes could be read from the timetable.';
