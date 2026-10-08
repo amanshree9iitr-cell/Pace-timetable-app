@@ -130,11 +130,6 @@
   button.icon{ all:unset; cursor:pointer; padding:4px 7px; border-radius:6px; color:var(--text-muted); font-size:13px; }
   button.icon:hover{ background:var(--paper); color:var(--ink); }
 
-
-  #manualClassForm .row{margin-bottom:0;}
-  #deleteDayBtn{margin-left:auto;}
-  @media(max-width:980px){#deleteDayBtn{margin-left:0;}}
-
   table{ width:100%; border-collapse:collapse; font-size:13.3px; }
   th{ text-align:left; font-size:11.5px; text-transform:none; color:var(--text-muted); font-weight:600; padding:7px 8px; border-bottom:1px solid var(--line); }
   td{ padding:8px 8px; border-bottom:1px solid var(--line); vertical-align:middle; }
@@ -688,16 +683,6 @@ function deleteClass(id){
   ns.classes = ns.classes.filter(c=>c.id!==id);
   persist(ns);
 }
-function deleteDay(date){
-  const ns = structuredClone(STATE);
-  const count = ns.classes.filter(c=>c.date===date).length;
-  if(!count){ toast('No classes found for this date'); return; }
-  if(!confirm(`Delete all ${count} class${count===1?'':'es'} for ${fmtDateLong(date)}? This will also remove them from Faculty and Student Timetables.`)) return;
-  ns.classes = ns.classes.filter(c=>c.date!==date);
-  persist(ns);
-  UI.editingId=null;
-  toast(`Deleted ${count} class${count===1?'':'es'} for ${fmtDateLong(date)}`);
-}
 function duplicateDay(fromDate, toDate){
   const ns = structuredClone(STATE);
   const src = ns.classes.filter(c=>c.date===fromDate);
@@ -1029,7 +1014,6 @@ function renderSchedule(view){
             <div class="row" style="gap:8px;">
               <input type="date" id="copyFromDate" style="width:auto;">
               <button class="btn ghost" id="copyDayBtn" type="button">Duplicate into this date</button>
-              <button class="btn danger" id="deleteDayBtn" type="button">🗑️ Delete entire day's schedule</button>
             </div>
           </div>
         </div>
@@ -1067,7 +1051,6 @@ function renderSchedule(view){
     if(!from){ toast('Pick a date to copy from'); return; }
     duplicateDay(from, date);
   };
-  document.getElementById('deleteDayBtn').onclick = ()=> deleteDay(date);
 
   const centerSel = document.getElementById('f_center');
   const batchSel = document.getElementById('f_batch');
@@ -1190,7 +1173,6 @@ function renderFaculty(view){
           <button class="btn ghost" data-wa="${t.id}">Share on WhatsApp</button>
         </div>` : ''}
       </div>
-      ${(()=>{ const cs=classesFor(date).filter(c=>c.teacherId===t.id).sort((a,b)=>a.start.localeCompare(b.start)); return cs.length?`<div style="padding:10px 16px 0;"><div class="muted" style="font-size:11.5px;margin-bottom:6px;">Classes — tap Edit to change the master timetable:</div>${cs.map(c=>`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);font-size:12.5px;"><span>${fmt12(c.start)}–${fmt12(c.end)} · ${esc((batchById(c.batchId)||{}).label||c.customBatchLabel||'—')} · ${esc(c.subject||'—')}</span><button class="btn ghost" data-fac-edit="${c.id}" type="button">✏️ Edit</button></div>`).join('')}</div>`:'' })()}
       ${msg ? `<textarea class="wa-message" data-msg="${t.id}" readonly spellcheck="false" style="width:100%;min-height:230px;margin-top:10px;resize:vertical;font:14px/1.55 -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;white-space:pre-wrap;">${esc(msg)}</textarea>` : `<div class="msg-empty">No classes scheduled for this date.</div>`}
     `;
     list.appendChild(box);
@@ -1207,7 +1189,6 @@ function renderFaculty(view){
     const id=btn.getAttribute('data-wa'), ta=list.querySelector(`textarea[data-msg="${id}"]`);
     if(ta) shareWhatsApp(ta.value);
   });
-  list.querySelectorAll('[data-fac-edit]').forEach(btn=>btn.onclick=()=>{UI.editingId=btn.getAttribute('data-fac-edit');UI.scheduleDate=date;UI.tab='schedule';render();});
 }
 
 function renderStudents(view){
@@ -1240,7 +1221,6 @@ function renderStudents(view){
           <button class="btn ghost" data-wa="${b.id}">Share on WhatsApp</button>
         </div>` : ''}
       </div>
-      ${(()=>{ const cs=classesFor(date).filter(c=>c.batchId===b.id).sort((a,b)=>a.start.localeCompare(b.start)); return cs.length?`<div style="padding:10px 16px 0;"><div class="muted" style="font-size:11.5px;margin-bottom:6px;">Classes — tap Edit to change the master timetable:</div>${cs.map(c=>`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);font-size:12.5px;"><span>${fmt12(c.start)}–${fmt12(c.end)} · ${esc((teacherById(c.teacherId)||{}).code||'—')} · ${esc(c.subject||'—')}</span><button class="btn ghost" data-stu-edit="${c.id}" type="button">✏️ Edit</button></div>`).join('')}</div>`:'' })()}
       ${msg ? `<textarea class="wa-message" data-msg="${b.id}" readonly spellcheck="false" style="width:100%;min-height:230px;margin-top:10px;resize:vertical;font:14px/1.55 -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;white-space:pre-wrap;">${esc(msg)}</textarea>` : `<div class="msg-empty">No classes scheduled for this date.</div>`}
     `;
     list.appendChild(box);
@@ -1257,7 +1237,6 @@ function renderStudents(view){
     const id=btn.getAttribute('data-wa'), ta=list.querySelector(`textarea[data-msg="${id}"]`);
     if(ta) shareWhatsApp(ta.value);
   });
-  list.querySelectorAll('[data-stu-edit]').forEach(btn=>btn.onclick=()=>{UI.editingId=btn.getAttribute('data-stu-edit');UI.scheduleDate=date;UI.tab='schedule';render();});
 }
 
 function renderPredict(view){
@@ -1489,93 +1468,35 @@ function normalizeAiBatch(v){
 }
 
 function renderAIImport(view){
- view.innerHTML=`<div class="grid2">
-  <div>
-   <div class="card ai-upload-card">
-    <div class="cardhead"><h2>📷 Upload Timetable Image</h2></div>
-    <div class="muted" style="font-size:12px;margin-bottom:12px">Upload a timetable photo/PDF. AI reads the timetable and adds the classes directly to Schedule.</div>
-    <div id="aiDrop" class="ai-drop">
-     <div class="ai-upload-hint">Upload the handwritten timetable photo here</div>
-     <input id="aiFile" type="file" accept="image/*,.png,.jpg,.jpeg,.webp,.heic,.heif,.pdf" style="display:none">
-     <label for="aiFile" class="btn primary" id="aiChoose" style="display:inline-block;cursor:pointer">Choose image / PDF</label>
-     <div id="aiFileName" class="muted" style="font-size:12px;margin-top:9px">No file selected</div>
-     <div class="muted" style="font-size:12px;margin-top:9px">You can choose from Photos or Files</div>
-    </div>
-    <div class="ai-read-rules"><b>AI will read:</b> teacher code, centre section (VASAI/VIRAR), batch and class timings. Batch names such as <b>XII J-1</b>, <b>XII-J-2</b>, <b>XII-1</b> and <b>XII-2</b> are matched to the corresponding JEE batch.</div>
-    <div class="field" style="margin-top:14px"><label>Fallback date</label><input id="aiDate" type="date" value="${todayStr()}"></div>
-    <div class="row">
-     <div class="field"><label>Centre</label><select id="aiCenter"><option>Auto detect</option><option>Vasai</option><option>Virar</option><option>Both</option></select></div>
-     <div class="field"><label>Schedule</label><select id="aiMode"><option value="daily">Daily</option><option value="weekly">Weekly</option></select></div>
-    </div>
-    <button class="btn primary" id="aiRead">🤖 Read & Add to Schedule</button>
-    <div id="aiMsg" class="muted" style="font-size:12px;margin-top:10px">No file read yet.</div>
+ view.innerHTML=`<div class="ai-import-grid">
+  <div class="card ai-upload-card">
+   <div class="cardhead"><h2>📷 Upload Timetable Image</h2></div>
+   <div class="muted" style="font-size:12px;margin-bottom:12px">Upload a timetable photo/PDF. AI reads the timetable and adds the classes directly to Schedule.</div>
+   <div id="aiDrop" class="ai-drop">
+    <div class="ai-upload-hint">Upload the handwritten timetable photo here</div>
+    <input id="aiFile" type="file" accept="image/*,.png,.jpg,.jpeg,.webp,.heic,.heif,.pdf" style="display:none">
+    <label for="aiFile" class="btn primary" id="aiChoose" style="display:inline-block;cursor:pointer">Choose image / PDF</label>
+    <div id="aiFileName" class="muted" style="font-size:12px;margin-top:9px">No file selected</div>
+    <div class="muted" style="font-size:12px;margin-top:9px">You can choose from Photos or Files</div>
    </div>
-
-   <div class="card" style="margin-top:18px">
-    <div class="cardhead"><div><h2>✍️ Add Class Manually</h2><div class="muted" style="font-size:12px">Enter a class directly without uploading an image.</div></div></div>
-    <form id="manualClassForm">
-     <div class="row">
-      <div class="field"><label>Date</label><input id="m_date" type="date" value="${todayStr()}"></div>
-      <div class="field"><label>Centre</label><select id="m_center">${centerOptions('')}</select></div>
-     </div>
-     <div class="row">
-      <div class="field"><label>Batch</label><select id="m_batch">${batchOptions('', '')}</select></div>
-      <div class="field"><label>Teacher code</label><select id="m_teacher"><option value="">Select teacher</option>${STATE.teachers.map(t=>`<option value="${t.id}">${esc(t.code)} — ${esc(t.name)}</option>`).join('')}</select></div>
-     </div>
-     <div class="row">
-      <div class="field"><label>Subject</label><select id="m_subject">${subjectOptions('')}</select></div>
-      <div class="field"><label>Chapter / Topic</label><input id="m_chapter" placeholder="Optional"></div>
-     </div>
-     <div class="row">
-      <div class="field"><label>Start time</label><input id="m_start" type="time" value="09:30"></div>
-      <div class="field"><label>End time</label><input id="m_end" type="time" value="12:45"></div>
-     </div>
-     <button class="btn primary" type="submit">➕ Add Class to Schedule</button>
-    </form>
+   <div class="ai-read-rules"><b>AI will read:</b> teacher code, centre section (VASAI/VIRAR), batch and class timings. If a timing is not written, PACE regular timings are used automatically. Batch names such as <b>XII J-1</b>, <b>XII-J-2</b>, <b>XII-1</b> and <b>XII-2</b> are matched to the corresponding JEE batch.</div>
+   <div class="field" style="margin-top:14px"><label>Fallback date</label><input id="aiDate" type="date" value="${todayStr()}"></div>
+   <div class="row">
+    <div class="field"><label>Centre</label><select id="aiCenter"><option>Auto detect</option><option>Vasai</option><option>Virar</option><option>Both</option></select></div>
+    <div class="field"><label>Schedule</label><select id="aiMode"><option value="daily">Daily</option><option value="weekly">Weekly</option></select></div>
    </div>
+   <button class="btn primary" id="aiRead">🤖 Read & Add to Schedule</button>
+   <div id="aiMsg" class="muted" style="font-size:12px;margin-top:10px">No file read yet.</div>
   </div>
-
   <div class="card">
-   <div class="cardhead"><div><h2>Schedule Management</h2><div class="muted" style="font-size:12px">All changes are made to the master Schedule and automatically appear in Faculty and Student Timetables.</div></div></div>
-   <div class="empty">Use <b>Add Class Manually</b> for individual entries, or upload a timetable image for automatic import.</div>
+   <div class="cardhead"><div><h2>Automatic Import</h2><div class="muted" style="font-size:12px">No review or confirmation is required. The teacher, centre, batch and timing are taken from the timetable image and added directly to Schedule.</div></div></div>
+   <div id="aiTable"><div class="empty">Upload a timetable and press <b>Read & Add to Schedule</b>.</div></div>
   </div>
  </div>`;
 
  const file=document.getElementById('aiFile');
  const fileName=document.getElementById('aiFileName');
  file.addEventListener('change',()=>{const f=file.files&&file.files[0];fileName.textContent=f?`Selected: ${f.name}`:'No file selected';});
-
- const mCenter=document.getElementById('m_center'), mBatch=document.getElementById('m_batch');
- function syncManualBatches(){ mBatch.innerHTML=batchOptions(mBatch.value, mCenter.value); }
- mCenter.onchange=syncManualBatches;
- syncManualBatches();
-
- document.getElementById('manualClassForm').onsubmit=(e)=>{
-  e.preventDefault();
-  const batchVal=mBatch.value, date=document.getElementById('m_date').value;
-  const entry={
-   date,
-   batchId:batchVal==='custom'?null:batchVal,
-   customBatchLabel:batchVal==='custom'?'Other / custom batch':null,
-   customCenter:batchVal==='custom'?mCenter.value:null,
-   teacherId:document.getElementById('m_teacher').value,
-   subject:document.getElementById('m_subject').value,
-   chapter:document.getElementById('m_chapter').value.trim(),
-   lectureNo:1,
-   chapterCompleted:false,
-   topic:'',
-   start:document.getElementById('m_start').value,
-   end:document.getElementById('m_end').value,
-   isDoubt:false
-  };
-  if(!date||!entry.teacherId||!entry.subject){toast('Please select date, teacher and subject');return;}
-  if(!entry.start||!entry.end||entry.end<=entry.start){toast('Check the start/end time');return;}
-  const conflicts=findConflicts(entry,null);
-  if(conflicts.length && !confirm('This class overlaps with:\n'+conflicts.map(describeConflict).join('\n')+'\n\nAdd it anyway?')) return;
-  addClass(entry);
-  UI.scheduleDate=date;
-  toast('Class added to Schedule');
- };
 
  document.getElementById('aiRead').onclick=async()=>{
   const f=file.files&&file.files[0];
@@ -1586,29 +1507,133 @@ function renderAIImport(view){
 
   const msg=document.getElementById('aiMsg');
   const btn=document.getElementById('aiRead');
-  msg.textContent='Reading timetable and adding classes to Schedule…'; btn.disabled=true;
+  msg.textContent='Reading timetable and adding classes to Schedule…';
+  btn.disabled=true;
+
   const fd=new FormData();
-  fd.append('file',f); fd.append('fallbackDate',document.getElementById('aiDate').value); fd.append('fallbackCenter',document.getElementById('aiCenter').value); fd.append('mode',document.getElementById('aiMode').value);
+  fd.append('file',f);
+  fd.append('fallbackDate',document.getElementById('aiDate').value);
+  fd.append('fallbackCenter',document.getElementById('aiCenter').value);
+  fd.append('mode',document.getElementById('aiMode').value);
+
   try{
-   const resp=await fetch('https://fzgftorhxxpnihipmiix.supabase.co/functions/v1/quick-function',{method:'POST',headers:{'Authorization':'Bearer sb_publishable_WMyKmv0cunkBSwkkaPHtuQ_WE7rfZdb','apikey':'sb_publishable_WMyKmv0cunkBSwkkaPHtuQ_WE7rfZdb'},body:fd});
+   const resp=await fetch('https://fzgftorhxxpnihipmiix.supabase.co/functions/v1/quick-function',{
+    method:'POST',
+    headers:{
+     'Authorization':'Bearer sb_publishable_WMyKmv0cunkBSwkkaPHtuQ_WE7rfZdb',
+     'apikey':'sb_publishable_WMyKmv0cunkBSwkkaPHtuQ_WE7rfZdb'
+    },
+    body:fd
+   });
    if(!resp.ok)throw new Error(await resp.text());
    const data=await resp.json();
-   UI.aiRows=(data.rows||[]).map(r=>({date:r.date||document.getElementById('aiDate').value,center:normalizeAiCenter(r.center||document.getElementById('aiCenter').value),batch:normalizeAiBatch(r.batch),teacherCode:normalizeAiTeacherCode(r.teacherCode),subject:r.subject||'',chapter:r.chapter||'',lectureNo:r.lectureNo||'',start:normAiTime(r.start),end:normAiTime(r.end),confidence:r.confidence||'auto'}));
-   if(!UI.aiRows.length){msg.textContent='No classes could be read from the timetable.';return;}
+
+   // Apply PACE regular timings only when the timetable image does not specify a time.
+   // Written timings always take priority. lectureNo 1 = first class, 2 = second class.
+   function aiDefaultTiming(row){
+    if(row.start && row.end) return row;
+    const center=normalizeAiCenter(row.center||document.getElementById('aiCenter').value).toLowerCase();
+    const batch=normalizeAiBatch(row.batch||'').toLowerCase();
+    const lecture=String(row.lectureNo||'').trim().toLowerCase().replace(/\s+/g,'');
+    const isFoundation=/^(9th fb|10th fb|9th foundation|10th foundation)$/.test(batch);
+    const isSenior=/^(xi jee|xi neet|xii jee 1|xii jee 2|xii neet)$/.test(batch);
+    let timing=null;
+    if(isSenior){
+      if(/^(1|1st|first)$/.test(lecture)) timing=['09:30','12:45'];
+      else if(/^(2|2nd|second)$/.test(lecture)) timing=['13:15','16:30'];
+    }else if(isFoundation){
+      if(center==='virar'){
+       if(/^(1|1st|first)$/.test(lecture)) timing=['16:30','18:00'];
+       else if(/^(2|2nd|second)$/.test(lecture)) timing=['18:15','19:45'];
+      }else if(center==='vasai'){
+       if(/^(1|1st|first)$/.test(lecture)) timing=['16:30','17:30'];
+       else if(/^(2|2nd|second)$/.test(lecture)) timing=['17:30','18:30'];
+      }
+    }
+    if(timing){ row.start=timing[0]; row.end=timing[1]; }
+    return row;
+   }
+
+   UI.aiRows=(data.rows||[]).map(raw=>{
+    const r=aiDefaultTiming({...raw});
+    return {
+    date:r.date||document.getElementById('aiDate').value,
+    center:normalizeAiCenter(r.center||document.getElementById('aiCenter').value),
+    batch:normalizeAiBatch(r.batch),
+    teacherCode:normalizeAiTeacherCode(r.teacherCode),
+    subject:r.subject||'',
+    chapter:r.chapter||'',
+    lectureNo:r.lectureNo||'',
+    start:normAiTime(r.start),
+    end:normAiTime(r.end),
+    confidence:r.confidence||'auto'
+    };
+   });
+
+   if(!UI.aiRows.length){
+    msg.textContent='No classes could be read from the timetable.';
+    document.getElementById('aiTable').innerHTML='<div class="empty">No classes found.</div>';
+    return;
+   }
+
    const ns=structuredClone(STATE),add=[],failed=[];
    for(const r of UI.aiRows){
-    const center=normalizeAiCenter(r.center).toLowerCase(), batchLabel=normalizeAiBatch(r.batch).toLowerCase();
-    let b=STATE.batches.find(x=>x.label.toLowerCase()===batchLabel&&(!center||x.center.toLowerCase()===center));
-    if(!b)b=STATE.batches.find(x=>x.label.toLowerCase()===batchLabel);
+    const center=normalizeAiCenter(r.center).toLowerCase();
+    const batchLabel=normalizeAiBatch(r.batch).toLowerCase();
+
+    let b=STATE.batches.find(x=>
+      x.label.toLowerCase()===batchLabel &&
+      (!center || x.center.toLowerCase()===center)
+    );
+    if(!b) b=STATE.batches.find(x=>x.label.toLowerCase()===batchLabel);
+    if(!b && center){
+      const centerBatches=STATE.batches.filter(x=>x.center.toLowerCase()===center);
+      if(centerBatches.length===1) b=centerBatches[0];
+    }
+
     const t=STATE.teachers.find(x=>x.code.toLowerCase()===normalizeAiTeacherCode(r.teacherCode).toLowerCase());
-    if(!r.date||!r.start||!r.end||!b||!t){failed.push(r);continue;}
-    add.push({id:uid('ai'),date:r.date,batchId:b.id,customBatchLabel:null,customCenter:null,teacherId:t.id,subject:r.subject||'',chapter:r.chapter||'',lectureNo:parseInt(r.lectureNo,10)||null,chapterCompleted:false,topic:'',start:r.start,end:r.end,isDoubt:false});
+
+    if(!r.date||!r.start||!r.end||!b||!t){
+      failed.push(r);
+      continue;
+    }
+
+    add.push({
+      id:uid('ai'),
+      date:r.date,
+      batchId:b.id,
+      customBatchLabel:null,
+      customCenter:null,
+      teacherId:t.id,
+      subject:r.subject||'',
+      chapter:r.chapter||'',
+      lectureNo:parseInt(r.lectureNo,10)||null,
+      chapterCompleted:false,
+      topic:'',
+      start:r.start,
+      end:r.end,
+      isDoubt:false
+    });
    }
-   if(add.length){add.forEach(c=>ns.classes.push(c));persist(ns);UI.aiRows=[];UI.tab='schedule';UI.scheduleDate=add[0].date;toast(`${add.length} class${add.length===1?'':'es'} added to Schedule`);render();}
-   else msg.textContent='AI read the timetable, but no complete class could be matched to your Teachers & Batches.';
-   if(failed.length) console.warn('AI rows not imported:',failed);
-  }catch(e){msg.textContent='AI reader failed: '+(e.message||e);}
-  finally{btn.disabled=false;}
+
+   if(add.length){
+    add.forEach(c=>ns.classes.push(c));
+    persist(ns);
+    UI.aiRows=[];
+    UI.tab='schedule';
+    UI.scheduleDate=add[0].date;
+    msg.textContent=`✓ ${add.length} class${add.length===1?'':'es'} added to Schedule automatically.`;
+    toast(`${add.length} class${add.length===1?'':'es'} added to Schedule`);
+    render();
+   }else{
+    msg.textContent='AI read the timetable, but no complete class could be matched to your Teachers & Batches.';
+    document.getElementById('aiTable').innerHTML='<div class="empty">Please check that the timetable image contains the batch, teacher and timings, and that those teachers/batches exist in Teachers & Batches.</div>';
+   }
+  }catch(e){
+   msg.textContent='AI reader failed: '+(e.message||e);
+  }finally{
+   btn.disabled=false;
+  }
  };
 }
 
