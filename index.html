@@ -1448,22 +1448,144 @@ function renderWeekPreview(sub){
 }
 
 function renderAIImport(view){
- view.innerHTML=`<div class="ai-import-grid"><div class="card"><div class="cardhead"><h2>AI Handwritten Timetable Import</h2></div><div class="muted" style="font-size:12px;margin-bottom:12px">Upload a timetable photo/PDF. AI extracts only what it can see clearly.</div><div id="aiDrop" class="ai-drop">
-<input id="aiFile" type="file" accept="image/*,.png,.jpg,.jpeg,.webp,.heic,.heif,.pdf" style="display:none">
-<label for="aiFile" class="btn primary" id="aiChoose" style="display:inline-block;cursor:pointer">Choose image / PDF</label>
-<div id="aiFileName" class="muted" style="font-size:12px;margin-top:9px">No file selected</div>
-<div class="muted" style="font-size:12px;margin-top:7px">You can choose from Photos or Files</div>
-</div><div class="field" style="margin-top:14px"><label>Fallback date</label><input id="aiDate" type="date" value="${todayStr()}"></div><div class="row"><div class="field"><label>Centre</label><select id="aiCenter"><option>Auto detect</option><option>Vasai</option><option>Virar</option><option>Both</option></select></div><div class="field"><label>Schedule</label><select id="aiMode"><option value="daily">Daily</option><option value="weekly">Weekly</option></select></div></div><button class="btn primary" id="aiRead">🤖 Read timetable</button><div id="aiMsg" class="muted" style="font-size:12px;margin-top:10px">${UI.aiRows.length?UI.aiRows.length+' rows ready for review.':'No file read yet.'}</div></div><div class="card"><div class="cardhead"><div><h2>Review & publish</h2><div class="muted" style="font-size:12px">Nothing is added to Schedule until you confirm.</div></div></div><div id="aiTable"></div><div class="row" style="margin-top:14px"><button class="btn ghost" id="aiClear">Clear</button><button class="btn primary" id="aiPublish">Confirm & Add to Schedule</button></div></div></div>`;
+ view.innerHTML=`<div class="ai-import-grid">
+  <div class="card">
+   <div class="cardhead"><h2>AI Handwritten Timetable Import</h2></div>
+   <div class="muted" style="font-size:12px;margin-bottom:12px">Upload a timetable photo/PDF. AI reads the timetable and adds the classes directly to Schedule.</div>
+   <div id="aiDrop" class="ai-drop">
+    <input id="aiFile" type="file" accept="image/*,.png,.jpg,.jpeg,.webp,.heic,.heif,.pdf" style="display:none">
+    <label for="aiFile" class="btn primary" id="aiChoose" style="display:inline-block;cursor:pointer">Choose image / PDF</label>
+    <div id="aiFileName" class="muted" style="font-size:12px;margin-top:9px">No file selected</div>
+    <div class="muted" style="font-size:12px;margin-top:7px">You can choose from Photos or Files</div>
+   </div>
+   <div class="field" style="margin-top:14px"><label>Fallback date</label><input id="aiDate" type="date" value="${todayStr()}"></div>
+   <div class="row">
+    <div class="field"><label>Centre</label><select id="aiCenter"><option>Auto detect</option><option>Vasai</option><option>Virar</option><option>Both</option></select></div>
+    <div class="field"><label>Schedule</label><select id="aiMode"><option value="daily">Daily</option><option value="weekly">Weekly</option></select></div>
+   </div>
+   <button class="btn primary" id="aiRead">🤖 Read & Add to Schedule</button>
+   <div id="aiMsg" class="muted" style="font-size:12px;margin-top:10px">No file read yet.</div>
+  </div>
+  <div class="card">
+   <div class="cardhead"><div><h2>Automatic Import</h2><div class="muted" style="font-size:12px">No review or confirmation is required. The teacher, centre, batch and timing are taken from the timetable image and added directly to Schedule.</div></div></div>
+   <div id="aiTable"><div class="empty">Upload a timetable and press <b>Read & Add to Schedule</b>.</div></div>
+  </div>
+ </div>`;
+
  const file=document.getElementById('aiFile');
  const fileName=document.getElementById('aiFileName');
  file.addEventListener('change',()=>{const f=file.files&&file.files[0];fileName.textContent=f?`Selected: ${f.name}`:'No file selected';});
- document.getElementById('aiRead').onclick=async()=>{const f=file.files&&file.files[0];if(!f){toast('Choose an image or PDF first');return}
- const allowed=f.type==='application/pdf'||f.type.startsWith('image/')||/\\.(png|jpe?g|webp|heic|heif|pdf)$/i.test(f.name);
- if(!allowed){toast('Please choose a JPG, PNG, WEBP, HEIC/HEIF image or PDF');return}
- if(f.size>15*1024*1024){toast('Please choose a file smaller than 15 MB');return}const msg=document.getElementById('aiMsg');msg.textContent='Reading timetable with AI…';const fd=new FormData();fd.append('file',f);fd.append('fallbackDate',document.getElementById('aiDate').value);fd.append('fallbackCenter',document.getElementById('aiCenter').value);fd.append('mode',document.getElementById('aiMode').value);try{const resp=await fetch('https://fzgftorhxxpnihipmiix.supabase.co/functions/v1/quick-function',{method:'POST',headers:{'Authorization':'Bearer sb_publishable_WMyKmv0cunkBSwkkaPHtuQ_WE7rfZdb','apikey':'sb_publishable_WMyKmv0cunkBSwkkaPHtuQ_WE7rfZdb'},body:fd});if(!resp.ok)throw new Error(await resp.text());const data=await resp.json();UI.aiRows=(data.rows||[]).map(r=>({date:r.date||'',center:r.center||'',batch:r.batch||'',teacherCode:r.teacherCode||'',subject:r.subject||'',chapter:r.chapter||'',lectureNo:r.lectureNo||'',start:normAiTime(r.start),end:normAiTime(r.end),confidence:r.confidence||'review'}));renderAIImport(view)}catch(e){msg.textContent='AI reader failed: '+(e.message||e)}};
- const renderTable=()=>{const el=document.getElementById('aiTable');if(!UI.aiRows.length){el.innerHTML='<div class="empty">No extracted rows yet.</div>';return}el.innerHTML=`<div class="ai-table"><table><thead><tr><th>#</th><th>Date</th><th>Center</th><th>Batch</th><th>Teacher</th><th>Subject</th><th>Start</th><th>End</th><th>Status</th></tr></thead><tbody>${UI.aiRows.map((r,i)=>{const b=STATE.batches.find(x=>x.label.toLowerCase()===(r.batch||'').toLowerCase()&&x.center.toLowerCase()===(r.center||'').toLowerCase())||STATE.batches.find(x=>x.label.toLowerCase()===(r.batch||'').toLowerCase());const t=STATE.teachers.find(x=>x.code.toLowerCase()===(r.teacherCode||'').toLowerCase());const bad=!r.date||!r.start||!r.end||!b||!t;return `<tr><td>${i+1}</td><td><input data-ai="date" data-i="${i}" value="${esc(r.date)}"></td><td><input data-ai="center" data-i="${i}" value="${esc(r.center)}"></td><td><select data-ai="batch" data-i="${i}">${STATE.batches.map(x=>`<option value="${x.id}" ${b&&x.id===b.id?'selected':''}>${esc(x.center+' '+x.label)}</option>`).join('')}</select></td><td><select data-ai="teacher" data-i="${i}">${STATE.teachers.map(x=>`<option value="${x.id}" ${t&&x.id===t.id?'selected':''}>${esc(x.code+' — '+x.name)}</option>`).join('')}</select></td><td><input data-ai="subject" data-i="${i}" value="${esc(r.subject)}"></td><td><input type="time" data-ai="start" data-i="${i}" value="${esc(r.start)}"></td><td><input type="time" data-ai="end" data-i="${i}" value="${esc(r.end)}"></td><td><span class="ai-status ${bad?'ai-review':'ai-ok'}">${bad?'Needs review':'Ready'}</span></td></tr>`}).join('')}</tbody></table></div>`;el.querySelectorAll('[data-ai]').forEach(x=>x.onchange=()=>{const i=+x.dataset.i,k=x.dataset.ai;if(k==='batch'){const b=batchById(x.value);UI.aiRows[i].batch=b.label;UI.aiRows[i].center=b.center}else if(k==='teacher'){UI.aiRows[i].teacherCode=teacherById(x.value).code}else UI.aiRows[i][k]=x.value;renderAIImport(view)})};renderTable();
- document.getElementById('aiClear').onclick=()=>{UI.aiRows=[];render()};document.getElementById('aiPublish').onclick=()=>{if(!UI.aiRows.length){toast('Nothing to import');return}const ns=structuredClone(STATE),add=[];for(const r of UI.aiRows){const b=STATE.batches.find(x=>x.label.toLowerCase()===(r.batch||'').toLowerCase()&&x.center.toLowerCase()===(r.center||'').toLowerCase())||STATE.batches.find(x=>x.label.toLowerCase()===(r.batch||'').toLowerCase());const t=STATE.teachers.find(x=>x.code.toLowerCase()===(r.teacherCode||'').toLowerCase());if(!r.date||!r.start||!r.end||!b||!t){toast('Resolve all Needs review rows first');return}add.push({id:uid('ai'),date:r.date,batchId:b.id,customBatchLabel:null,customCenter:null,teacherId:t.id,subject:r.subject||'',chapter:r.chapter||'',lectureNo:parseInt(r.lectureNo,10)||null,chapterCompleted:false,topic:'',start:r.start,end:r.end,isDoubt:false})}add.forEach(c=>ns.classes.push(c));persist(ns);UI.aiRows=[];UI.tab='schedule';UI.scheduleDate=add[0].date};
+
+ document.getElementById('aiRead').onclick=async()=>{
+  const f=file.files&&file.files[0];
+  if(!f){toast('Choose an image or PDF first');return}
+  const allowed=f.type==='application/pdf'||f.type.startsWith('image/')||/\.(png|jpe?g|webp|heic|heif|pdf)$/i.test(f.name);
+  if(!allowed){toast('Please choose a JPG, PNG, WEBP, HEIC/HEIF image or PDF');return}
+  if(f.size>15*1024*1024){toast('Please choose a file smaller than 15 MB');return}
+
+  const msg=document.getElementById('aiMsg');
+  const btn=document.getElementById('aiRead');
+  msg.textContent='Reading timetable and adding classes to Schedule…';
+  btn.disabled=true;
+
+  const fd=new FormData();
+  fd.append('file',f);
+  fd.append('fallbackDate',document.getElementById('aiDate').value);
+  fd.append('fallbackCenter',document.getElementById('aiCenter').value);
+  fd.append('mode',document.getElementById('aiMode').value);
+
+  try{
+   const resp=await fetch('https://fzgftorhxxpnihipmiix.supabase.co/functions/v1/quick-function',{
+    method:'POST',
+    headers:{
+     'Authorization':'Bearer sb_publishable_WMyKmv0cunkBSwkkaPHtuQ_WE7rfZdb',
+     'apikey':'sb_publishable_WMyKmv0cunkBSwkkaPHtuQ_WE7rfZdb'
+    },
+    body:fd
+   });
+   if(!resp.ok)throw new Error(await resp.text());
+   const data=await resp.json();
+
+   UI.aiRows=(data.rows||[]).map(r=>({
+    date:r.date||document.getElementById('aiDate').value,
+    center:r.center||'',
+    batch:r.batch||'',
+    teacherCode:r.teacherCode||'',
+    subject:r.subject||'',
+    chapter:r.chapter||'',
+    lectureNo:r.lectureNo||'',
+    start:normAiTime(r.start),
+    end:normAiTime(r.end),
+    confidence:r.confidence||'auto'
+   }));
+
+   if(!UI.aiRows.length){
+    msg.textContent='No classes could be read from the timetable.';
+    document.getElementById('aiTable').innerHTML='<div class="empty">No classes found.</div>';
+    return;
+   }
+
+   const ns=structuredClone(STATE),add=[],failed=[];
+   for(const r of UI.aiRows){
+    const center=(r.center||'').trim().toLowerCase();
+    const batchLabel=(r.batch||'').trim().toLowerCase();
+
+    let b=STATE.batches.find(x=>
+      x.label.toLowerCase()===batchLabel &&
+      (!center || x.center.toLowerCase()===center)
+    );
+    if(!b) b=STATE.batches.find(x=>x.label.toLowerCase()===batchLabel);
+    if(!b && center){
+      const centerBatches=STATE.batches.filter(x=>x.center.toLowerCase()===center);
+      if(centerBatches.length===1) b=centerBatches[0];
+    }
+
+    const t=STATE.teachers.find(x=>x.code.toLowerCase()===(r.teacherCode||'').trim().toLowerCase());
+
+    if(!r.date||!r.start||!r.end||!b||!t){
+      failed.push(r);
+      continue;
+    }
+
+    add.push({
+      id:uid('ai'),
+      date:r.date,
+      batchId:b.id,
+      customBatchLabel:null,
+      customCenter:null,
+      teacherId:t.id,
+      subject:r.subject||'',
+      chapter:r.chapter||'',
+      lectureNo:parseInt(r.lectureNo,10)||null,
+      chapterCompleted:false,
+      topic:'',
+      start:r.start,
+      end:r.end,
+      isDoubt:false
+    });
+   }
+
+   if(add.length){
+    add.forEach(c=>ns.classes.push(c));
+    persist(ns);
+    UI.aiRows=[];
+    UI.tab='schedule';
+    UI.scheduleDate=add[0].date;
+    msg.textContent=`✓ ${add.length} class${add.length===1?'':'es'} added to Schedule automatically.`;
+    toast(`${add.length} class${add.length===1?'':'es'} added to Schedule`);
+    render();
+   }else{
+    msg.textContent='AI read the timetable, but no complete class could be matched to your Teachers & Batches.';
+    document.getElementById('aiTable').innerHTML='<div class="empty">Please check that the timetable image contains the batch, teacher and timings, and that those teachers/batches exist in Teachers & Batches.</div>';
+   }
+  }catch(e){
+   msg.textContent='AI reader failed: '+(e.message||e);
+  }finally{
+   btn.disabled=false;
+  }
+ };
 }
+
 function normAiTime(v){if(!v)return '';const m=String(v).trim().toUpperCase().replace(/\s+/g,'').match(/^(\d{1,2})(?::(\d{2}))?(AM|PM)?$/);if(!m)return String(v);let h=+m[1],mi=m[2]||'00';if(m[3]==='PM'&&h<12)h+=12;if(m[3]==='AM'&&h===12)h=0;return String(h).padStart(2,'0')+':'+mi;}
 
 function renderSetup(view){
