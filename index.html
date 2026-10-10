@@ -862,6 +862,18 @@ function deleteClass(id){
   ns.classes = ns.classes.filter(c=>c.id!==id);
   persist(ns);
 }
+function deleteDaySchedule(dateStr){
+  const count = STATE.classes.filter(c=>c.date===dateStr).length;
+  if(!count){ toast('No classes to delete for this date'); return; }
+  if(!confirm(`Delete all ${count} scheduled class${count===1?'':'es'} for ${dateStr}? This cannot be undone.`)) return;
+  const ns = structuredClone(STATE);
+  ns.classes = ns.classes.filter(c=>c.date!==dateStr);
+  if(ns.chapterProgress && typeof ns.chapterProgress==='object'){
+    // Keep chapter progress intact; only remove timetable entries for the selected date.
+  }
+  persist(ns);
+  toast(`Deleted all classes for ${dateStr}`);
+}
 function duplicateDay(fromDate, toDate){
   const ns = structuredClone(STATE);
   const src = ns.classes.filter(c=>c.date===fromDate);
@@ -1187,6 +1199,7 @@ function renderSchedule(view){
           <h2>Timetable</h2>
           <input type="date" id="scheduleDatePick" value="${date}" style="width:auto;">
         </div>
+        ${entries.length ? `<div style="margin:0 0 12px;"><button class="btn" id="deleteDayScheduleBtn" type="button" style="width:100%;min-height:48px;font-size:15px;font-weight:700;background:color-mix(in srgb, var(--coral) 13%, transparent);color:var(--coral);border:1px solid color-mix(in srgb, var(--coral) 45%, transparent);">🗑️ Delete Entire Day’s Schedule (${entries.length} classes)</button></div>` : ''}
         <div class="row" style="margin-bottom:12px;">
           <div class="field" style="flex:2;">
             <label>Copy another day's schedule into ${fmtDateLong(date)}</label>
@@ -1225,6 +1238,7 @@ function renderSchedule(view){
   `;
 
   document.getElementById('scheduleDatePick').onchange = (e)=>{ UI.scheduleDate=e.target.value; UI.editingId=null; render(); };
+  document.getElementById('deleteDayScheduleBtn')?.addEventListener('click',()=>deleteDaySchedule(date));
   document.getElementById('copyDayBtn').onclick = ()=>{
     const from = document.getElementById('copyFromDate').value;
     if(!from){ toast('Pick a date to copy from'); return; }
@@ -1627,9 +1641,9 @@ function renderWeekPreview(sub){
 }
 
 function renderAIImport(view){
- view.innerHTML=`<div class="ai-import-grid"><div class="card"><div class="cardhead"><h2>AI Handwritten Timetable Import</h2></div><div class="muted" style="font-size:12px;margin-bottom:12px">Upload a timetable photo/PDF. AI extracts only what it can see clearly.</div><div id="aiDrop" class="ai-drop">
+ view.innerHTML=`<div class="ai-import-grid"><div class="card"><div class="cardhead"><h2>AI Handwritten Timetable Import</h2></div><div class="muted" style="font-size:12px;margin-bottom:12px">Upload a timetable photo/PDF. AI extracts only what it can see clearly.</div><div id="aiDrop" class="ai-drop" style="padding:22px 18px;">
 <input id="aiFile" type="file" accept="image/*,.png,.jpg,.jpeg,.webp,.heic,.heif,.pdf" style="display:none">
-<label for="aiFile" class="btn primary" id="aiChoose" style="display:inline-block;cursor:pointer">Choose image / PDF</label>
+<label for="aiFile" class="btn primary" id="aiChoose" style="display:flex;align-items:center;justify-content:center;width:100%;min-height:64px;padding:18px 20px;box-sizing:border-box;font-size:18px;font-weight:700;line-height:1.3;text-align:center;cursor:pointer;border-radius:12px;">📁 Choose image / PDF</label>
 <div id="aiFileName" class="muted" style="font-size:12px;margin-top:9px">No file selected</div>
 <div class="muted" style="font-size:12px;margin-top:7px">You can choose from Photos or Files</div>
 </div><div class="field" style="margin-top:14px"><label>Fallback date</label><input id="aiDate" type="date" value="${todayStr()}"></div><div class="row"><div class="field"><label>Centre</label><select id="aiCenter"><option>Auto detect</option><option>Vasai</option><option>Virar</option><option>Both</option></select></div><div class="field"><label>Schedule</label><select id="aiMode"><option value="daily">Daily</option><option value="weekly">Weekly</option></select></div></div><button class="btn primary" id="aiRead">🤖 Read timetable</button><div id="aiMsg" class="muted" style="font-size:12px;margin-top:10px">${UI.aiRows.length?UI.aiRows.length+' rows ready for review.':'No file read yet.'}</div></div><div class="card"><div class="cardhead"><div><h2>Review & publish</h2><div class="muted" style="font-size:12px">Nothing is added to Schedule until you confirm.</div></div></div><div id="aiTable"></div><div class="row" style="margin-top:14px"><button class="btn ghost" id="aiClear">Clear</button><button class="btn primary" id="aiPublish">Confirm & Add to Schedule</button></div></div></div>`;
