@@ -1763,6 +1763,25 @@ async function cloudWrite(){
   const publicSnapshot={teachers:STATE.teachers||[],batches:STATE.batches||[],classes:STATE.classes||[],holidays:STATE.holidays||[],weeklyPattern:STATE.weeklyPattern||[]};
   const {error:pubError}=await paceCloud.from('pace_public_timetable').upsert({id:'main',payload:publicSnapshot,updated_at:new Date().toISOString()},{onConflict:'id'});
   if(pubError)throw pubError;
+  // Publish each teacher's own private projection, linked to their Supabase Auth account.
+  const {data:teacherAccounts,error:accountsError}=await paceCloud.from('pace_teacher_accounts').select('user_id,teacher_id');
+  if(accountsError)throw accountsError;
+  if((teacherAccounts||[]).length){
+    const teacherRows=teacherAccounts.map(a=>{
+      const teacher=(STATE.teachers||[]).find(t=>t.id===a.teacher_id);
+      const classes=(STATE.classes||[]).filter(c=>c.teacherId===a.teacher_id);
+      const weeklyPattern={};
+      Object.entries(STATE.weeklyPattern||{}).forEach(([batchId,days])=>{
+        Object.entries(days||{}).forEach(([day,slots])=>{
+          const own=(slots||[]).filter(slot=>slot.teacherId===a.teacher_id);
+          if(own.length){weeklyPattern[batchId] ||= {};weeklyPattern[batchId][day]=own;}
+        });
+      });
+      return {user_id:a.user_id,payload:{teacher:teacher||{id:a.teacher_id,name:'Teacher'},batches:(STATE.batches||[]).filter(b=>classes.some(c=>c.batchId===b.id)||Object.prototype.hasOwnProperty.call(weeklyPattern,b.id)),classes,holidays:(STATE.holidays||[]).filter(h=>h.teacherId===a.teacher_id),weeklyPattern},updated_at:new Date().toISOString()};
+    });
+    const {error:teacherPublishError}=await paceCloud.from('pace_teacher_timetables').upsert(teacherRows,{onConflict:'user_id'});
+    if(teacherPublishError)throw teacherPublishError;
+  }
   cloudStatus('Cloud backed up ✓');
  }catch(e){cloudStatus('Cloud error — local saved');console.error('Cloud backup:',e);}
  finally{cloudBusy=false;if(cloudPending){cloudPending=false;queueCloudSave();}}
@@ -1810,6 +1829,46 @@ async function initCloud(){
  paceCloud.auth.onAuthStateChange((_event,session)=>{applySession(session);});
 }
 
+
+async function initPrivateTeacherView(){
+  document.title='PACE IIT & Medical — Teacher Timetable';
+  const shell=document.getElementById('shell');
+  shell.innerHTML=`<main style="max-width:850px;margin:0 auto;padding:24px 16px 50px;width:100%">
+    <header style="background:#152238;color:#fff;padding:22px;border-radius:14px;margin-bottom:18px"><div style="font-size:12px;letter-spacing:.12em;color:#f3d9a7;font-weight:700">PACE IIT &amp; MEDICAL</div><h1 style="margin:7px 0 4px;font-size:25px;color:white">Faculty Timetable</h1><div style="color:#d1d8e8;font-size:13px">Private access · Sign in to view your own schedule</div></header>
+    <section class="card" id="teacherLoginCard"><h2>Teacher Login</h2><p class="muted">Use the teacher account provided by PACE administration.</p><form id="teacherLoginForm" style="display:grid;gap:12px"><div class="field"><label for="teacherEmail">Email</label><input id="teacherEmail" type="email" autocomplete="username" required placeholder="teacher@example.com"></div><div class="field"><label for="teacherPassword">Password</label><input id="teacherPassword" type="password" autocomplete="current-password" required placeholder="Password"></div><button class="btn primary" type="submit">Sign in</button></form><div id="teacherLoginStatus" class="muted" style="margin-top:12px;font-size:13px"></div></section>
+    <section id="teacherScheduleCard" class="card" style="display:none;margin-top:16px"><div class="cardhead"><div><h2 id="teacherName">Your timetable</h2><div class="muted" id="teacherUpdated"></div></div><button class="btn ghost" id="teacherSignOut" type="button">Sign out</button></div><div class="row" style="margin:14px 0"><div class="field"><label for="teacherDate">Date</label><input id="teacherDate" type="date" value="${todayStr()}"></div></div><div id="teacherResults"></div></section>
+    <footer style="text-align:center;color:var(--text-muted);font-size:12px;padding:16px">PACE IIT &amp; Medical · Private faculty portal</footer></main>`;
+  const loginCard=document.getElementById('teacherLoginCard'),scheduleCard=document.getElementById('teacherScheduleCard'),status=document.getElementById('teacherLoginStatus');
+  if(!paceCloud){status.textContent='Could not connect. Check your internet connection.';return;}
+  let payload=null,updatedAt=null;
+  function renderTeacherDay(){
+    const date=document.getElementById('teacherDate').value,results=document.getElementById('teacherResults');
+    if(!payload||!date)return;
+    const teacher=payload.teacher||{};
+    const classes=(payload.classes||[]).filter(c=>c.date===date).sort((a,b)=>String(a.start).localeCompare(String(b.start)));
+    const batchMap=new Map((payload.batches||[]).map(b=>[b.id,b]));
+    if(!classes.length){results.innerHTML=`<p class="muted">No classes scheduled for ${esc(fmtDateLong(date))}.</p>`;return;}
+    results.innerHTML=`<p class="muted">${esc(dayName(date))}, ${esc(fmtDateLong(date))}</p><div style="display:grid;gap:10px">${classes.map(c=>{const b=batchMap.get(c.batchId),name=c.customBatchLabel||(b?.label||b?.name||'Batch'),center=b?.center||c.customCenter||'';const detail=c.isTest?(Array.isArray(c.testTopics)?c.testTopics.map(x=>`${x.subject}: ${x.topic}`).join(' · '):''):String(c.chapter||c.topic||'');return `<article style="border:1px solid var(--line);border-radius:10px;padding:13px"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><strong>${esc(name)}${c.subject?' · '+esc(c.subject):''}</strong><strong>${esc(fmt12(c.start))} – ${esc(fmt12(c.end))}</strong></div>${center?`<div class="muted" style="margin-top:4px">${esc(center)} Centre</div>`:''}${detail?`<div style="margin-top:5px;color:var(--text-muted);font-size:13px">${esc(detail)}</div>`:''}${c.online?'<div style="margin-top:5px;font-size:12px;color:var(--teal)">Online class</div>':''}</article>`;}).join('')}</div>`;
+  }
+  async function loadTeacher(session){
+    const user=session?.user;
+    if(!user){payload=null;loginCard.style.display='block';scheduleCard.style.display='none';return;}
+    status.textContent='Checking teacher access…';
+    try{
+      const {data,error}=await paceCloud.from('pace_teacher_timetables').select('payload,updated_at').eq('user_id',user.id).maybeSingle();
+      if(error)throw error;
+      if(!data?.payload){await paceCloud.auth.signOut();status.textContent='This account is not linked to a PACE teacher yet. Contact the administrator.';return;}
+      payload=data.payload;updatedAt=data.updated_at;loginCard.style.display='none';scheduleCard.style.display='block';
+      document.getElementById('teacherName').textContent=(payload.teacher?.name||'Teacher')+' — Your Timetable';
+      document.getElementById('teacherUpdated').textContent='Last published: '+(updatedAt?new Date(updatedAt).toLocaleString():'Not available');
+      renderTeacherDay();
+    }catch(e){status.textContent='Could not load your timetable: '+e.message;}
+  }
+  document.getElementById('teacherLoginForm').onsubmit=async e=>{e.preventDefault();status.textContent='Signing in…';const email=document.getElementById('teacherEmail').value.trim(),password=document.getElementById('teacherPassword').value;const {data,error}=await paceCloud.auth.signInWithPassword({email,password});if(error){status.textContent='Sign-in failed. Check your email and password, then try again.';return;}await loadTeacher(data.session);};
+  document.getElementById('teacherDate').onchange=renderTeacherDay;
+  document.getElementById('teacherSignOut').onclick=async()=>{await paceCloud.auth.signOut();payload=null;loginCard.style.display='block';scheduleCard.style.display='none';status.textContent='Signed out.';};
+  const {data}=await paceCloud.auth.getSession();if(data?.session)await loadTeacher(data.session);
+}
 
 async function initPublicStudentView(){
   document.title='PACE IIT & Medical — Student Timetable';
@@ -1866,7 +1925,10 @@ async function initPublicStudentView(){
   centerSel.onchange=()=>{fillBatches();};
   batchSel.onchange=showClasses;dateSel.onchange=showClasses;
 }
-if(new URLSearchParams(location.search).get('student')==='1'){
+const paceViewParams=new URLSearchParams(location.search);
+if(paceViewParams.get('teacher')==='1'){
+  initPrivateTeacherView();
+}else if(paceViewParams.get('student')==='1'){
   initPublicStudentView();
 }else{
   render();
