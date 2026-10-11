@@ -834,11 +834,17 @@ function studentMessage(batchId,date){
    main.forEach((c,i)=>{
      const t=teacherById(c.teacherId);
      const code=t?.code||'';
-     const subject=String(c.subject||'').trim();
-     if(subject){
-       out+=`${fmt12(c.start)} - ${fmt12(c.end)}: ${subject}${code?'('+code+')':''}\n`;
-     }else if(c.isTest){
-       out+=`${fmt12(c.start)} - ${fmt12(c.end)}: Test\n`;
+     // Use the saved subject first. If it is blank, infer the subject from
+     // the teacher's code so the student timetable always shows both.
+     const subjectByCode = {
+       DC:'Chemistry', NC:'Chemistry', GM:'Maths', AP:'Physics',
+       RB:'Biology', MB:'Biology', PB:'Biology', VP:'Physics', SM:'Maths'
+     };
+     const subject=String(c.subject||subjectByCode[code]||'').trim();
+     if(c.isTest){
+       out+=`${fmt12(c.start)} - ${fmt12(c.end)}: ${subject ? subject+' Test' : 'Test'}${code?' ('+code+')':''}\n`;
+     }else if(subject){
+       out+=`${fmt12(c.start)} - ${fmt12(c.end)}: ${subject}${code?' ('+code+')':''}\n`;
      }else{
        out+=`${fmt12(c.start)} - ${fmt12(c.end)}: ${code||'Class'}\n`;
      }
