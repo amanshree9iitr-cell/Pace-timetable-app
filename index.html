@@ -1921,7 +1921,10 @@ async function initPublicStudentView(){
     if(!entries.length){results.innerHTML=`<div class="card"><h2>${esc(title)}</h2><p class="muted">No classes scheduled for ${esc(fmtDateLong(date))}.</p></div>`;return;}
     const teacherMap=new Map((snap.teachers||[]).map(t=>[t.id,t]));
     results.innerHTML=`<div class="card"><div class="cardhead"><h2>${esc(title)}</h2><span class="pill ${String(batch.center).toLowerCase().includes('virar')?'virar':'vasai'}">${esc(batch.center)}</span></div><p class="muted">${esc(dayName(date))}, ${esc(fmtDateLong(date))}</p><div style="display:grid;gap:10px">${entries.map(c=>{
-      const t=teacherMap.get(c.teacherId),code=t?.code||'',subject=String(c.subject||'').trim();
+      const t=teacherMap.get(c.teacherId),code=t?.code||'';
+      // Some older timetable rows have no subject saved. Use the teacher's known subject as a display fallback.
+      const subjectFallback={AP:'Physics',VP:'Physics',PB:'Physics',NC:'Chemistry',DC:'Chemistry',GM:'Mathematics',SM:'Mathematics',RB:'Biology',MB:'Biology'};
+      const subject=String(c.subject||c.testSubject||'').trim() || subjectFallback[code] || '';
       const name=c.isTest?'Test':subject||'Class';
       const detail=c.isTest?(Array.isArray(c.testTopics)?c.testTopics.map(x=>`${x.subject}: ${x.topic}`).join(' · '):''):String(c.chapter||c.topic||'');
       return `<article style="border:1px solid var(--line);border-radius:10px;padding:13px"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><strong>${esc(name)}${code?' ('+esc(code)+')':''}</strong><strong>${esc(fmt12(c.start))} – ${esc(fmt12(c.end))}</strong></div>${detail?`<div style="margin-top:5px;color:var(--text-muted);font-size:13px">${esc(detail)}</div>`:''}${c.online?'<div style="margin-top:5px;font-size:12px;color:var(--teal)">Online class</div>':''}</article>`;
