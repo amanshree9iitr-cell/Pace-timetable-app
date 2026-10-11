@@ -1739,7 +1739,7 @@ function renderSetup(view){
 /* Google sign-in and Supabase cloud backup. Local storage remains the offline fallback. */
 const PACE_CLOUD_URL='https://fzgftorhxxpnihipmiix.supabase.co';
 const PACE_CLOUD_KEY='sb_publishable_WMyKmv0cunkBSwkkaPHtuQ_WE7rfZdb';
-const PACE_GOOGLE_EMAIL='amanshree9.iitr@gmail.com';
+const PACE_GOOGLE_EMAIL='iitianspacetimetable@gmail.com';
 const paceCloud=window.supabase?.createClient(PACE_CLOUD_URL,PACE_CLOUD_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 let cloudUser=null,cloudEnabled=false,cloudTimer=null,cloudBusy=false,cloudPending=false;
 function cloudStatus(msg){const e=document.getElementById('cloudstatus');if(e)e.textContent=msg;}
