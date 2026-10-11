@@ -1759,6 +1759,10 @@ async function cloudWrite(){
  try{
   const {error}=await paceCloud.from('pace_app_state').upsert({id:'main',state:STATE,updated_by:cloudUser.id},{onConflict:'id'});
   if(error)throw error;
+  // Publish a student-safe snapshot to a separate read-only table.
+  const publicSnapshot={teachers:STATE.teachers||[],batches:STATE.batches||[],classes:STATE.classes||[],holidays:STATE.holidays||[],weeklyPattern:STATE.weeklyPattern||[]};
+  const {error:pubError}=await paceCloud.from('pace_public_timetable').upsert({id:'main',payload:publicSnapshot,updated_at:new Date().toISOString()},{onConflict:'id'});
+  if(pubError)throw pubError;
   cloudStatus('Cloud backed up ✓');
  }catch(e){cloudStatus('Cloud error — local saved');console.error('Cloud backup:',e);}
  finally{cloudBusy=false;if(cloudPending){cloudPending=false;queueCloudSave();}}
@@ -1806,8 +1810,68 @@ async function initCloud(){
  paceCloud.auth.onAuthStateChange((_event,session)=>{applySession(session);});
 }
 
-render();
-initCloud();
+
+async function initPublicStudentView(){
+  document.title='PACE IIT & Medical — Student Timetable';
+  document.getElementById('shell').innerHTML=`
+    <main style="max-width:850px;margin:0 auto;padding:24px 16px 50px;width:100%">
+      <header style="background:#152238;color:#fff;padding:22px;border-radius:14px;margin-bottom:18px">
+        <div style="font-size:12px;letter-spacing:.12em;color:#f3d9a7;font-weight:700">PACE IIT &amp; MEDICAL</div>
+        <h1 style="margin:7px 0 4px;font-size:25px;color:white">Student Timetable</h1>
+        <div style="color:#d1d8e8;font-size:13px">Vasai &amp; Virar Centres · Select your batch to view classes</div>
+      </header>
+      <section class="card" style="margin-bottom:16px">
+        <div class="row">
+          <div class="field"><label for="pubCenter">Centre</label><select id="pubCenter"><option value="">Select centre</option></select></div>
+          <div class="field"><label for="pubBatch">Batch</label><select id="pubBatch" disabled><option value="">Select batch</option></select></div>
+          <div class="field"><label for="pubDate">Date</label><input id="pubDate" type="date" value="${todayStr()}"></div>
+        </div>
+        <div id="pubStatus" class="muted" style="font-size:12px">Loading latest timetable…</div>
+      </section>
+      <section id="pubResults"></section>
+      <footer style="text-align:center;color:var(--text-muted);font-size:12px;padding:16px">PACE IIT &amp; Medical · Official student timetable</footer>
+    </main>`;
+  const status=document.getElementById('pubStatus'),centerSel=document.getElementById('pubCenter'),batchSel=document.getElementById('pubBatch'),dateSel=document.getElementById('pubDate'),results=document.getElementById('pubResults');
+  if(!paceCloud){status.textContent='Unable to connect. Please check your internet connection.';return;}
+  let snap;
+  try{
+    const {data,error}=await paceCloud.from('pace_public_timetable').select('payload,updated_at').eq('id','main').maybeSingle();
+    if(error)throw error;
+    if(!data?.payload){status.textContent='Timetable has not been published yet. Please check again later.';return;}
+    snap=data.payload;status.textContent='Latest timetable loaded'+(data.updated_at?' · Updated '+new Date(data.updated_at).toLocaleString():'');
+  }catch(e){status.textContent='Could not load the timetable. The administrator needs to complete the one-time public timetable setup.';console.error('Public timetable:',e);return;}
+  const centers=[...new Set((snap.batches||[]).map(b=>String(b.center||'').toUpperCase()==='VASAI'?'Vasai':String(b.center||'').toUpperCase()==='VIRAR'?'Virar':b.center).filter(Boolean))].sort();
+  centerSel.innerHTML='<option value="">Select centre</option>'+centers.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  function fillBatches(){
+    const center=centerSel.value;
+    const batches=(snap.batches||[]).filter(b=>{const c=String(b.center||'').toUpperCase()==='VASAI'?'Vasai':String(b.center||'').toUpperCase()==='VIRAR'?'Virar':b.center;return c===center;});
+    batchSel.innerHTML='<option value="">Select batch</option>'+batches.map(b=>`<option value="${esc(b.id)}">${esc(b.label||b.name)}</option>`).join('');
+    batchSel.disabled=!center;results.innerHTML='';
+  }
+  function showClasses(){
+    const bid=batchSel.value,date=dateSel.value;
+    if(!bid||!date){results.innerHTML='';return;}
+    const batch=(snap.batches||[]).find(b=>b.id===bid);if(!batch)return;
+    const entries=(snap.classes||[]).filter(c=>c.date===date&&c.batchId===bid).sort((a,b)=>a.start.localeCompare(b.start));
+    const title=`${batch.name||batch.label} — ${batch.label||''}`;
+    if(!entries.length){results.innerHTML=`<div class="card"><h2>${esc(title)}</h2><p class="muted">No classes scheduled for ${esc(fmtDateLong(date))}.</p></div>`;return;}
+    const teacherMap=new Map((snap.teachers||[]).map(t=>[t.id,t]));
+    results.innerHTML=`<div class="card"><div class="cardhead"><h2>${esc(title)}</h2><span class="pill ${String(batch.center).toLowerCase().includes('virar')?'virar':'vasai'}">${esc(batch.center)}</span></div><p class="muted">${esc(dayName(date))}, ${esc(fmtDateLong(date))}</p><div style="display:grid;gap:10px">${entries.map(c=>{
+      const t=teacherMap.get(c.teacherId),code=t?.code||'',subject=String(c.subject||'').trim();
+      const name=c.isTest?'Test':subject||'Class';
+      const detail=c.isTest?(Array.isArray(c.testTopics)?c.testTopics.map(x=>`${x.subject}: ${x.topic}`).join(' · '):''):String(c.chapter||c.topic||'');
+      return `<article style="border:1px solid var(--line);border-radius:10px;padding:13px"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><strong>${esc(name)}${code?' ('+esc(code)+')':''}</strong><strong>${esc(fmt12(c.start))} – ${esc(fmt12(c.end))}</strong></div>${detail?`<div style="margin-top:5px;color:var(--text-muted);font-size:13px">${esc(detail)}</div>`:''}${c.online?'<div style="margin-top:5px;font-size:12px;color:var(--teal)">Online class</div>':''}</article>`;
+    }).join('')}</div></div>`;
+  }
+  centerSel.onchange=()=>{fillBatches();};
+  batchSel.onchange=showClasses;dateSel.onchange=showClasses;
+}
+if(new URLSearchParams(location.search).get('student')==='1'){
+  initPublicStudentView();
+}else{
+  render();
+  initCloud();
+}
 </script>
 
 
