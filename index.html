@@ -1764,20 +1764,25 @@ async function cloudWrite(){
   const {error:pubError}=await paceCloud.from('pace_public_timetable').upsert({id:'main',payload:publicSnapshot,updated_at:new Date().toISOString()},{onConflict:'id'});
   if(pubError)throw pubError;
   // Publish each teacher's own private projection, linked to their Supabase Auth account.
-  const {data:teacherAccounts,error:accountsError}=await paceCloud.from('pace_teacher_accounts').select('user_id,teacher_id');
+  const {data:teacherAccounts,error:accountsError}=await paceCloud.from('pace_teacher_accounts').select('user_id,teacher_id,teachers(code,name)');
   if(accountsError)throw accountsError;
   if((teacherAccounts||[]).length){
     const teacherRows=teacherAccounts.map(a=>{
-      const teacher=(STATE.teachers||[]).find(t=>t.id===a.teacher_id);
-      const classes=(STATE.classes||[]).filter(c=>c.teacherId===a.teacher_id);
+      // Account mappings store the database teacher UUID; the timetable state uses internal IDs (t1, t_sm1, etc.).
+      // Resolve the internal teacher by the stable teacher code, falling back to a direct ID match.
+      const linkedDbTeacher=Array.isArray(a.teachers)?a.teachers[0]:a.teachers;
+      const teacher=(STATE.teachers||[]).find(t=>t.id===a.teacher_id) ||
+        (linkedDbTeacher?.code ? (STATE.teachers||[]).find(t=>String(t.code||'').toUpperCase()===String(linkedDbTeacher.code).toUpperCase()) : null);
+      const internalTeacherId=teacher?.id || a.teacher_id;
+      const classes=(STATE.classes||[]).filter(c=>c.teacherId===internalTeacherId);
       const weeklyPattern={};
       Object.entries(STATE.weeklyPattern||{}).forEach(([batchId,days])=>{
         Object.entries(days||{}).forEach(([day,slots])=>{
-          const own=(slots||[]).filter(slot=>slot.teacherId===a.teacher_id);
+          const own=(slots||[]).filter(slot=>slot.teacherId===internalTeacherId);
           if(own.length){weeklyPattern[batchId] ||= {};weeklyPattern[batchId][day]=own;}
         });
       });
-      return {user_id:a.user_id,payload:{teacher:teacher||{id:a.teacher_id,name:'Teacher'},batches:(STATE.batches||[]).filter(b=>classes.some(c=>c.batchId===b.id)||Object.prototype.hasOwnProperty.call(weeklyPattern,b.id)),classes,holidays:(STATE.holidays||[]).filter(h=>h.teacherId===a.teacher_id),weeklyPattern},updated_at:new Date().toISOString()};
+      return {user_id:a.user_id,payload:{teacher:teacher||{id:internalTeacherId,name:linkedDbTeacher?.name||'Teacher'},batches:(STATE.batches||[]).filter(b=>classes.some(c=>c.batchId===b.id)||Object.prototype.hasOwnProperty.call(weeklyPattern,b.id)),classes,holidays:(STATE.holidays||[]).filter(h=>h.teacherId===internalTeacherId),weeklyPattern},updated_at:new Date().toISOString()};
     });
     const {error:teacherPublishError}=await paceCloud.from('pace_teacher_timetables').upsert(teacherRows,{onConflict:'user_id'});
     if(teacherPublishError)throw teacherPublishError;
