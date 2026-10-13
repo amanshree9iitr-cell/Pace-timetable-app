@@ -821,7 +821,7 @@ function removeSubject(name){
 }
 
 /* ================= Message builders ================= */
-function facultyMessage(teacherId,date){const t=teacherById(teacherId);if(!t)return '';const e=classesFor(date).filter(c=>c.teacherId===teacherId).sort((a,b)=>a.start.localeCompare(b.start));if(!e.length)return null;const centers={};e.forEach(c=>{const b=batchById(c.batchId),center=b?b.center:(c.customCenter||'Other');(centers[center] ||= []).push(c)});Object.values(centers).forEach(a=>a.sort((x,y)=>x.start.localeCompare(y.start)));const order=['Vasai','Virar'].filter(c=>centers[c]).concat(Object.keys(centers).filter(c=>!['Vasai','Virar'].includes(c)));let out=`Good Evening\n*${t.name.split(' ')[0]} ${t.salutation||'Sir'}*\n\nDate:- ${fmtDateLong(date)}\nDay:- ${dayName(date)}\n`;order.forEach(center=>{out+=`\n*${center} Center*\n`;centers[center].forEach(c=>{const b=batchById(c.batchId),batch=c.customBatchLabel||(b?b.label:'Batch');out+=c.isDoubt?`_*${fmt12(c.start)} - ${fmt12(c.end)}: Doubt Session*_\n`:`${fmt12(c.start)} - ${fmt12(c.end)}: ${batch}${c.subject?' ('+c.subject+')':''}\n`;})});if(e.some(c=>!c.isDoubt&&c.end==='16:30')&&!e.some(c=>c.isDoubt&&c.start==='16:30'))out+=`\n_*4:30 PM - 6:00 PM: Doubt Session*_\n`;return out+'\nThank you.';}
+function facultyMessage(teacherId,date){const t=teacherById(teacherId);if(!t)return '';const e=classesFor(date).filter(c=>c.teacherId===teacherId).sort((a,b)=>a.start.localeCompare(b.start)||a.end.localeCompare(b.end));if(!e.length)return null;let out=`Good Evening\n*${t.name.split(' ')[0]} ${t.salutation||'Sir'}*\n\nDate:- ${fmtDateLong(date)}\nDay:- ${dayName(date)}\n`;let lastSlot='';e.forEach(c=>{const b=batchById(c.batchId),batch=c.customBatchLabel||(b?b.label:'Batch'),center=b?b.center:(c.customCenter||'Other'),slot=c.start<'13:00'?'morning':'afternoon';if(slot!==lastSlot){out+=`\n*${slot==='morning'?'First Slot (9:30 AM – 12:45 PM)':'Second Slot (1:15 PM – 4:30 PM)'}*\n`;lastSlot=slot;}out+=`*${center} Center*\n`;out+=c.isDoubt?`_${fmt12(c.start)} - ${fmt12(c.end)}: Doubt Session_\n`:`${fmt12(c.start)} - ${fmt12(c.end)}: ${batch}${c.subject?' ('+c.subject+')':''}\n`;});if(e.some(c=>!c.isDoubt&&c.end==='16:30')&&!e.some(c=>c.isDoubt&&c.start==='16:30'))out+=`\n_*4:30 PM - 6:00 PM: Doubt Session*_\n`;return out+'\nThank you.';}
 function studentMessage(batchId,date){
  const b=batchById(batchId);if(!b)return '';
  const e=classesFor(date).filter(c=>c.batchId===batchId).sort((a,b)=>a.start.localeCompare(b.start));
@@ -1159,8 +1159,13 @@ function renderSchedule(view){
   batchSel.addEventListener('change', ()=>applyChapterSuggestion(true));
   const isTestToggle = document.getElementById('f_isTest');
   const teacherSelect = document.getElementById('f_teacher');
-  const syncExamTeacher = ()=>{ if(isTestToggle.checked){ teacherSelect.value=''; teacherSelect.disabled=true; } else { teacherSelect.disabled=false; } };
+  const noTeacherFields = ['f_subject','f_chapter','f_customBatch'];
+  const isExamOrTestText = (value)=>/\b(exam|test|twt|mt)\b/i.test(String(value||''));
+  const syncExamTeacher = ()=>{ const batchEl=document.getElementById('f_batch'); const batchText=batchEl&&batchEl.value==='custom'?document.getElementById('f_customBatch')?.value:(batchById(batchEl?.value)?.label||''); const textMatch=noTeacherFields.some(id=>isExamOrTestText(document.getElementById(id)?.value))||isExamOrTestText(batchText); const noTeacher=isTestToggle.checked||textMatch; if(noTeacher){teacherSelect.value='';teacherSelect.disabled=true;}else{teacherSelect.disabled=false;} };
   isTestToggle.addEventListener('change', syncExamTeacher);
+  noTeacherFields.forEach(id=>document.getElementById(id)?.addEventListener('input',syncExamTeacher));
+  noTeacherFields.forEach(id=>document.getElementById(id)?.addEventListener('change',syncExamTeacher));
+  document.getElementById('f_batch')?.addEventListener('change',syncExamTeacher);
   syncExamTeacher();
   centerSel.addEventListener('change', ()=>applyChapterSuggestion(true));
   chapterInput.addEventListener('input', ()=>applyChapterSuggestion(false));
@@ -1180,7 +1185,7 @@ function renderSchedule(view){
       batchId: batchVal==='custom' ? null : batchVal,
       customBatchLabel: batchVal==='custom' ? document.getElementById('f_customBatch').value.trim() : null,
       customCenter: batchVal==='custom' ? centerSel.value : null,
-      teacherId: document.getElementById('f_isTest').checked ? null : document.getElementById('f_teacher').value,
+      teacherId: (document.getElementById('f_isTest').checked || /\b(exam|test|twt|mt)\b/i.test([document.getElementById('f_subject').value,document.getElementById('f_chapter').value,document.getElementById('f_customBatch')?.value,batchById(batchVal)?.label].filter(Boolean).join(' '))) ? null : document.getElementById('f_teacher').value,
       subject: document.getElementById('f_subject').value,
       chapter: document.getElementById('f_chapter').value.trim(),
       lectureNo: parseInt(document.getElementById('f_lecture').value, 10) || 1,
@@ -1191,7 +1196,8 @@ function renderSchedule(view){
       isTest: document.getElementById('f_isTest').checked,
     };
     const secondBatchId = batch2Sel ? batch2Sel.value : '';
-    if(entry.isTest){ entry.teacherId=null; entry.subject=entry.subject||null; entry.chapter=''; entry.lectureNo=null; }
+    const noTeacherClass = entry.isTest || /\b(exam|test|twt|mt)\b/i.test([entry.subject,entry.chapter,entry.topic,entry.customBatchLabel,batchById(entry.batchId)?.label].filter(Boolean).join(' '));
+    if(noTeacherClass){ entry.teacherId=null; if(entry.isTest){entry.chapter='';entry.lectureNo=null;} }
     else if(!entry.teacherId){ toast('Please choose a teacher'); return; }
     if(secondBatchId && secondBatchId===entry.batchId){ toast('Choose a different second batch'); return; }
     if(secondBatchId && !confirm('Combined class confirmation: the same teacher will teach both selected batches at the same time. Continue?')) return;
