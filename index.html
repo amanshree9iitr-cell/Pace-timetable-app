@@ -382,6 +382,7 @@ function timesOverlap(s1,e1,s2,e2){ return s1<e2 && s2<e1; }
 function findConflicts(entry, excludeId){
   return STATE.classes.filter(c=>{
     if(c.id===excludeId) return false;
+    if(entry.combinedGroupId && c.combinedGroupId===entry.combinedGroupId) return false;
     if(c.date!==entry.date) return false;
     if(!timesOverlap(entry.start, entry.end, c.start, c.end)) return false;
     const sameTeacher = !!entry.teacherId && c.teacherId===entry.teacherId;
@@ -977,6 +978,7 @@ function renderSchedule(view){
   const formCenter = editing ? (batchById(editing.batchId)?.center || editing.customCenter || '') : (UI._draftCenter || '');
 
   view.innerHTML = `
+    <div style="display:flex;justify-content:flex-end;margin-bottom:12px"><button class="btn danger" id="deleteAllSchedule">Delete All Schedule</button></div>
     <div class="grid2">
       <div class="card">
         <div class="cardhead">
@@ -997,6 +999,10 @@ function renderSchedule(view){
           <div class="field" id="customBatchWrap" style="display:none;">
             <label>Custom batch label</label>
             <input id="f_customBatch" placeholder="e.g. X (F.B)" value="${editing&&editing.customBatchLabel?esc(editing.customBatchLabel):''}">
+          </div>
+          <div class="field">
+            <label>Second batch (optional — combined class)</label>
+            <select id="f_batch2"><option value="">— No second batch —</option>${STATE.batches.filter(b=>b.center===formCenter).map(b=>`<option value="${b.id}">${esc(b.label)} (${esc(b.center)})</option>`).join('')}</select>
           </div>
           <div class="row">
             <div class="field">
@@ -1036,6 +1042,10 @@ function renderSchedule(view){
           <div class="checkfield">
             <input type="checkbox" id="f_doubt" ${editing&&editing.isDoubt?'checked':''}>
             <label for="f_doubt">This is a Doubt Session</label>
+          </div>
+          <div class="checkfield">
+            <input type="checkbox" id="f_isTest" ${editing&&editing.isTest?'checked':''}>
+            <label for="f_isTest">This is an exam/test (teacher optional)</label>
           </div>
           <button class="btn primary" type="submit">${editing?'Save changes':'Add to timetable'}</button>
         </form>
@@ -1084,6 +1094,12 @@ function renderSchedule(view){
   `;
 
   document.getElementById('scheduleDatePick').onchange = (e)=>{ UI.scheduleDate=e.target.value; UI.editingId=null; render(); };
+  const deleteAllBtn=document.getElementById('deleteAllSchedule');
+  if(deleteAllBtn) deleteAllBtn.onclick=()=>{
+    if(!confirm('Delete ALL scheduled classes across Vasai and Virar? Teachers, batches, holidays, accounts and settings will be kept.')) return;
+    if(!confirm('Final confirmation: permanently clear every scheduled class from the timetable and cloud-published student/teacher schedules?')) return;
+    const ns=structuredClone(STATE); ns.classes=[]; ns.chapterProgress={}; persist(ns); UI.editingId=null; toast('All scheduled classes deleted');
+  };
   document.getElementById('copyDayBtn').onclick = ()=>{
     const from = document.getElementById('copyFromDate').value;
     if(!from){ toast('Pick a date to copy from'); return; }
@@ -1092,9 +1108,11 @@ function renderSchedule(view){
 
   const centerSel = document.getElementById('f_center');
   const batchSel = document.getElementById('f_batch');
+  const batch2Sel = document.getElementById('f_batch2');
   const customWrap = document.getElementById('customBatchWrap');
   function syncBatchOptions(){
     batchSel.innerHTML = batchOptions(editing?editing.batchId:'', centerSel.value);
+    if(batch2Sel) batch2Sel.innerHTML = '<option value="">— No second batch —</option>' + STATE.batches.filter(b=>b.center===centerSel.value).map(b=>`<option value="${b.id}">${esc(b.label)} (${esc(b.center)})</option>`).join('');
     customWrap.style.display = batchSel.value==='custom' ? 'block' : 'none';
   }
   if(!centerSel.value && STATE.batches.length) centerSel.value = STATE.batches[0].center;
@@ -1165,16 +1183,28 @@ function renderSchedule(view){
       start: document.getElementById('f_start').value,
       end: document.getElementById('f_end').value,
       isDoubt: document.getElementById('f_doubt').checked,
+      isTest: document.getElementById('f_isTest').checked,
     };
-    if(!entry.teacherId){ toast('Please choose a teacher'); return; }
+    const secondBatchId = batch2Sel ? batch2Sel.value : '';
+    if(entry.isTest){ entry.teacherId=entry.teacherId||null; entry.subject=entry.subject||null; entry.chapter=''; entry.lectureNo=null; }
+    else if(!entry.teacherId){ toast('Please choose a teacher'); return; }
+    if(secondBatchId && secondBatchId===entry.batchId){ toast('Choose a different second batch'); return; }
+    if(secondBatchId && !confirm('Combined class confirmation: the same teacher will teach both selected batches at the same time. Continue?')) return;
     if(!entry.start || !entry.end || entry.end<=entry.start){ toast('Check the start/end time'); return; }
     const conflicts = findConflicts(entry, editing?editing.id:null);
     if(conflicts.length){
       const msg = 'This overlaps with:\n' + conflicts.map(describeConflict).join('\n') + '\n\nAdd it anyway?';
       if(!confirm(msg)) return;
     }
-    if(editing){ updateClass(editing.id, entry); UI.editingId=null; }
-    else addClass(entry);
+    if(editing){
+      updateClass(editing.id, entry);
+      if(secondBatchId){ const ns=structuredClone(STATE); const group=entry.combinedGroupId||uid('combined'); ns.classes=ns.classes.filter(c=>c.id===editing.id||c.combinedGroupId!==group); const mirror={...entry,id:uid('c'),batchId:secondBatchId,customBatchLabel:null,customCenter:null,combinedGroupId:group}; const ix=ns.classes.findIndex(c=>c.id===editing.id); if(ix>=0){ns.classes[ix].combinedGroupId=group;ns.classes[ix].batchIds=[entry.batchId,secondBatchId];} ns.classes.push(mirror); persist(ns); }
+      UI.editingId=null;
+    } else if(secondBatchId){
+      const group=uid('combined'); entry.combinedGroupId=group; entry.batchIds=[entry.batchId,secondBatchId];
+      const mirror={...entry,id:uid('c'),batchId:secondBatchId,customBatchLabel:null,customCenter:null};
+      addClass(entry); const ns=structuredClone(STATE); ns.classes.push(mirror); persist(ns);
+    } else addClass(entry);
   };
 
   view.querySelectorAll('[data-edit]').forEach(b=> b.onclick = ()=>{ UI.editingId=b.getAttribute('data-edit'); render(); });
