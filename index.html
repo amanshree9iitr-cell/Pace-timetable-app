@@ -949,7 +949,7 @@ function batchOptions(selectedId, selectedCenter){
     + `<option value="custom" ${selectedId==='custom'?'selected':''}>Other / custom batch…</option>`;
 }
 function teacherOptions(selectedId){
-  return STATE.teachers.map(t=>`<option value="${t.id}" ${t.id===selectedId?'selected':''}>${esc(t.name)} (${esc(t.code)})</option>`).join('');
+  return `<option value="" ${!selectedId?'selected':''}>— No teacher assigned —</option>` + STATE.teachers.map(t=>`<option value="${t.id}" ${t.id===selectedId?'selected':''}>${esc(t.name)} (${esc(t.code)})</option>`).join('');
 }
 function subjectOptions(selected){
   return `<option value="">— none —</option>` + STATE.subjects.map(s=>`<option value="${s}" ${s===selected?'selected':''}>${esc(s)}</option>`).join('');
@@ -1157,6 +1157,11 @@ function renderSchedule(view){
   }
   teacherSel.addEventListener('change', ()=>applyChapterSuggestion(true));
   batchSel.addEventListener('change', ()=>applyChapterSuggestion(true));
+  const isTestToggle = document.getElementById('f_isTest');
+  const teacherSelect = document.getElementById('f_teacher');
+  const syncExamTeacher = ()=>{ if(isTestToggle.checked){ teacherSelect.value=''; teacherSelect.disabled=true; } else { teacherSelect.disabled=false; } };
+  isTestToggle.addEventListener('change', syncExamTeacher);
+  syncExamTeacher();
   centerSel.addEventListener('change', ()=>applyChapterSuggestion(true));
   chapterInput.addEventListener('input', ()=>applyChapterSuggestion(false));
   if(!editing) applyChapterSuggestion(true);
@@ -1175,7 +1180,7 @@ function renderSchedule(view){
       batchId: batchVal==='custom' ? null : batchVal,
       customBatchLabel: batchVal==='custom' ? document.getElementById('f_customBatch').value.trim() : null,
       customCenter: batchVal==='custom' ? centerSel.value : null,
-      teacherId: document.getElementById('f_teacher').value,
+      teacherId: document.getElementById('f_isTest').checked ? null : document.getElementById('f_teacher').value,
       subject: document.getElementById('f_subject').value,
       chapter: document.getElementById('f_chapter').value.trim(),
       lectureNo: parseInt(document.getElementById('f_lecture').value, 10) || 1,
@@ -1186,7 +1191,7 @@ function renderSchedule(view){
       isTest: document.getElementById('f_isTest').checked,
     };
     const secondBatchId = batch2Sel ? batch2Sel.value : '';
-    if(entry.isTest){ entry.teacherId=entry.teacherId||null; entry.subject=entry.subject||null; entry.chapter=''; entry.lectureNo=null; }
+    if(entry.isTest){ entry.teacherId=null; entry.subject=entry.subject||null; entry.chapter=''; entry.lectureNo=null; }
     else if(!entry.teacherId){ toast('Please choose a teacher'); return; }
     if(secondBatchId && secondBatchId===entry.batchId){ toast('Choose a different second batch'); return; }
     if(secondBatchId && !confirm('Combined class confirmation: the same teacher will teach both selected batches at the same time. Continue?')) return;
@@ -1883,7 +1888,12 @@ async function initPrivateTeacherView(){
     const classes=(payload.classes||[]).filter(c=>c.date===date).sort((a,b)=>String(a.start).localeCompare(String(b.start)));
     const batchMap=new Map((payload.batches||[]).map(b=>[b.id,b]));
     if(!classes.length){results.innerHTML=`<p class="muted">No classes scheduled for ${esc(fmtDateLong(date))}.</p>`;return;}
-    results.innerHTML=`<p class="muted">${esc(dayName(date))}, ${esc(fmtDateLong(date))}</p><div style="display:grid;gap:10px">${classes.map(c=>{const b=batchMap.get(c.batchId),name=c.customBatchLabel||(b?.label||b?.name||'Batch'),center=b?.center||c.customCenter||'';const detail=c.isTest?(Array.isArray(c.testTopics)?c.testTopics.map(x=>`${x.subject}: ${x.topic}`).join(' · '):''):String(c.chapter||c.topic||'');return `<article style="border:1px solid var(--line);border-radius:10px;padding:13px"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><strong>${esc(name)}${c.subject?' · '+esc(c.subject):''}</strong><strong>${esc(fmt12(c.start))} – ${esc(fmt12(c.end))}</strong></div>${center?`<div class="muted" style="margin-top:4px">${esc(center)} Centre</div>`:''}${detail?`<div style="margin-top:5px;color:var(--text-muted);font-size:13px">${esc(detail)}</div>`:''}${c.online?'<div style="margin-top:5px;font-size:12px;color:var(--teal)">Online class</div>':''}</article>`;}).join('')}</div>`;
+    const firstSlot=classes.filter(c=>String(c.start)>='09:30'&&String(c.start)<='12:45').sort((a,b)=>String(a.start).localeCompare(String(b.start)));
+    const secondSlot=classes.filter(c=>String(c.start)>='13:15'&&String(c.start)<='16:30').sort((a,b)=>String(a.start).localeCompare(String(b.start)));
+    const otherSlots=classes.filter(c=>!firstSlot.includes(c)&&!secondSlot.includes(c)).sort((a,b)=>String(a.start).localeCompare(String(b.start)));
+    const renderClass=c=>{const b=batchMap.get(c.batchId),name=c.customBatchLabel||(b?.label||b?.name||'Batch'),center=b?.center||c.customCenter||'';const detail=c.isTest?(Array.isArray(c.testTopics)?c.testTopics.map(x=>`${x.subject}: ${x.topic}`).join(' · '):''):String(c.chapter||c.topic||'');return `<article style="border:1px solid var(--line);border-radius:10px;padding:13px"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><strong>${esc(name)}${c.subject?' · '+esc(c.subject):''}</strong><strong>${esc(fmt12(c.start))} – ${esc(fmt12(c.end))}</strong></div>${center?`<div class="muted" style="margin-top:4px">${esc(center)} Centre</div>`:''}${detail?`<div style="margin-top:5px;color:var(--text-muted);font-size:13px">${esc(detail)}</div>`:''}${c.online?'<div style="margin-top:5px;font-size:12px;color:var(--teal)">Online class</div>':''}</article>`;};
+    const renderSlot=(title,slotClasses)=>slotClasses.length?`<section style="margin-top:14px"><h3 style="margin:0 0 8px;font-size:15px">${title}</h3><div style="display:grid;gap:10px">${slotClasses.map(renderClass).join('')}</div></section>`:'';
+    results.innerHTML=`<p class="muted">${esc(dayName(date))}, ${esc(fmtDateLong(date))}</p>${renderSlot('Slot 1 · 9:30 AM – 12:45 PM',firstSlot)}${renderSlot('Slot 2 · 1:15 PM – 4:30 PM',secondSlot)}${renderSlot('Other timings',otherSlots)}`;
   }
   async function loadTeacher(session){
     const user=session?.user;
