@@ -821,7 +821,7 @@ function removeSubject(name){
 }
 
 /* ================= Message builders ================= */
-function facultyMessage(teacherId,date){const t=teacherById(teacherId);if(!t)return '';const e=classesFor(date).filter(c=>c.teacherId===teacherId).sort((a,b)=>a.start.localeCompare(b.start)||a.end.localeCompare(b.end));if(!e.length)return null;let out=`Good Evening\n*${t.name.split(' ')[0]} ${t.salutation||'Sir'}*\n\nDate:- ${fmtDateLong(date)}\nDay:- ${dayName(date)}\n`;let lastSlot='';e.forEach(c=>{const b=batchById(c.batchId),batch=c.customBatchLabel||(b?b.label:'Batch'),center=b?b.center:(c.customCenter||'Other'),slot=c.start<'13:00'?'morning':'afternoon';if(slot!==lastSlot){out+=`\n*${slot==='morning'?'First Slot (9:30 AM – 12:45 PM)':'Second Slot (1:15 PM – 4:30 PM)'}*\n`;lastSlot=slot;}out+=`*${center} Center*\n`;out+=c.isDoubt?`_${fmt12(c.start)} - ${fmt12(c.end)}: Doubt Session_\n`:`${fmt12(c.start)} - ${fmt12(c.end)}: ${batch}${c.subject?' ('+c.subject+')':''}\n`;});if(e.some(c=>!c.isDoubt&&c.end==='16:30')&&!e.some(c=>c.isDoubt&&c.start==='16:30'))out+=`\n_*4:30 PM - 6:00 PM: Doubt Session*_\n`;return out+'\nThank you.';}
+function facultyMessage(teacherId,date){const t=teacherById(teacherId);if(!t)return '';const e=classesFor(date).filter(c=>c.teacherId===teacherId).sort((a,b)=>a.start.localeCompare(b.start)||a.end.localeCompare(b.end));if(!e.length)return null;let out=`Good Evening\n*${t.name.split(' ')[0]} ${t.salutation||'Sir'}*\n\nDate:- ${fmtDateLong(date)}\nDay:- ${dayName(date)}\n`;e.forEach(c=>{const b=batchById(c.batchId),batch=c.customBatchLabel||(b?b.label:'Batch'),center=b?b.center:(c.customCenter||'Other');out+=`\n*${center} Center*\n`;out+=c.isDoubt?`_${fmt12(c.start)} - ${fmt12(c.end)}: Doubt Session_\n`:`${fmt12(c.start)} - ${fmt12(c.end)}: ${batch}${c.subject?' ('+c.subject+')':''}\n`;});if(e.some(c=>!c.isDoubt&&c.end==='16:30')&&!e.some(c=>c.isDoubt&&c.start==='16:30'))out+=`\n_*4:30 PM - 6:00 PM: Doubt Session*_\n`;return out+'\nThank you.';}
 function studentMessage(batchId,date){
  const b=batchById(batchId);if(!b)return '';
  const e=classesFor(date).filter(c=>c.batchId===batchId).sort((a,b)=>a.start.localeCompare(b.start));
@@ -1894,12 +1894,11 @@ async function initPrivateTeacherView(){
     const classes=(payload.classes||[]).filter(c=>c.date===date).sort((a,b)=>String(a.start).localeCompare(String(b.start)));
     const batchMap=new Map((payload.batches||[]).map(b=>[b.id,b]));
     if(!classes.length){results.innerHTML=`<p class="muted">No classes scheduled for ${esc(fmtDateLong(date))}.</p>`;return;}
-    const firstSlot=classes.filter(c=>String(c.start)>='09:30'&&String(c.start)<='12:45').sort((a,b)=>String(a.start).localeCompare(String(b.start)));
-    const secondSlot=classes.filter(c=>String(c.start)>='13:15'&&String(c.start)<='16:30').sort((a,b)=>String(a.start).localeCompare(String(b.start)));
-    const otherSlots=classes.filter(c=>!firstSlot.includes(c)&&!secondSlot.includes(c)).sort((a,b)=>String(a.start).localeCompare(String(b.start)));
+    // Keep every class in one chronological list; do not label time slots.
+    classes.sort((a,b)=>String(a.start).localeCompare(String(b.start))||String(a.end).localeCompare(String(b.end)));
+
     const renderClass=c=>{const b=batchMap.get(c.batchId),name=c.customBatchLabel||(b?.label||b?.name||'Batch'),center=b?.center||c.customCenter||'';const detail=c.isTest?(Array.isArray(c.testTopics)?c.testTopics.map(x=>`${x.subject}: ${x.topic}`).join(' · '):''):String(c.chapter||c.topic||'');return `<article style="border:1px solid var(--line);border-radius:10px;padding:13px"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><strong>${esc(name)}${c.subject?' · '+esc(c.subject):''}</strong><strong>${esc(fmt12(c.start))} – ${esc(fmt12(c.end))}</strong></div>${center?`<div class="muted" style="margin-top:4px">${esc(center)} Centre</div>`:''}${detail?`<div style="margin-top:5px;color:var(--text-muted);font-size:13px">${esc(detail)}</div>`:''}${c.online?'<div style="margin-top:5px;font-size:12px;color:var(--teal)">Online class</div>':''}</article>`;};
-    const renderSlot=(title,slotClasses)=>slotClasses.length?`<section style="margin-top:14px"><h3 style="margin:0 0 8px;font-size:15px">${title}</h3><div style="display:grid;gap:10px">${slotClasses.map(renderClass).join('')}</div></section>`:'';
-    results.innerHTML=`<p class="muted">${esc(dayName(date))}, ${esc(fmtDateLong(date))}</p>${renderSlot('Slot 1 · 9:30 AM – 12:45 PM',firstSlot)}${renderSlot('Slot 2 · 1:15 PM – 4:30 PM',secondSlot)}${renderSlot('Other timings',otherSlots)}`;
+    results.innerHTML=`<p class="muted">${esc(dayName(date))}, ${esc(fmtDateLong(date))}</p><section style="margin-top:14px"><div style="display:grid;gap:10px">${classes.map(renderClass).join('')}</div></section>`;
   }
   async function loadTeacher(session){
     const user=session?.user;
