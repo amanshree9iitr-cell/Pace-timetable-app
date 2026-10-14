@@ -1045,7 +1045,7 @@ function renderSchedule(view){
           </div>
           <div class="checkfield">
             <input type="checkbox" id="f_isTest" ${editing&&editing.isTest?'checked':''}>
-            <label for="f_isTest">This is an exam/test (teacher optional)</label>
+            <label for="f_isTest">No teacher required (Exam / Test / MT / TWT / Practice session)</label>
           </div>
           <button class="btn primary" type="submit">${editing?'Save changes':'Add to timetable'}</button>
         </form>
@@ -1160,7 +1160,7 @@ function renderSchedule(view){
   const isTestToggle = document.getElementById('f_isTest');
   const teacherSelect = document.getElementById('f_teacher');
   const noTeacherFields = ['f_subject','f_chapter','f_customBatch'];
-  const isExamOrTestText = (value)=>/\b(exam|test|twt|mt)\b/i.test(String(value||''));
+  const isExamOrTestText = (value)=>/\b(exam|test|twt|mt|practice|practise)\b/i.test(String(value||''));
   const syncExamTeacher = ()=>{ const batchEl=document.getElementById('f_batch'); const batchText=batchEl&&batchEl.value==='custom'?document.getElementById('f_customBatch')?.value:(batchById(batchEl?.value)?.label||''); const textMatch=noTeacherFields.some(id=>isExamOrTestText(document.getElementById(id)?.value))||isExamOrTestText(batchText); const noTeacher=isTestToggle.checked||textMatch; if(noTeacher){teacherSelect.value='';teacherSelect.disabled=true;}else{teacherSelect.disabled=false;} };
   isTestToggle.addEventListener('change', syncExamTeacher);
   noTeacherFields.forEach(id=>document.getElementById(id)?.addEventListener('input',syncExamTeacher));
@@ -1185,7 +1185,7 @@ function renderSchedule(view){
       batchId: batchVal==='custom' ? null : batchVal,
       customBatchLabel: batchVal==='custom' ? document.getElementById('f_customBatch').value.trim() : null,
       customCenter: batchVal==='custom' ? centerSel.value : null,
-      teacherId: (document.getElementById('f_isTest').checked || /\b(exam|test|twt|mt)\b/i.test([document.getElementById('f_subject').value,document.getElementById('f_chapter').value,document.getElementById('f_customBatch')?.value,batchById(batchVal)?.label].filter(Boolean).join(' '))) ? null : document.getElementById('f_teacher').value,
+      teacherId: (document.getElementById('f_isTest').checked || /\b(exam|test|twt|mt|practice|practise)\b/i.test([document.getElementById('f_subject').value,document.getElementById('f_chapter').value,document.getElementById('f_customBatch')?.value,batchById(batchVal)?.label].filter(Boolean).join(' '))) ? null : document.getElementById('f_teacher').value,
       subject: document.getElementById('f_subject').value,
       chapter: document.getElementById('f_chapter').value.trim(),
       lectureNo: parseInt(document.getElementById('f_lecture').value, 10) || 1,
@@ -1196,7 +1196,7 @@ function renderSchedule(view){
       isTest: document.getElementById('f_isTest').checked,
     };
     const secondBatchId = batch2Sel ? batch2Sel.value : '';
-    const noTeacherClass = entry.isTest || /\b(exam|test|twt|mt)\b/i.test([entry.subject,entry.chapter,entry.topic,entry.customBatchLabel,batchById(entry.batchId)?.label].filter(Boolean).join(' '));
+    const noTeacherClass = entry.isTest || /\b(exam|test|twt|mt|practice|practise)\b/i.test([entry.subject,entry.chapter,entry.topic,entry.customBatchLabel,batchById(entry.batchId)?.label].filter(Boolean).join(' '));
     if(noTeacherClass){ entry.teacherId=null; if(entry.isTest){entry.chapter='';entry.lectureNo=null;} }
     else if(!entry.teacherId){ toast('Please choose a teacher'); return; }
     if(secondBatchId && secondBatchId===entry.batchId){ toast('Choose a different second batch'); return; }
