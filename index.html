@@ -2472,5 +2472,248 @@ document.addEventListener('touchend',e=>{
 },{passive:true});
 })();
 </script>
+  <!-- ===== PACE Dashboard Theme (restyle layer; additive, safe to remove) ===== -->
+<style id="pace-theme-css">
+:root{--ink-2:#3640C6;--amber:#3640C6;--amber-ink:#fff;--paper:#F5F6FB;--line:#E6E8F2;--teal:#1E9E5A;--pe-r:16px}
+:root[data-theme=dark]{--ink-2:#8E96FF;--amber:#5560F0;--paper:#0E1017;--card:#171A24;--line:#262A38;--teal:#4CC98A}
+body{background:var(--paper)!important}
+#sidebar{background:#13151D!important;box-shadow:none!important;width:248px!important;border-right:1px solid rgba(255,255,255,.04)}
+#brand{border-bottom:1px solid rgba(255,255,255,.08)!important}
+#brand::before{content:"P";display:grid;place-items:center;width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,#5560F0,#3640C6);color:#fff;font:700 23px 'Space Grotesk',sans-serif;margin-bottom:12px}
+#brand .mark{font-size:19px!important}
+#nav button{border-radius:12px!important;color:#aab0c4!important}
+#nav button:hover{background:#1c1f2b!important;transform:none!important}
+#nav button.active{background:#252a3b!important;box-shadow:none!important;color:#fff!important}
+#sidefoot{border-top:1px solid rgba(255,255,255,.08)!important}
+.topbar{border-bottom:0!important;padding:0 0 4px!important;margin-bottom:20px!important}
+.topbar h1{color:var(--ink-2)!important;font-size:clamp(24px,2.2vw,30px)!important}
+.topbar-right{margin-left:auto}
+#peSearch{min-width:230px;justify-content:space-between;display:inline-flex;gap:10px;border:1.5px solid var(--ink-2)!important;border-radius:99px!important;background:var(--card)!important;color:var(--text-muted)!important;font-weight:500!important;padding:9px 16px!important}
+#peSearch kbd{font:600 10.5px Inter,sans-serif;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:1px 6px}
+.pe-ava{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#5560F0,#3640C6);color:#fff;font:700 13px 'Space Grotesk',sans-serif;position:relative;flex:none}
+.pe-ava::after{content:"";position:absolute;right:0;bottom:0;width:10px;height:10px;border-radius:50%;background:#2FCB74;border:2px solid var(--paper)}
+.card{border:1px solid color-mix(in srgb,var(--line) 60%,transparent)!important;border-radius:var(--pe-r)!important;box-shadow:0 2px 16px rgba(30,36,90,.06)!important;background:var(--card)!important}
+.cardhead h2{font-size:16px!important}
+th{text-transform:uppercase!important;font-size:10.5px!important;letter-spacing:.07em;color:var(--text-muted)!important}
+td{padding:11px 8px!important;border-bottom:1px solid var(--line)}
+.pe-rows tbody td:first-child{white-space:nowrap;font-weight:600;color:var(--ink-2)}
+.pill.vasai{background:#E1ECFF!important;color:#2456C9!important}.pill.virar{background:#DDF4E7!important;color:#1B8A4E!important}
+:root[data-theme=dark] .pill.vasai{background:#1E2C55!important;color:#9DBBFF!important}
+:root[data-theme=dark] .pill.virar{background:#173A2B!important;color:#7BE0AB!important}
+button.btn.primary{background:var(--amber)!important;box-shadow:0 6px 16px rgba(54,64,198,.28)!important;border-radius:12px!important}
+:root[data-theme=dark] input,:root[data-theme=dark] select,:root[data-theme=dark] textarea{background:var(--paper)!important;border-color:var(--line)!important;color:var(--text)!important}
+:root[data-theme=dark] .topbar h1{color:var(--ink-2)!important}
+/* dashboard */
+.pe-split{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
+.pe-main{min-width:0}.pe-aside{display:grid;gap:16px;position:sticky;top:16px}
+.pe-hello{margin:0 0 14px}.pe-hello small{color:var(--text-muted);font-size:13px}.pe-hello h2{margin:2px 0 0;font:700 22px 'Space Grotesk',sans-serif;color:var(--text)}
+.pe-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(138px,1fr));gap:12px;margin-bottom:18px}
+.pe-stat{background:var(--card);border-radius:14px;padding:14px;box-shadow:0 2px 16px rgba(30,36,90,.06);display:flex;gap:12px;align-items:center}
+.pe-stat i{font-style:normal;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:19px;background:color-mix(in srgb,var(--c) 16%,transparent)}
+.pe-stat b{display:block;font:700 22px 'Space Grotesk',sans-serif;line-height:1.1}.pe-stat span{font-size:11.5px;color:var(--text-muted)}
+.pe-cal{background:var(--card);border-radius:var(--pe-r);padding:16px;box-shadow:0 2px 16px rgba(30,36,90,.06)}
+.pe-cal header{display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:14px;margin-bottom:8px}
+.pe-cal header button{all:unset;cursor:pointer;padding:2px 10px;font-size:18px;color:var(--text-muted)}
+.pe-g{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}
+.pe-g span{font-size:10px;color:var(--text-muted);font-weight:700;padding:4px 0}
+.pe-g button{all:unset;cursor:pointer;aspect-ratio:1;display:grid;place-items:center;font-size:12.5px;border-radius:50%;position:relative;color:var(--text)}
+.pe-g button:hover{background:var(--paper)}.pe-g button.has::after{content:"";position:absolute;bottom:3px;width:4px;height:4px;border-radius:50%;background:var(--teal)}
+.pe-g button.sel{background:color-mix(in srgb,var(--ink-2) 18%,transparent);color:var(--ink-2);font-weight:700}
+.pe-g button.tod{box-shadow:inset 0 0 0 1.5px var(--ink-2)}
+.pe-add{width:100%;margin-top:12px;padding:12px;border:0;border-radius:12px;background:var(--amber);color:#fff;font:600 14px Inter,sans-serif;cursor:pointer;box-shadow:0 6px 16px rgba(54,64,198,.28)}
+.pe-ev{background:var(--card);border-radius:12px;padding:11px 13px;border-left:4px solid var(--c);box-shadow:0 2px 12px rgba(30,36,90,.06);cursor:pointer}
+.pe-ev b{font-size:13px;display:block}.pe-ev span{font-size:11.5px;color:var(--text-muted)}
+.pe-aside h3{margin:0 0 -6px;font-size:13px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em}
+@media(max-width:1180px){.pe-split{grid-template-columns:1fr}.pe-aside{position:static;grid-template-columns:1fr 1fr}.pe-aside h3,.pe-aside .pe-ev{grid-column:auto}}
+@media(max-width:780px){
+ .pe-aside{grid-template-columns:1fr}.pe-cal{order:2}
+ #peSearch{min-width:0;flex:1}#peSearch kbd{display:none}
+ #mobiletabs{position:fixed!important;left:0;right:0;bottom:0;top:auto!important;z-index:45;display:flex!important;overflow-x:auto;gap:2px!important;background:var(--card)!important;border-top:1px solid var(--line);border-radius:0!important;padding:8px 8px calc(8px + env(safe-area-inset-bottom))!important;box-shadow:0 -6px 22px rgba(30,36,90,.1)}
+ #mobiletabs button{color:var(--text-muted)!important;font-size:11.5px!important;padding:8px 12px!important;border-radius:12px!important}
+ #mobiletabs button.active{background:var(--ink-2)!important;color:#fff!important}
+ #main{padding-bottom:96px!important}}
+</style>
+<script>
+(function(){
+if(window.__peTheme||/[?&](teacher|student)=1/.test(location.search))return;window.__peTheme=true;
+const $=(s,r=document)=>r.querySelector(s),P=n=>n<10?'0'+n:''+n;
+let cal=null;
+const ymd=(y,m,d)=>y+'-'+P(m+1)+'-'+P(d);
+const col=c=>{const b=batchById(c.batchId),x=String((b&&b.center)||c.customCenter||'').toLowerCase();return x==='virar'?'#1E9E5A':'#2F6BEB'};
+function chrome(){
+  const s=$('#peSearch');if(s&&!s.dataset.k){s.dataset.k=1;s.innerHTML='<span>🔍 Search classes, teachers…</span><kbd>Ctrl K</kbd>'}
+  const t=$('.topbar-right');if(t&&!$('.pe-ava')){const a=document.createElement('span');a.className='pe-ava';a.textContent='AD';t.append(a)}
+}
+function calHTML(){
+  const [Y,M]=cal.split('-').map(Number),m=M-1,first=new Date(Y,m,1),lead=(first.getDay()+6)%7,n=new Date(Y,m+1,0).getDate();
+  const has=new Set(STATE.classes.map(c=>c.date)),today=todayStr();
+  let g=['M','T','W','T','F','S','S'].map(d=>`<span>${d}</span>`).join('')+'<i></i>'.repeat(lead).replace(/<i><\/i>/g,'<span></span>');
+  for(let d=1;d<=n;d++){const s=ymd(Y,m,d);g+=`<button data-d="${s}" class="${has.has(s)?'has ':''}${s===UI.scheduleDate?'sel ':''}${s===today?'tod':''}">${d}</button>`}
+  return `<header><button data-m="-1">‹</button>${MONTHS[m]} ${Y}<button data-m="1">›</button></header><div class="pe-g">${g}</div><button class="pe-add" data-add>＋ Add Class</button>`;
+}
+function dash(){
+  const view=$('#view');
+  if(UI.accessRole!=='admin'||UI.tab!=='schedule'||!view||$('#peDash')||!$('#scheduleDatePick'))return;
+  const date=UI.scheduleDate,cl=classesFor(date).filter(c=>c.start&&c.end).sort((a,b)=>a.start.localeCompare(b.start));
+  const fac=new Set(cl.map(c=>c.teacherId).filter(Boolean)),bat=new Set(cl.map(c=>c.batchId||c.customBatchLabel).filter(Boolean));
+  const hrs=Math.round(cl.reduce((a,c)=>a+Math.max(0,durMin(c.start,c.end)),0)/6)/10;
+  const h=new Date().getHours(),greet=h<12?'Good morning':h<17?'Good afternoon':'Good evening';
+  const hero=document.createElement('div');
+  hero.innerHTML=`<div class="pe-hello"><small>${dayName(date)}, ${fmtDateLong(date)}</small><h2>${greet}, Admin 👋</h2></div>
+  <div class="pe-stats">${[['📚','Classes',cl.length,'#2F6BEB'],['🧑‍🏫','Faculty',fac.size,'#7C5CE8'],['🎓','Batches',bat.size,'#1E9E5A'],['⏱️','Hours',hrs,'#E8890C']].map(s=>`<div class="pe-stat" style="--c:${s[3]}"><i>${s[0]}</i><div><b>${s[2]}</b><span>${s[1]}</span></div></div>`).join('')}</div>`;
+  const wrap=document.createElement('div');wrap.id='peDash';wrap.className='pe-split';
+  const main=document.createElement('div');main.className='pe-main';
+  while(view.firstChild)main.appendChild(view.firstChild);
+  main.prepend(hero);
+  const side=document.createElement('aside');side.className='pe-aside';
+  if(!cal)cal=date.slice(0,7);else if(cal!==date.slice(0,7)&&!side.dataset.m)cal=date.slice(0,7);
+  side.innerHTML=`<div class="pe-cal" id="peCal">${calHTML()}</div>${cl.length?'<h3>Schedule · '+fmtDateLong(date).replace(/ \d{4}$/,'')+'</h3>':''}`+
+    cl.slice(0,6).map(c=>{const b=batchById(c.batchId),t=teacherById(c.teacherId);return `<div class="pe-ev" style="--c:${col(c)}" data-e="${c.id}"><b>${esc(c.subject)} · ${esc(c.customBatchLabel||(b?b.label:'—'))}</b><span>${fmt12(c.start)}–${fmt12(c.end)}${t?' · '+esc(t.name):''}</span></div>`}).join('');
+  wrap.append(main,side);view.append(wrap);
+  side.onclick=e=>{
+    const d=e.target.closest('[data-d]'),m=e.target.closest('[data-m]'),ev=e.target.closest('[data-e]');
+    if(d){UI.scheduleDate=d.dataset.d;UI.editingId=null;render()}
+    else if(m){const[Y,M]=cal.split('-').map(Number),x=new Date(Y,M-1+ +m.dataset.m,1);cal=x.getFullYear()+'-'+P(x.getMonth()+1);$('#peCal').innerHTML=calHTML()}
+    else if(e.target.closest('[data-add]')){const f=$('#f_batch');if(f){f.scrollIntoView({block:'center',behavior:'smooth'});f.focus()}}
+    else if(ev){const b=$(`[data-edit="${ev.dataset.e}"]`);if(b){b.closest('tr').scrollIntoView({block:'center',behavior:'smooth'});b.closest('tr').classList.add('pe-flash')}}
+  };
+}
+const prev=render;
+render=function(){prev.apply(this,arguments);try{chrome();dash()}catch(e){console.error('theme',e)}};
+try{chrome();dash()}catch(e){}
+})();
+</script>
+<!-- ===== PACE Extra Screens: Login, Weekly View, Materials, Profile (additive) ===== -->
+<style id="pace-screens-css">
+.pw-wrap{overflow-x:auto;border-radius:12px}.pw{display:grid;grid-template-columns:40px repeat(7,minmax(88px,1fr));min-width:720px;position:relative}
+.pw-h{font-size:11px;text-align:center;padding:8px 2px;color:var(--text-muted);cursor:pointer;border-bottom:1px solid var(--line);background:var(--card);position:sticky;top:0;z-index:2}
+.pw-h b{display:block;font:700 16px 'Space Grotesk',sans-serif;color:var(--text)}.pw-h.tod b{color:#fff;background:var(--ink-2);border-radius:50%;width:28px;height:28px;line-height:28px;margin:0 auto}
+.pw-t{position:relative;font-size:10px;color:var(--text-muted)}.pw-t span{position:absolute;right:6px;transform:translateY(-50%)}
+.pw-c{position:relative;border-left:1px solid var(--line);background:repeating-linear-gradient(to bottom,transparent 0,transparent calc(var(--hh) - 1px),var(--line) calc(var(--hh) - 1px),var(--line) var(--hh))}
+.pw-b{position:absolute;border-radius:8px;padding:4px 5px;font-size:11px;font-weight:700;overflow:hidden;cursor:pointer;color:var(--c);background:color-mix(in srgb,var(--c) 17%,var(--card));border:1px solid color-mix(in srgb,var(--c) 40%,transparent);line-height:1.25;transition:transform .12s,box-shadow .12s}
+.pw-b:hover{transform:scale(1.03);box-shadow:0 6px 18px rgba(0,0,0,.18);z-index:3}.pw-b small{display:block;font-weight:500;opacity:.85}
+.pw-leg{display:flex;gap:12px;flex-wrap:wrap;font-size:11.5px;color:var(--text-muted);margin-top:10px}.pw-leg i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px;background:var(--c)}
+.pm-row{display:flex;gap:12px;align-items:center;padding:11px 4px;border-bottom:1px solid var(--line)}.pm-ic{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;font-size:19px;background:color-mix(in srgb,var(--c) 15%,transparent);flex:none}
+.pm-row div{flex:1;min-width:0}.pm-row b{display:block;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pm-row span{font-size:11.5px;color:var(--text-muted)}
+.pm-row a{text-decoration:none;font-size:18px;padding:6px 9px;border-radius:9px}.pm-row a:hover{background:var(--paper)}
+.pl-top{display:flex;gap:16px;align-items:center;margin-bottom:8px}.pl-top .pe-ava{width:64px;height:64px;font-size:22px}.pl-top h2{margin:0;font:700 20px 'Space Grotesk',sans-serif}.pl-top span{color:var(--text-muted);font-size:13px}
+.pl-r{display:flex;align-items:center;gap:12px;padding:14px 4px;border-bottom:1px solid var(--line);cursor:pointer;font-size:14px}.pl-r>span:first-child{font-size:19px;width:26px}.pl-r em{margin-left:auto;font-style:normal;color:var(--text-muted);font-size:12px}
+.pl-sw{margin-left:auto;width:44px;height:25px;border-radius:99px;background:var(--line);position:relative;transition:.2s}.pl-sw::after{content:"";position:absolute;left:3px;top:3px;width:19px;height:19px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 4px rgba(0,0,0,.3)}.pl-sw.on{background:var(--ink-2)}.pl-sw.on::after{left:22px}
+#peLogin{position:fixed;inset:0;z-index:20000;background:radial-gradient(120% 90% at 50% 0,#4650E0 0,#2A2FA0 55%,#1B1E6B 100%);display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;color:#fff;overflow:auto}
+#peLogin.open{display:flex}#peLogin .lg{width:76px;height:76px;border-radius:22px;background:#fff;color:#3640C6;display:grid;place-items:center;font:700 44px 'Space Grotesk',sans-serif;box-shadow:0 14px 40px rgba(0,0,0,.35)}
+#peLogin h1{margin:16px 0 2px;font:700 26px 'Space Grotesk',sans-serif;text-align:center}#peLogin p{margin:0 0 26px;opacity:.8;font-size:14px}
+#peLogin .opts{width:min(380px,100%);display:grid;gap:12px}
+#peLogin button{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:14px;background:#fff;color:#1B2333;padding:15px 18px;border-radius:14px;font:600 15px Inter,sans-serif;box-shadow:0 6px 20px rgba(0,0,0,.18);transition:transform .12s}
+#peLogin button:hover{transform:translateY(-2px)}#peLogin button:active{transform:scale(.97)}#peLogin button i{font-style:normal;font-size:20px;width:26px}#peLogin button u{margin-left:auto;text-decoration:none;color:#8A93AD}
+#peLogin small{margin-top:22px;opacity:.65;font-size:12px;text-align:center}
+</style>
+<div id="peLogin"></div>
+<script>
+(function(){
+if(window.__peApp||/[?&](teacher|student)=1/.test(location.search))return;window.__peApp=true;
+const $=(s,r=document)=>r.querySelector(s),P=n=>n<10?'0'+n:''+n,fd=d=>d.getFullYear()+'-'+P(d.getMonth()+1)+'-'+P(d.getDate());
+const addD=(s,n)=>{const d=new Date(s+'T00:00:00');d.setDate(d.getDate()+n);return fd(d)};
+const monOf=s=>addD(s,-((new Date(s+'T00:00:00').getDay()+6)%7));
+const mins=t=>{const[a,b]=t.split(':').map(Number);return a*60+b};
+const mut=fn=>{const ns=structuredClone(STATE);fn(ns);persist(ns)};
+NAV_ITEMS.splice(1,0,{id:'weekly',ic:'🗓️',label:'Weekly View'});
+NAV_ITEMS.push({id:'materials',ic:'📁',label:'Materials'},{id:'profile',ic:'👤',label:'Profile'});
+const SUBJ={Physics:'#2F6BEB',Chemistry:'#1E9E5A',Maths:'#7C5CE8',Biology:'#E8890C'};
+const colOf=c=>c.isTest?'#D9A400':SUBJ[c.subject]||'#64748B';
+const centerOf=c=>String((batchById(c.batchId)||{}).center||c.customCenter||'').toLowerCase();
+
+/* ---------- Weekly view ---------- */
+const W={start:monOf(todayStr()),center:'',teacher:''};
+function weekly(v){
+  const days=[...Array(7)].map((_,i)=>addD(W.start,i));
+  const all=days.flatMap(d=>classesFor(d)).filter(c=>c.start&&c.end&&(!W.center||centerOf(c)===W.center)&&(!W.teacher||c.teacherId===W.teacher));
+  const minH=all.length?Math.floor(Math.min(...all.map(c=>mins(c.start)))/60):9,maxH=all.length?Math.ceil(Math.max(...all.map(c=>mins(c.end)))/60):17,HH=56,H=(maxH-minH)*HH;
+  const cols=days.map(d=>{
+    const cl=all.filter(c=>c.date===d).sort((a,b)=>a.start.localeCompare(b.start)),ends=[],ln=new Map();
+    cl.forEach(c=>{let i=ends.findIndex(e=>e<=mins(c.start));if(i<0){i=ends.length;ends.push(0)}ends[i]=mins(c.end);ln.set(c.id,i)});
+    const n=Math.max(1,ends.length);
+    return `<div class="pw-c" style="height:${H}px">${cl.map(c=>{const b=batchById(c.batchId),t=teacherById(c.teacherId),i=ln.get(c.id),top=(mins(c.start)-minH*60)/60*HH,h=Math.max(22,(mins(c.end)-mins(c.start))/60*HH-2);
+      return `<div class="pw-b" data-id="${c.id}" style="--c:${colOf(c)};top:${top}px;height:${h}px;left:calc(${i*100/n}% + 2px);width:calc(${100/n}% - 4px)" title="${esc(c.subject)} · ${esc(c.customBatchLabel||(b?b.label:''))} · ${fmt12(c.start)}–${fmt12(c.end)}">${esc(c.customBatchLabel||(b?b.label:'—'))}<small>${c.isTest?'Test':esc(shortSubj(c.subject))}${t?' · '+esc(t.code):''}</small></div>`}).join('')}</div>`}).join('');
+  const hrs=[...Array(maxH-minH)].map((_,i)=>`<span style="top:${i*HH}px">${(minH+i)%12||12}${minH+i<12?'a':'p'}</span>`).join('');
+  const f=new Date(W.start+'T00:00:00'),l=new Date(days[6]+'T00:00:00');
+  const centers=[...new Set(STATE.batches.map(b=>String(b.center).toLowerCase()))];
+  v.innerHTML=`<div class="card"><div class="cardhead"><h2>${f.getDate()} ${MONTHS[f.getMonth()]} – ${l.getDate()} ${MONTHS[l.getMonth()]} ${l.getFullYear()}</h2><div style="display:flex;gap:6px"><button class="btn ghost" data-w="-7">‹</button><button class="btn ghost" data-w="0">This week</button><button class="btn ghost" data-w="7">›</button></div></div>
+  <div class="pe-filter"><button class="pe-chip${W.center?'':' act'}" data-c="">All</button>${centers.map(c=>`<button class="pe-chip${W.center===c?' act':''}" data-c="${c}" style="text-transform:capitalize">${c}</button>`).join('')}<select id="pwT" style="width:auto;flex:0 1 200px"><option value="">All teachers</option>${STATE.teachers.map(t=>`<option value="${t.id}"${W.teacher===t.id?' selected':''}>${esc(t.name)}</option>`).join('')}</select></div>
+  <div class="pw-wrap"><div class="pw"><div class="pw-h"></div>${days.map(d=>`<div class="pw-h${d===todayStr()?' tod':''}" data-day="${d}">${dayName(d).slice(0,3)}<b>${+d.slice(8)}</b></div>`).join('')}<div class="pw-t" style="height:${H}px">${hrs}</div>${cols}</div></div>
+  <div class="pw-leg">${Object.entries(SUBJ).map(([k,c])=>`<span style="--c:${c}"><i></i>${k}</span>`).join('')}<span style="--c:#D9A400"><i></i>Test</span><span>${all.length} classes this week</span></div></div>`;
+  v.querySelector('.pw').style.setProperty('--hh',HH+'px');
+  v.querySelectorAll('.pw-c').forEach(e=>e.style.setProperty('--hh',HH+'px'));
+  v.onclick=e=>{const w=e.target.closest('[data-w]'),c=e.target.closest('[data-c]'),b=e.target.closest('.pw-b'),d=e.target.closest('[data-day]');
+    if(w){W.start=w.dataset.w==='0'?monOf(todayStr()):addD(W.start,+w.dataset.w);render()}
+    else if(c){W.center=c.dataset.c;render()}
+    else if(b){const x=STATE.classes.find(k=>k.id===b.dataset.id);UI.tab='schedule';UI.scheduleDate=x.date;UI.editingId=x.id;render()}
+    else if(d){UI.tab='schedule';UI.scheduleDate=d.dataset.day;UI.editingId=null;render()}};
+  $('#pwT').onchange=e=>{W.teacher=e.target.value;render()};
+}
+
+/* ---------- Materials (links) ---------- */
+const MK={pdf:['📕','#D14363','PDF'],doc:['📗','#1E9E5A','Document'],link:['🔗','#2F6BEB','Link']};
+const M={batch:'',subject:''};
+function materials(v){
+  const all=(STATE.materials||[]).filter(m=>(!M.batch||m.batchId===M.batch)&&(!M.subject||m.subject===M.subject));
+  const bo=STATE.batches.map(b=>`<option value="${b.id}">${esc(b.name)}</option>`).join(''),so=STATE.subjects.map(s=>`<option>${esc(s)}</option>`).join('');
+  v.innerHTML=`<div class="grid2"><div class="card"><div class="cardhead"><h2>Batch materials</h2></div>
+  <div class="row" style="margin-bottom:6px"><div class="field"><select id="mfb"><option value="">All batches</option>${bo}</select></div><div class="field"><select id="mfs"><option value="">All subjects</option>${so}</select></div></div>
+  ${all.length?all.map(m=>{const k=MK[m.kind]||MK.link,b=batchById(m.batchId);return `<div class="pm-row"><span class="pm-ic" style="--c:${k[1]}">${k[0]}</span><div><b>${esc(m.title)}</b><span>${k[2]}${b?' · '+esc(b.label):''}${m.subject?' · '+esc(m.subject):''}</span></div><a href="${esc(m.url)}" target="_blank" rel="noopener noreferrer" title="Open">↗</a><button class="icon" data-del="${m.id}" title="Delete">🗑️</button></div>`}).join(''):'<p class="muted" style="font-size:13px">No materials yet — add a link on the right.</p>'}</div>
+  <div class="card"><div class="cardhead"><h2>Add material</h2></div><form id="mForm">
+  <div class="field"><label>Title</label><input id="mt" required placeholder="e.g. DPP-1 Circular Motion"></div>
+  <div class="field"><label>Link (Google Drive, YouTube, PDF URL…)</label><input id="mu" required placeholder="https://"></div>
+  <div class="row"><div class="field"><label>Type</label><select id="mk"><option value="pdf">PDF</option><option value="doc">Document</option><option value="link">Link</option></select></div><div class="field"><label>Batch</label><select id="mb"><option value="">All</option>${bo}</select></div></div>
+  <div class="field"><label>Subject</label><select id="ms"><option value="">—</option>${so}</select></div><button class="btn primary" type="submit">+ Add material</button></form></div></div>`;
+  $('#mfb').value=M.batch;$('#mfs').value=M.subject;
+  $('#mfb').onchange=e=>{M.batch=e.target.value;render()};$('#mfs').onchange=e=>{M.subject=e.target.value;render()};
+  v.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>mut(ns=>{ns.materials=(ns.materials||[]).filter(m=>m.id!==b.dataset.del)}));
+  $('#mForm').onsubmit=e=>{e.preventDefault();let u=$('#mu').value.trim();if(!/^https?:\/\//i.test(u))u='https://'+u;
+    try{const x=new URL(u);if(!/^https?:$/.test(x.protocol))throw 0;u=x.href}catch(_){toast('Enter a valid web link');return}
+    mut(ns=>{(ns.materials=ns.materials||[]).unshift({id:uid('m'),title:$('#mt').value.trim(),url:u,kind:$('#mk').value,batchId:$('#mb').value,subject:$('#ms').value})})};
+}
+
+/* ---------- Profile ---------- */
+function who(){return UI.accessRole==='admin'?{n:'Admin',s:'Administrator · Vasai & Virar'}:(t=>t?{n:t.name,s:'Faculty'}:{n:'Student / Parent',s:'View-only access'})(teacherById(UI.accessTeacher))}
+function profile(v){
+  const w=who(),dark=document.documentElement.dataset.theme==='dark',cs=($('#cloudstatus')||{}).textContent||'Local only';
+  v.innerHTML=`<div class="card" style="max-width:560px"><div class="pl-top"><span class="pe-ava">${w.n.split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase()}</span><div><h2>${esc(w.n)}</h2><span>${w.s}</span></div></div>
+  <div class="pl-r" data-a="dark"><span>🌙</span>Dark mode<span class="pl-sw${dark?' on':''}"></span></div>
+  <div class="pl-r" data-a="search"><span>🔍</span>Search everything<em>Ctrl K</em></div>
+  <div class="pl-r" data-a="week"><span>🗓️</span>Weekly timetable<em>›</em></div>
+  <div class="pl-r" data-a="mat"><span>📁</span>Study materials<em>${(STATE.materials||[]).length}</em></div>
+  <div class="pl-r"><span>☁️</span>Cloud sync<em>${esc(cs)}</em></div>
+  <div class="pl-r"><span>📊</span>Data<em>${STATE.classes.length} classes · ${STATE.teachers.length} teachers · ${STATE.batches.length} batches</em></div>
+  <div class="pl-r" data-a="out" style="color:var(--coral);border:0"><span>⎋</span>Switch role / Log out</div></div>`;
+  v.onclick=e=>{const a=e.target.closest('[data-a]');if(!a)return;const k=a.dataset.a;
+    if(k==='dark'){$('#peTheme').click();profile(v)}else if(k==='search')$('#peSearch').click();
+    else if(k==='week'){UI.tab='weekly';render()}else if(k==='mat'){UI.tab='materials';render()}else if(k==='out'){try{localStorage.removeItem('pace-role')}catch(_){}login()}};
+}
+
+/* ---------- Login / role launcher ---------- */
+function enter(role,tid){
+  try{localStorage.setItem('pace-role',JSON.stringify({role,tid:tid||''}))}catch(_){}
+  UI.accessRole=role==='admin'?'admin':'teacher';UI.accessTeacher=tid||'';UI.tab=role==='admin'?'schedule':role==='teacher'?'faculty':'students';
+  $('#peLogin').classList.remove('open');render();
+}
+function login(step){
+  const L=$('#peLogin'),head='<div class="lg">P</div><h1>PACE IIT &amp; Medical</h1><p>Timetable App</p>';
+  L.innerHTML=head+(step==='t'?`<div class="opts">${STATE.teachers.map(t=>`<button data-t="${t.id}"><i>🧑‍🏫</i>${esc(t.name)}<u>${esc(t.code)}</u></button>`).join('')}<button data-s=""><i>←</i>Back</button></div>`
+   :`<div class="opts"><button data-r="student"><i>🎓</i>Student Login<u>›</u></button><button data-r="parent"><i>👨‍👩‍👧</i>Parent Login<u>›</u></button><button data-r="teacher"><i>🧑‍🏫</i>Teacher Login<u>›</u></button><button data-r="admin"><i>⚙️</i>Admin Login<u>›</u></button></div><small>Your schedule. Always with you.</small>`);
+  L.classList.add('open');
+  L.onclick=e=>{const b=e.target.closest('button');if(!b)return;
+    if(b.dataset.t)enter('teacher',b.dataset.t);else if(b.dataset.s!==undefined)login();
+    else if(b.dataset.r==='teacher')login('t');else if(b.dataset.r)enter(b.dataset.r==='admin'?'admin':'student')};
+}
+
+const VIEWS={weekly,materials,profile},prev=render;
+render=function(){prev.apply(this,arguments);try{const f=VIEWS[UI.tab];if(f){const v=$('#view');v.onclick=null;f(v)}}catch(e){console.error('screens',e)}};
+let saved=null;try{saved=JSON.parse(localStorage.getItem('pace-role')||'null')}catch(_){}
+if(saved&&saved.role){UI.accessRole=saved.role==='admin'?'admin':'teacher';UI.accessTeacher=saved.tid||'';UI.tab=saved.role==='admin'?'schedule':saved.role==='teacher'?'faculty':'students'}
+else login();
+render();
+})();
+</script>
+
 
 </body></html>
