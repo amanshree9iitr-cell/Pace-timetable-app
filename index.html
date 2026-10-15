@@ -254,10 +254,60 @@
     .card{padding:15px;}
   }
 
+
+/* PACE redesign preview — structural dashboard refresh (branch only) */
+:root{--ink:#0b1f43;--ink-2:#2563eb;--paper:#f3f6fc;--card:#fff;--amber:#3b82f6;--amber-ink:#fff;--teal:#6557e8;--coral:#dc4664;--line:#dbe5f4;--text:#17243b;--text-muted:#66758e;--shadow:0 8px 28px rgba(15,39,82,.065);--radius:18px}
+html{scroll-behavior:smooth} body{background:radial-gradient(ellipse at 85% 0%,#e5edff 0,transparent 38%),var(--paper);font-size:14px;color:var(--text)}
+#shell{min-height:100vh;align-items:stretch}
+#sidebar{width:264px;padding:28px 16px 18px;background:linear-gradient(165deg,#0b1f43 0%,#112e61 62%,#263d8d 100%);box-shadow:8px 0 32px rgba(11,31,67,.10);position:sticky;top:0;height:100vh;z-index:30}
+#brand{padding:12px 13px 26px;margin-bottom:12px;border-bottom:1px solid rgba(255,255,255,.13)}
+#brand .mark{font-size:23px;letter-spacing:-.04em;line-height:1.05} #brand .sub{font-size:12px;color:#aebfe3;margin-top:9px}
+#nav{gap:6px;margin-top:10px} #nav button{position:relative;width:100%;padding:12px 13px;border-radius:12px;font-size:13.5px;color:#c5d1e8;gap:12px;transition:background .18s ease,transform .18s ease}
+#nav button .ic{font-size:18px;width:24px} #nav button:hover{background:rgba(255,255,255,.09);transform:translateX(2px)}
+#nav button.active{background:linear-gradient(100deg,rgba(59,130,246,.34),rgba(109,92,232,.26));color:#fff;box-shadow:inset 3px 0 0 #8db8ff}
+#sidefoot{padding:15px 12px;border-top:1px solid rgba(255,255,255,.12);color:#a1b1d2;line-height:1.6}
+#main{padding:32px clamp(18px,3vw,44px) 64px;max-width:1800px}
+.topbar{align-items:center;margin-bottom:28px;padding-bottom:22px;border-bottom:1px solid #dce5f3;gap:18px}
+.topbar h1{font-size:clamp(25px,2.4vw,34px);font-weight:750;letter-spacing:-.045em;color:#102a56}
+.topbar .today{font-size:13px;font-weight:600;color:#65748b}
+.topbar-right{align-items:center;gap:9px}
+#saveflag{background:#eaf3ff;color:#2359ad;padding:7px 10px;border-radius:999px;font-weight:650}
+#cloudstatus{padding:6px 9px!important;background:#f0edff;border-radius:8px;color:#6554d9}
+.card,.msg-card{border:1px solid #e1e8f3;border-radius:18px;background:rgba(255,255,255,.96);box-shadow:0 8px 28px rgba(15,39,82,.055);padding:22px}
+.cardhead{margin-bottom:18px}.cardhead h2{font-size:18px;font-weight:750;letter-spacing:-.025em}
+h2{font-size:20px!important;letter-spacing:-.035em!important} h3{letter-spacing:-.025em}
+label{font-size:12px;font-weight:650;color:#64748b;margin-bottom:7px}
+input,select,textarea{min-height:42px;border:1px solid #d8e2f0!important;border-radius:11px!important;background:#f8faff!important;padding:10px 12px!important;color:#182a49!important}
+input:focus,select:focus,textarea:focus{background:#fff!important;border-color:#5791f7!important;box-shadow:0 0 0 4px rgba(59,130,246,.13)!important}
+button.btn{padding:10px 15px;border-radius:11px;font-weight:700}button.btn.primary{background:linear-gradient(135deg,#3478f6,#6857e8);box-shadow:0 5px 14px rgba(59,130,246,.22)}button.btn.danger{background:#fff1f3;color:#c62f4c;border:1px solid #ffd4dc}
+button.btn:not(.primary):not(.ghost):not(.danger){background:#183c7c;color:#fff}
+table{border-collapse:separate!important;border-spacing:0!important;width:100%}thead th{background:#f3f7ff!important;color:#5d6e89!important;font-size:12px!important;text-transform:uppercase;letter-spacing:.05em}th,td{padding:13px 14px!important;border-bottom:1px solid #e4ebf6!important}tbody tr:hover td{background:#f8faff}
+.pill{border-radius:999px;padding:5px 9px;font-weight:700}
+#mobiletabs{display:none!important}
+#mobileMenuToggle{display:none}
+#mobileNavScrim{display:none}
+@media(min-width:781px){#sidebar{flex:0 0 264px}}
+@media(max-width:780px){
+ #shell{display:block} #sidebar{display:flex;position:fixed;left:0;top:0;bottom:0;width:min(84vw,300px);height:100dvh;overflow-y:auto;transform:translateX(-105%);transition:transform .24s ease;box-shadow:18px 0 48px rgba(3,15,38,.28);padding:20px 14px 16px}
+ #sidebar.mobile-open{transform:translateX(0)} #mobileNavScrim{display:block;position:fixed;inset:0;background:rgba(5,17,39,.48);backdrop-filter:blur(2px);z-index:29;opacity:0;pointer-events:none;transition:opacity .2s}
+ #mobileNavScrim.visible{opacity:1;pointer-events:auto}
+ #mobileMenuToggle{display:inline-flex;align-items:center;justify-content:center;gap:9px;border:0;border-radius:12px;background:#102a56;color:#fff;padding:11px 14px;font-weight:750;box-shadow:0 5px 14px rgba(16,42,86,.16);margin-bottom:17px}
+ #mobiletabs{display:none!important} #main{padding:18px 14px 44px;max-width:none}
+ .topbar{align-items:flex-start;margin-bottom:20px;padding-bottom:17px}.topbar h1{font-size:26px;line-height:1.15}
+ .topbar-right{width:100%;gap:7px}.topbar-right>*{max-width:100%} #roleSelect,#teacherSelectTop{font-size:12px!important}
+ .card,.msg-card{padding:16px;border-radius:15px;margin-bottom:14px}.cardhead h2{font-size:17px}
+ .grid2{grid-template-columns:minmax(0,1fr)!important;gap:14px}
+ input,select,textarea{min-height:44px;font-size:14px!important}
+ table{min-width:520px} .card:has(table){overflow-x:auto}
+ .statrow{gap:10px}.statrow>*{min-width:calc(50% - 10px)}
+}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important}}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
+<div id="mobileNavScrim" aria-hidden="true"></div>
 <div id="shell">
   <div id="sidebar">
     <div id="brand">
@@ -269,6 +319,7 @@
   </div>
 
   <div id="main">
+    <button id="mobileMenuToggle" type="button" aria-expanded="false" aria-controls="sidebar"><span aria-hidden="true">☰</span> PACE Menu</button>
     <div id="mobiletabs"><button class="">Schedule</button><button class="">Faculty Timetables</button><button class="">Student Timetables</button><button class="">Hours &amp; Reports</button><button class="active">Teachers &amp; Batches</button></div>
     <div id="copyHelp" style="display:none;position:fixed;left:12px;right:12px;bottom:12px;z-index:9999;background:#152238;color:white;padding:12px 14px;border-radius:10px;font-size:13px;box-shadow:0 6px 24px rgba(0,0,0,.2)">For WhatsApp: open Faculty Timetables or Student Timetables → choose the date → tap <b>Copy Message</b>. If iPad blocks clipboard access, tap <b>Select Text</b>, then Copy.</div>
 <div class="topbar">
@@ -2128,6 +2179,20 @@ if(paceViewParams.get('teacher')==='1'){
   initCloud();
 }
 </script>
-
+<script>
+(function(){
+ const sidebar=document.getElementById('sidebar');
+ const toggle=document.getElementById('mobileMenuToggle');
+ const scrim=document.getElementById('mobileNavScrim');
+ if(!sidebar||!toggle||!scrim)return;
+ function closeMenu(){sidebar.classList.remove('mobile-open');scrim.classList.remove('visible');toggle.setAttribute('aria-expanded','false');document.body.style.overflow='';}
+ function openMenu(){sidebar.classList.add('mobile-open');scrim.classList.add('visible');toggle.setAttribute('aria-expanded','true');document.body.style.overflow='hidden';}
+ toggle.addEventListener('click',()=>sidebar.classList.contains('mobile-open')?closeMenu():openMenu());
+ scrim.addEventListener('click',closeMenu);
+ sidebar.addEventListener('click',e=>{if(e.target.closest('nav button'))closeMenu();});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMenu();});
+ window.addEventListener('resize',()=>{if(window.innerWidth>780)closeMenu();});
+})();
+</script>
 
 </body></html>
