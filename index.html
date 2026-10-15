@@ -1102,7 +1102,36 @@ function renderSchedule(view){
   `;
 
   document.getElementById('scheduleDatePick').onchange = (e)=>{ UI.scheduleDate=e.target.value; UI.editingId=null; render(); };
-  const deleteAllBtn=document.getElementById('deleteAllSchedule');
+  const deleteAllBtn = document.getElementById('deleteAllSchedule');
+
+if (deleteAllBtn) {
+  deleteAllBtn.textContent = 'Delete Selected Day';
+
+  deleteAllBtn.onclick = () => {
+    const selectedDate = date;
+    const dayClasses = STATE.classes.filter(
+      c => c.date === selectedDate
+    );
+
+    if (dayClasses.length === 0) {
+      toast('No classes scheduled for this day');
+      return;
+    }
+
+    if (!confirm(
+      `Delete ${dayClasses.length} classes scheduled for ${fmtDateLong(selectedDate)} only? Other dates will remain unchanged.`
+    )) return;
+
+    const ns = structuredClone(STATE);
+    ns.classes = ns.classes.filter(
+      c => c.date !== selectedDate
+    );
+
+    persist(ns);
+    UI.editingId = null;
+    toast('Selected day schedule deleted');
+  };
+}
   if(deleteAllBtn) deleteAllBtn.onclick=()=>{
     if(!confirm('Delete ALL scheduled classes across Vasai and Virar? Teachers, batches, holidays, accounts and settings will be kept.')) return;
     if(!confirm('Final confirmation: permanently clear every scheduled class from the timetable and cloud-published student/teacher schedules?')) return;
