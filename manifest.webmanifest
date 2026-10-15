@@ -1,0 +1,25 @@
+
+{
+  "name": "Pace IIT and Medical",
+  "short_name": "PACE",
+  "description": "PACE IIT & Medical Timetable App",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#37318D",
+  "theme_color": "#37318D",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
