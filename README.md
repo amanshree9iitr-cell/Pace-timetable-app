@@ -16,3 +16,4 @@ Open `index.html` in a browser or deploy it to Vercel/another static host.
 
 ## AI connection
 Set `SUPABASE_FUNCTION_URL` in browser local storage to your Supabase Edge Function URL. The included app expects the Edge Function to return `{ "rows": [...] }`.
+PACE Redesign Preview — separate test version.
