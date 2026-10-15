@@ -303,6 +303,65 @@ table{border-collapse:separate!important;border-spacing:0!important;width:100%}t
 }
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important}}
 
+
+/* PACE modern-blue redesign preview — layout A */
+:root{
+  --ink:#102A56; --ink-2:#2563EB; --paper:#F4F7FC; --card:#FFFFFF;
+  --amber:#3B82F6; --amber-ink:#FFFFFF; --teal:#0F9F9A; --coral:#D14363;
+  --line:#DCE5F3; --text:#1B2B45; --text-muted:#66758F;
+  --shadow:0 8px 26px rgba(16,42,86,.065); --radius:18px;
+}
+html,body{min-height:100%;background:var(--paper)}
+body{font-size:14px;line-height:1.55;background:linear-gradient(135deg,#F7F9FD 0%,#F0F5FF 100%)}
+#shell{display:flex;min-height:100vh}
+#sidebar{width:264px;flex:0 0 264px;position:fixed;inset:0 auto 0 0;height:100dvh;overflow-y:auto;z-index:40;padding:26px 16px 18px;background:linear-gradient(180deg,#102344 0%,#12366F 100%);border-right:1px solid rgba(255,255,255,.08);box-shadow:10px 0 35px rgba(10,31,67,.08)}
+#brand{padding:4px 10px 24px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,.14)}
+#brand .mark{font-size:22px;line-height:1.12;letter-spacing:-.04em}
+#brand .sub{font-size:12px;color:#B8C8E6;margin-top:9px}
+nav{gap:6px;margin-top:8px}
+nav button{width:100%;min-height:44px;padding:11px 12px;border-radius:12px;color:#C9D6EC;font-size:13.5px;transition:background .18s ease,transform .18s ease}
+nav button .ic{font-size:17px;width:22px}
+nav button:hover{background:rgba(255,255,255,.09);color:#fff;transform:translateX(2px)}
+nav button.active{background:linear-gradient(100deg,#2563EB,#3B82F6);color:#fff;box-shadow:0 8px 20px rgba(37,99,235,.28)}
+#sidefoot{color:#9FB2D2;padding:20px 10px 2px;line-height:1.5}
+#main{margin-left:264px;flex:1;min-width:0;padding:30px clamp(20px,3vw,46px) 64px}
+.topbar{align-items:center;padding:0 0 22px;margin-bottom:26px;border-bottom:1px solid #DFE7F3;gap:16px}
+.topbar h1{font-size:clamp(25px,2vw,32px);font-weight:700;letter-spacing:-.04em;color:#122B55}
+.topbar .today{font-size:12.5px}
+.topbar-right{align-items:center;gap:10px}
+.card{border:1px solid #E0E8F4;border-radius:18px;box-shadow:0 5px 18px rgba(18,43,85,.045);padding:22px 24px;background:rgba(255,255,255,.96)}
+.cardhead{margin-bottom:18px}
+.cardhead h2{font-size:17px;font-weight:700;letter-spacing:-.02em}
+.grid2{gap:22px}
+label{font-size:12px;font-weight:600;color:#65758F;margin-bottom:6px}
+input,select,textarea{border:1px solid #D8E2F0;border-radius:10px;background:#F8FAFE;min-height:42px;padding:10px 12px;color:#1B2B45}
+input:focus,select:focus,textarea:focus{outline:3px solid rgba(59,130,246,.15);border-color:#60A5FA}
+button.btn{border-radius:10px;padding:10px 16px;background:#17396F;transition:transform .16s ease,box-shadow .16s ease,background .16s ease}
+button.btn:hover{background:#1D4ED8;transform:translateY(-1px)}
+button.btn.primary{background:linear-gradient(110deg,#2563EB,#6366F1);color:white;box-shadow:0 5px 13px rgba(37,99,235,.19)}
+button.btn.ghost{background:#fff;color:#2454A4;border:1px solid #D7E3F4}
+button.btn.ghost:hover{background:#F1F6FF}
+button.btn.danger{color:#C53D59}
+table{font-size:13.5px}th{padding:11px 10px;color:#65758F;background:#F7F9FD}td{padding:12px 10px}
+tr:last-child td{border-bottom:none}
+.pill{padding:4px 10px;font-size:11px}
+#mobileMenuToggle{display:none}
+#mobileNavScrim{z-index:39}
+@media(min-width:781px){#sidebar{flex:0 0 264px}}
+@media(max-width:780px){
+ #shell{display:block}
+ #sidebar{width:min(84vw,310px);flex:none;position:fixed;left:0;top:0;bottom:0;height:100dvh;transform:translateX(-105%);transition:transform .24s ease;box-shadow:18px 0 48px rgba(3,15,38,.28);padding:22px 15px 18px}
+ #sidebar.mobile-open{transform:translateX(0)}
+ #main{margin-left:0;padding:18px 14px 44px}
+ #mobileMenuToggle{display:inline-flex;align-items:center;gap:9px;margin:0 0 18px;padding:10px 13px;border:1px solid #D8E3F3;border-radius:11px;background:#fff;color:#183766;font-weight:700;box-shadow:0 3px 12px rgba(16,42,86,.05)}
+ .topbar{align-items:flex-start;flex-direction:column;padding-bottom:18px;margin-bottom:18px}
+ .topbar-right{width:100%;gap:8px}
+ .card{padding:17px;border-radius:15px}
+ .grid2{grid-template-columns:1fr;gap:14px}
+ nav button{min-height:46px}
+}
+@media(max-width:430px){#main{padding:14px 11px 36px}.topbar h1{font-size:25px}.card{padding:14px}.topbar-right{align-items:flex-start}.today{max-width:100%}}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
