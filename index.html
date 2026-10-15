@@ -2714,6 +2714,37 @@ else login();
 render();
 })();
 </script>
+<!-- ===== PACE Layout Fixes (paste LAST, after the other three blocks) ===== -->
+<style id="pace-fixes-css">
+/* top bar: no squeezed or overlapping controls on phones */
+.topbar-right{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.topbar-right>*{min-width:0}
+#peSearch{white-space:nowrap;overflow:hidden}
+#peSearch span{overflow:hidden;text-overflow:ellipsis}
+#peTheme{width:44px;height:44px;padding:0!important;display:inline-grid;place-items:center;flex:0 0 44px;border-radius:50%!important;background:var(--card)!important;color:var(--text)!important;border:1px solid var(--line)!important}
+@media(max-width:780px){
+ .topbar{gap:12px!important}
+ .topbar-right{width:100%}
+ .topbar-right>*{flex:0 0 auto;max-width:100%}
+ #peSearch{flex:1 1 calc(100% - 56px)!important;min-width:0!important;min-height:44px;order:-2}
+ #peTheme{order:-1}
+ #saveflag,#cloudstatus{white-space:nowrap}
+}
+/* date row: label must never sit on top of the input */
+.row{flex-wrap:wrap}
+.row>.muted{flex:0 0 auto;white-space:nowrap}
+input[type=date],input[type=time]{min-width:0;max-width:100%;width:100%}
+.field{min-width:0}
+/* faculty / student message cards were hard-coded white */
+.msg-card{background:var(--card)!important;border-color:var(--line)!important;color:var(--text)}
+.msg-head{background:var(--paper)!important;flex-wrap:wrap;gap:8px}
+.msg-head .who{color:var(--text)!important}
+.msg-head .share-row{max-width:100%}
+.msg-empty{color:var(--text-muted)!important}
+/* dark-mode leftovers: light buttons, chips and menu toggle */
+:root[data-theme=dark] button.btn.ghost,:root[data-theme=dark] #mobileMenuToggle,:root[data-theme=dark] #saveflag,:root[data-theme=dark] #cloudstatus,:root[data-theme=dark] .role-pill{background:var(--card)!important;color:var(--text)!important;border-color:var(--line)!important}
+:root[data-theme=dark] #saveflag,:root[data-theme=dark] #cloudstatus{color:var(--text-muted)!important}
+</style>
 
 
 </body></html>
