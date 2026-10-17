@@ -303,65 +303,6 @@ table{border-collapse:separate!important;border-spacing:0!important;width:100%}t
 }
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important}}
 
-
-/* PACE modern-blue redesign preview — layout A */
-:root{
-  --ink:#102A56; --ink-2:#2563EB; --paper:#F4F7FC; --card:#FFFFFF;
-  --amber:#3B82F6; --amber-ink:#FFFFFF; --teal:#0F9F9A; --coral:#D14363;
-  --line:#DCE5F3; --text:#1B2B45; --text-muted:#66758F;
-  --shadow:0 8px 26px rgba(16,42,86,.065); --radius:18px;
-}
-html,body{min-height:100%;background:var(--paper)}
-body{font-size:14px;line-height:1.55;background:linear-gradient(135deg,#F7F9FD 0%,#F0F5FF 100%)}
-#shell{display:flex;min-height:100vh}
-#sidebar{width:264px;flex:0 0 264px;position:fixed;inset:0 auto 0 0;height:100dvh;overflow-y:auto;z-index:40;padding:26px 16px 18px;background:linear-gradient(180deg,#102344 0%,#12366F 100%);border-right:1px solid rgba(255,255,255,.08);box-shadow:10px 0 35px rgba(10,31,67,.08)}
-#brand{padding:4px 10px 24px;margin-bottom:18px;border-bottom:1px solid rgba(255,255,255,.14)}
-#brand .mark{font-size:22px;line-height:1.12;letter-spacing:-.04em}
-#brand .sub{font-size:12px;color:#B8C8E6;margin-top:9px}
-nav{gap:6px;margin-top:8px}
-nav button{width:100%;min-height:44px;padding:11px 12px;border-radius:12px;color:#C9D6EC;font-size:13.5px;transition:background .18s ease,transform .18s ease}
-nav button .ic{font-size:17px;width:22px}
-nav button:hover{background:rgba(255,255,255,.09);color:#fff;transform:translateX(2px)}
-nav button.active{background:linear-gradient(100deg,#2563EB,#3B82F6);color:#fff;box-shadow:0 8px 20px rgba(37,99,235,.28)}
-#sidefoot{color:#9FB2D2;padding:20px 10px 2px;line-height:1.5}
-#main{margin-left:264px;flex:1;min-width:0;padding:30px clamp(20px,3vw,46px) 64px}
-.topbar{align-items:center;padding:0 0 22px;margin-bottom:26px;border-bottom:1px solid #DFE7F3;gap:16px}
-.topbar h1{font-size:clamp(25px,2vw,32px);font-weight:700;letter-spacing:-.04em;color:#122B55}
-.topbar .today{font-size:12.5px}
-.topbar-right{align-items:center;gap:10px}
-.card{border:1px solid #E0E8F4;border-radius:18px;box-shadow:0 5px 18px rgba(18,43,85,.045);padding:22px 24px;background:rgba(255,255,255,.96)}
-.cardhead{margin-bottom:18px}
-.cardhead h2{font-size:17px;font-weight:700;letter-spacing:-.02em}
-.grid2{gap:22px}
-label{font-size:12px;font-weight:600;color:#65758F;margin-bottom:6px}
-input,select,textarea{border:1px solid #D8E2F0;border-radius:10px;background:#F8FAFE;min-height:42px;padding:10px 12px;color:#1B2B45}
-input:focus,select:focus,textarea:focus{outline:3px solid rgba(59,130,246,.15);border-color:#60A5FA}
-button.btn{border-radius:10px;padding:10px 16px;background:#17396F;transition:transform .16s ease,box-shadow .16s ease,background .16s ease}
-button.btn:hover{background:#1D4ED8;transform:translateY(-1px)}
-button.btn.primary{background:linear-gradient(110deg,#2563EB,#6366F1);color:white;box-shadow:0 5px 13px rgba(37,99,235,.19)}
-button.btn.ghost{background:#fff;color:#2454A4;border:1px solid #D7E3F4}
-button.btn.ghost:hover{background:#F1F6FF}
-button.btn.danger{color:#C53D59}
-table{font-size:13.5px}th{padding:11px 10px;color:#65758F;background:#F7F9FD}td{padding:12px 10px}
-tr:last-child td{border-bottom:none}
-.pill{padding:4px 10px;font-size:11px}
-#mobileMenuToggle{display:none}
-#mobileNavScrim{z-index:39}
-@media(min-width:781px){#sidebar{flex:0 0 264px}}
-@media(max-width:780px){
- #shell{display:block}
- #sidebar{width:min(84vw,310px);flex:none;position:fixed;left:0;top:0;bottom:0;height:100dvh;transform:translateX(-105%);transition:transform .24s ease;box-shadow:18px 0 48px rgba(3,15,38,.28);padding:22px 15px 18px}
- #sidebar.mobile-open{transform:translateX(0)}
- #main{margin-left:0;padding:18px 14px 44px}
- #mobileMenuToggle{display:inline-flex;align-items:center;gap:9px;margin:0 0 18px;padding:10px 13px;border:1px solid #D8E3F3;border-radius:11px;background:#fff;color:#183766;font-weight:700;box-shadow:0 3px 12px rgba(16,42,86,.05)}
- .topbar{align-items:flex-start;flex-direction:column;padding-bottom:18px;margin-bottom:18px}
- .topbar-right{width:100%;gap:8px}
- .card{padding:17px;border-radius:15px}
- .grid2{grid-template-columns:1fr;gap:14px}
- nav button{min-height:46px}
-}
-@media(max-width:430px){#main{padding:14px 11px 36px}.topbar h1{font-size:25px}.card{padding:14px}.topbar-right{align-items:flex-start}.today{max-width:100%}}
-
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
@@ -1388,7 +1329,7 @@ if (deleteAllBtn) {
       batchId: batchVal==='custom' ? null : batchVal,
       customBatchLabel: batchVal==='custom' ? document.getElementById('f_customBatch').value.trim() : null,
       customCenter: batchVal==='custom' ? centerSel.value : null,
-      teacherId: (document.getElementById('f_isTest').checked || /\b(exam|test|twt|mt)\b/i.test([document.getElementById('f_subject').value,document.getElementById('f_chapter').value,document.getElementById('f_customBatch')?.value,batchById(batchVal)?.label].filter(Boolean).join(' '))) ? null : document.getElementById('f_teacher').value,
+      teacherId: (document.getElementById('f_isTest').checked || /\b(exam|test|twt|mt|practice|practise)\b/i.test([document.getElementById('f_subject').value,document.getElementById('f_chapter').value,document.getElementById('f_customBatch')?.value,batchById(batchVal)?.label].filter(Boolean).join(' '))) ? null : document.getElementById('f_teacher').value,
       subject: document.getElementById('f_subject').value,
       chapter: document.getElementById('f_chapter').value.trim(),
       lectureNo: parseInt(document.getElementById('f_lecture').value, 10) || 1,
@@ -1810,25 +1751,18 @@ function renderAIImport(view){
    if(!resp.ok)throw new Error(await resp.text());
    const data=await resp.json();
 
-   UI.aiRows=(data.rows||[]).map(r=>{
-    const rawActivity=[r.activity,r.subject,r.chapter,r.topic,r.notes].filter(Boolean).join(' ');
-    const isPractice=/\bpracti[cs]e(?:\s+session)?\b/i.test(rawActivity);
-    const isTest=/\b(test|tests|full\s*test|exam|twt|mt)\b/i.test(rawActivity);
-    return {
-     date:r.date||document.getElementById('aiDate').value,
-     center:normalizeAiCenter(r.center||document.getElementById('aiCenter').value),
-     batch:normalizeAiBatch(r.batch),
-     teacherCode:(isPractice||isTest)?'':normalizeAiTeacherCode(r.teacherCode),
-     subject:isPractice?'Practice Session':(isTest?'':(r.subject||r.activity||'')),
-     chapter:isPractice||isTest?'':(r.chapter||''),
-     lectureNo:isPractice||isTest?'':(r.lectureNo||''),
-     isPractice,
-     isTest,
-     start:normAiTime(r.start),
-     end:normAiTime(r.end),
-     confidence:r.confidence||'auto'
-    };
-   });
+   UI.aiRows=(data.rows||[]).map(r=>({
+    date:r.date||document.getElementById('aiDate').value,
+    center:normalizeAiCenter(r.center||document.getElementById('aiCenter').value),
+    batch:normalizeAiBatch(r.batch),
+    teacherCode:normalizeAiTeacherCode(r.teacherCode),
+    subject:r.subject||'',
+    chapter:r.chapter||'',
+    lectureNo:r.lectureNo||'',
+    start:normAiTime(r.start),
+    end:normAiTime(r.end),
+    confidence:r.confidence||'auto'
+   }));
 
    if(!UI.aiRows.length){
     msg.textContent='No classes could be read from the timetable.';
@@ -1851,10 +1785,9 @@ function renderAIImport(view){
       if(centerBatches.length===1) b=centerBatches[0];
     }
 
-    const noTeacherActivity=!!(r.isTest||r.isPractice);
-    const t=noTeacherActivity?null:STATE.teachers.find(x=>x.code.toLowerCase()===normalizeAiTeacherCode(r.teacherCode).toLowerCase());
+    const t=STATE.teachers.find(x=>x.code.toLowerCase()===normalizeAiTeacherCode(r.teacherCode).toLowerCase());
 
-    if(!r.date||!r.start||!r.end||!b||(!noTeacherActivity&&!t)){
+    if(!r.date||!r.start||!r.end||!b||!t){
       failed.push(r);
       continue;
     }
@@ -1865,17 +1798,15 @@ function renderAIImport(view){
       batchId:b.id,
       customBatchLabel:null,
       customCenter:null,
-      teacherId:t?t.id:null,
-      subject:r.isTest?'':(r.subject||''),
-      chapter:r.isTest||r.isPractice?'':(r.chapter||''),
-      lectureNo:r.isTest||r.isPractice?null:(parseInt(r.lectureNo,10)||null),
+      teacherId:t.id,
+      subject:r.subject||'',
+      chapter:r.chapter||'',
+      lectureNo:parseInt(r.lectureNo,10)||null,
       chapterCompleted:false,
-      topic:r.isPractice?'Practice Session':'',
+      topic:'',
       start:r.start,
       end:r.end,
-      isDoubt:false,
-      ...(r.isTest?{isTest:true,testTopics:[]}:{}),
-      ...(r.isPractice?{isPractice:true}:{})
+      isDoubt:false
     });
    }
 
@@ -2167,7 +2098,7 @@ async function initPrivateTeacherView(){
     try{
       const {data,error}=await paceCloud.from('pace_teacher_timetables').select('payload,updated_at').eq('user_id',user.id).maybeSingle();
       if(error)throw error;
-      if(!data?.payload){await paceCloud.auth.signOut();status.textContent='This account is not linked to a PACE teacher yet. Contact the administrator.';return;}
+      if(!data?.payload){if(window.paceTeacherUnlinked){const r=await window.paceTeacherUnlinked(user);if(r==='ready'){location.reload();return}if(r)return;}await paceCloud.auth.signOut();status.textContent='This account is not linked to a PACE teacher yet. Contact the administrator.';return;}
       payload=data.payload;updatedAt=data.updated_at;loginCard.style.display='none';scheduleCard.style.display='block';renderTeacherResources(payload);
       document.getElementById('teacherName').textContent=(payload.teacher?.name||'Teacher')+' — Your Timetable';
       document.getElementById('teacherUpdated').textContent='Last published: '+(updatedAt?new Date(updatedAt).toLocaleString():'Not available');
@@ -2230,7 +2161,7 @@ async function initPublicStudentView(){
       // Some older timetable rows have no subject saved. Use the teacher's known subject as a display fallback.
       const subjectFallback={AP:'Physics',VP:'Physics',PB:'Physics',NC:'Chemistry',DC:'Chemistry',GM:'Mathematics',SM:'Mathematics',RB:'Biology',MB:'Biology'};
       const subject=String(c.subject||c.testSubject||'').trim() || subjectFallback[code] || '';
-      const name=c.isTest?'Test':(c.isPractice||/\bpracti[cs]e(?:\s+session)?\b/i.test(String(c.topic||c.subject||''))?'Practice Session':subject||'Class');
+      const name=c.isTest?'Test':subject||'Class';
       const detail=c.isTest?(Array.isArray(c.testTopics)?c.testTopics.map(x=>`${x.subject}: ${x.topic}`).join(' · '):''):String(c.chapter||c.topic||'');
       return `<article style="border:1px solid var(--line);border-radius:10px;padding:13px"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><strong>${esc(name)}${code?' ('+esc(code)+')':''}</strong><strong>${esc(fmt12(c.start))} – ${esc(fmt12(c.end))}</strong></div>${detail?`<div style="margin-top:5px;color:var(--text-muted);font-size:13px">${esc(detail)}</div>`:''}${c.online?'<div style="margin-top:5px;font-size:12px;color:var(--teal)">Online class</div>':''}</article>`;
     }).join('')}</div></div>`;
@@ -2263,6 +2194,7 @@ if(paceViewParams.get('teacher')==='1'){
  window.addEventListener('resize',()=>{if(window.innerWidth>780)closeMenu();});
 })();
 </script>
+
 <!-- ===== PACE Interactive Enhancements (additive layer; safe to remove) ===== -->
 <style id="pace-enh-css">
 #view>*{animation:pe-in .22s ease both}
@@ -2408,8 +2340,8 @@ function enhance(){
   const rows=$$('tbody tr',tbl);
   function apply(){let n=0;rows.forEach(r=>{const c=r.children[1].textContent.trim().toLowerCase();
     const ok=(!F.center||c===F.center)&&(!F.q||r.textContent.toLowerCase().includes(F.q.toLowerCase()));r.style.display=ok?'':'none';if(ok)n++});
-    $('#peCnt').textContent=(F.center||F.q)?`${n} of ${rows.length}`:`${rows.length} classes`}
-  bar.onclick=e=>{const b=e.target.closest('[data-c]');if(!b)return;F.center=b.dataset.c;$$('.pe-chip',bar).forEach(x=>x.classList.toggle('act',x===b));apply()};
+    $('#peCnt').innerHTML=(F.center||F.q)?`<b style="color:var(--coral)">Filtered: ${n} of ${rows.length}</b> <button type="button" class="pe-chip" data-clr>✕ Clear</button>`:`${rows.length} classes`}
+  bar.onclick=e=>{if(e.target.closest('[data-clr]')){F={center:'',q:''};render();return}const b=e.target.closest('[data-c]');if(!b)return;F.center=b.dataset.c;$$('.pe-chip',bar).forEach(x=>x.classList.toggle('act',x===b));apply()};
   $('#peF').oninput=e=>{F.q=e.target.value;apply()};
   apply();
   rows.forEach(r=>r.ondblclick=e=>{if(e.target.closest('button'))return;const b=$('[data-edit]',r);if(b)b.click()});
@@ -2482,7 +2414,8 @@ document.addEventListener('touchend',e=>{
 },{passive:true});
 })();
 </script>
-  <!-- ===== PACE Dashboard Theme (restyle layer; additive, safe to remove) ===== -->
+
+<!-- ===== PACE Dashboard Theme (restyle layer; additive, safe to remove) ===== -->
 <style id="pace-theme-css">
 :root{--ink-2:#3640C6;--amber:#3640C6;--amber-ink:#fff;--paper:#F5F6FB;--line:#E6E8F2;--teal:#1E9E5A;--pe-r:16px}
 :root[data-theme=dark]{--ink-2:#8E96FF;--amber:#5560F0;--paper:#0E1017;--card:#171A24;--line:#262A38;--teal:#4CC98A}
@@ -2593,6 +2526,7 @@ render=function(){prev.apply(this,arguments);try{chrome();dash()}catch(e){consol
 try{chrome();dash()}catch(e){}
 })();
 </script>
+
 <!-- ===== PACE Extra Screens: Login, Weekly View, Materials, Profile (additive) ===== -->
 <style id="pace-screens-css">
 .pw-wrap{overflow-x:auto;border-radius:12px}.pw{display:grid;grid-template-columns:40px repeat(7,minmax(88px,1fr));min-width:720px;position:relative}
@@ -2629,7 +2563,7 @@ const mut=fn=>{const ns=structuredClone(STATE);fn(ns);persist(ns)};
 NAV_ITEMS.splice(1,0,{id:'weekly',ic:'🗓️',label:'Weekly View'});
 NAV_ITEMS.push({id:'materials',ic:'📁',label:'Materials'},{id:'profile',ic:'👤',label:'Profile'});
 const SUBJ={Physics:'#2F6BEB',Chemistry:'#1E9E5A',Maths:'#7C5CE8',Biology:'#E8890C'};
-const colOf=c=>c.isTest?'#D9A400':SUBJ[c.subject]||'#64748B';
+const colOf=c=>c.isTest?'#D9A400':c.isPractice?'#0EA5A4':SUBJ[c.subject]||'#64748B';
 const centerOf=c=>String((batchById(c.batchId)||{}).center||c.customCenter||'').toLowerCase();
 
 /* ---------- Weekly view ---------- */
@@ -2724,6 +2658,7 @@ else login();
 render();
 })();
 </script>
+
 <!-- ===== PACE Layout Fixes (paste LAST, after the other three blocks) ===== -->
 <style id="pace-fixes-css">
 /* top bar: no squeezed or overlapping controls on phones */
@@ -2756,56 +2691,236 @@ input[type=date],input[type=time]{min-width:0;max-width:100%;width:100%}
 :root[data-theme=dark] #saveflag,:root[data-theme=dark] #cloudstatus{color:var(--text-muted)!important}
 </style>
 
-
-
-<!-- Final responsive overrides: keep this block last so earlier theme layers cannot undo it. -->
-<style id="pace-final-responsive-fix">
-  html, body { width:100%; max-width:100%; overflow-x:hidden; }
-  #shell { width:100%; min-width:0; }
-  #sidebar { box-sizing:border-box; }
-  #main { box-sizing:border-box; min-width:0; }
-  .topbar, .topbar-right, .card, .grid2, #view { min-width:0; max-width:100%; }
-  .topbar-right { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
-  .topbar-right > * { min-width:0; }
-  .card { overflow-wrap:anywhere; }
-  .pw-wrap, .table-wrap, .table-scroll { max-width:100%; overflow-x:auto; }
-  table { max-width:100%; }
-  @media (min-width:781px) {
-    #sidebar { display:flex !important; position:fixed !important; left:0; top:0; bottom:0; width:248px !important; height:100vh; transform:none !important; z-index:40; }
-    #main { margin-left:248px !important; width:calc(100% - 248px); padding:28px clamp(16px,2.5vw,38px) 60px; }
-    #mobileMenuToggle, #mobileNavScrim { display:none !important; }
-    #mobiletabs { display:none !important; }
-  }
-  @media (max-width:780px) {
-    #shell { display:block !important; min-height:100vh; }
-    #sidebar { display:flex !important; position:fixed !important; inset:0 auto 0 0 !important; width:min(84vw,310px) !important; max-width:310px; height:100dvh !important; overflow-y:auto; transform:translateX(-105%) !important; transition:transform .24s ease; z-index:1002 !important; padding:20px 14px calc(20px + env(safe-area-inset-bottom)); }
-    #sidebar.mobile-open { transform:translateX(0) !important; }
-    #mobileNavScrim { display:block; position:fixed; inset:0; background:rgba(5,17,39,.5); z-index:1001; opacity:0; pointer-events:none; }
-    #mobileNavScrim.visible { opacity:1; pointer-events:auto; }
-    #main { display:block; width:100% !important; max-width:100% !important; margin:0 !important; padding:14px 12px calc(104px + env(safe-area-inset-bottom)) !important; }
-    #mobileMenuToggle { display:inline-flex !important; position:relative; z-index:2; min-height:44px; margin:0 0 14px; padding:10px 14px; border-radius:11px; }
-    #mobiletabs { display:flex !important; position:fixed !important; left:0; right:0; bottom:0; top:auto !important; width:100%; max-width:100%; overflow-x:auto; overflow-y:hidden; z-index:1000; gap:3px; padding:7px 6px calc(7px + env(safe-area-inset-bottom)) !important; background:var(--card) !important; border-top:1px solid var(--line); box-shadow:0 -5px 20px rgba(20,35,70,.10); }
-    #mobiletabs button { flex:0 0 auto; white-space:nowrap; font-size:11px !important; padding:8px 10px !important; }
-    .topbar { display:flex; flex-direction:column; align-items:stretch; gap:10px; padding-bottom:14px !important; margin-bottom:16px !important; }
-    .topbar h1 { font-size:clamp(22px,6vw,28px) !important; overflow-wrap:anywhere; }
-    .topbar-right { width:100%; margin-left:0 !important; align-items:center; gap:7px; }
-    .topbar-right > * { max-width:100%; }
-    #peSearch { flex:1 1 150px; min-width:0 !important; }
-    .grid2 { grid-template-columns:minmax(0,1fr) !important; gap:12px; }
-    .card { padding:14px !important; }
-    .row { min-width:0; }
-    .field { min-width:0 !important; flex:1 1 140px; }
-    input, select, textarea { max-width:100%; }
-    .ai-import-grid { grid-template-columns:minmax(0,1fr) !important; }
-    .pe-split { grid-template-columns:minmax(0,1fr) !important; }
-    .pe-aside { grid-template-columns:minmax(0,1fr) !important; }
-  }
-  @media (max-width:380px) {
-    #main { padding-left:9px !important; padding-right:9px !important; }
-    .topbar-right { gap:5px; }
-    #mobiletabs button { padding-left:8px !important; padding-right:8px !important; }
-  }
-  @media (prefers-reduced-motion:reduce) { #sidebar, #mobileNavScrim { transition:none !important; } }
+<!-- ===== PACE Faculty Login (email+password, forgot password, mobile OTP) + Faculty Access admin tab ===== -->
+<style id="pace-faculty-css">
+.fa-row{display:grid;grid-template-columns:1.1fr 1.5fr 1.1fr 70px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.fa-row input{min-height:38px}.fa-row b{font-size:13px}.fa-ok{color:var(--teal);font-weight:700;font-size:12px}
+@media(max-width:780px){.fa-row{grid-template-columns:1fr 1fr}.fa-row b{grid-column:1/-1}}
+#teacherLoginCard a{color:var(--ink-2);font-weight:600}
 </style>
+<script>
+/* ---------- Faculty portal (?teacher=1): login methods ---------- */
+(function(){
+if(!/[?&]teacher=1/.test(location.search)||window.__peTA||typeof paceCloud==='undefined'||!paceCloud)return;
+const card=document.getElementById('teacherLoginCard');if(!card)return;window.__peTA=true;
+const $=id=>document.getElementById(id),back=location.origin+location.pathname+'?teacher=1';
+let mode='email',step=1,phone='';
+const normPhone=v=>{let d=String(v).replace(/[^\d+]/g,'');if(d[0]==='+')return/^\+\d{10,15}$/.test(d)?d:'';d=d.replace(/^0+/,'');if(/^\d{10}$/.test(d))return'+91'+d;if(/^91\d{10}$/.test(d))return'+'+d;return''};
+const say=(m,bad)=>{const s=$('peTS');if(!s)return;s.textContent=m;s.style.color=bad?'var(--coral)':'var(--text-muted)'};
+function draw(){
+  card.innerHTML=`<h2>Faculty Login</h2><p class="muted">Sign in with your registered email or mobile number.</p>
+  <div class="pe-filter"><button type="button" class="pe-chip${mode==='email'?' act':''}" data-m="email">Email &amp; password</button><button type="button" class="pe-chip${mode==='phone'?' act':''}" data-m="phone">Mobile OTP</button></div>`+
+  (mode==='email'?`<form id="peEF" style="display:grid;gap:12px"><div class="field"><label>Email</label><input id="peE" type="email" autocomplete="username" required placeholder="you@gmail.com"></div><div class="field"><label>Password</label><input id="peP" type="password" autocomplete="current-password" required minlength="8"></div><button class="btn primary" type="submit">Sign in</button><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:13px"><a href="#" data-a="new">First time? Create password</a><a href="#" data-a="forgot">Forgot password?</a></div></form>`
+  :`<form id="peMF" style="display:grid;gap:12px"><div class="field"><label>Mobile number</label><input id="peM" type="tel" inputmode="tel" autocomplete="tel" required placeholder="98XXXXXXXX or +91…" value="${esc(phone)}" ${step===2?'readonly':''}></div><div class="field" style="display:${step===2?'block':'none'}"><label>OTP sent by SMS</label><input id="peO" inputmode="numeric" autocomplete="one-time-code" maxlength="8"></div><button class="btn primary" type="submit">${step===2?'Verify &amp; sign in':'Send OTP'}</button>${step===2?'<a href="#" data-a="again" style="font-size:13px">Use a different number / resend</a>':''}</form>`)+
+  `<p id="peTS" class="muted" style="font-size:13px;min-height:18px;margin-top:10px"></p>`;
+}
+async function afterAuth(){
+  const {data:{session}}=await paceCloud.auth.getSession();if(!session)return;
+  const ok=await window.paceTeacherUnlinked(session.user,true);
+  if(ok==='ready')location.replace(back);
+  else if(!ok){await paceCloud.auth.signOut();say('This email / mobile number is not registered with PACE. Please contact the administrator.',1)}
+}
+/* called by the portal when a signed-in account has no timetable yet */
+window.paceTeacherUnlinked=async function(user,fromLogin){
+  const {data:name}=await paceCloud.rpc('claim_teacher_account');
+  if(!name)return false;
+  const {data}=await paceCloud.from('pace_teacher_timetables').select('user_id').eq('user_id',user.id).maybeSingle();
+  if(data)return'ready';
+  draw();say('✓ Linked to '+name+'. Your timetable will appear as soon as the administrator publishes it. Try again shortly.');
+  const b=document.createElement('button');b.className='btn ghost';b.textContent='Sign out';b.onclick=async()=>{await paceCloud.auth.signOut();location.replace(back)};$('peTS').after(b);
+  return 'wait';
+};
+card.onclick=async e=>{
+  const m=e.target.closest('[data-m]'),a=e.target.closest('[data-a]');
+  if(m){mode=m.dataset.m;step=1;draw();return}
+  if(!a)return;e.preventDefault();
+  const email=($('peE')||{}).value?.trim().toLowerCase(),pw=($('peP')||{}).value||'';
+  if(a.dataset.a==='new'){
+    if(!email||pw.length<8)return say('Enter your registered email and choose a password of at least 8 characters, then tap “Create password”.',1);
+    say('Creating…');const {error}=await paceCloud.auth.signUp({email,password:pw,options:{emailRedirectTo:back}});
+    say(error?'Could not create password: '+error.message:'Check your inbox: open the confirmation link, then sign in.',!!error);
+  }else if(a.dataset.a==='forgot'){
+    if(!email)return say('Type your email above first.',1);
+    const {error}=await paceCloud.auth.resetPasswordForEmail(email,{redirectTo:back});
+    say(error?'Could not send reset email: '+error.message:'If this email is registered, a password-reset link has been sent.',!!error);
+  }else if(a.dataset.a==='again'){step=1;draw()}
+};
+card.onsubmit=async e=>{
+  e.preventDefault();
+  if(e.target.id==='peEF'){
+    say('Signing in…');const {error}=await paceCloud.auth.signInWithPassword({email:$('peE').value.trim().toLowerCase(),password:$('peP').value});
+    if(error)return say('Sign-in failed. Check email and password, or use “Forgot password”.',1);afterAuth();
+  }else if(step===1){
+    const p=normPhone($('peM').value);if(!p)return say('Enter a valid mobile number.',1);
+    say('Sending OTP…');const {error}=await paceCloud.auth.signInWithOtp({phone:p});
+    if(error)return say('Could not send OTP: '+error.message,1);phone=p;step=2;draw();say('OTP sent to '+p+'.');
+  }else{
+    const t=$('peO').value.trim();if(!t)return say('Enter the OTP.',1);
+    say('Verifying…');const {error}=await paceCloud.auth.verifyOtp({phone,token:t,type:'sms'});
+    if(error)return say('Wrong or expired OTP.',1);afterAuth();
+  }
+};
+function recovery(){
+  if($('pePwBox'))return;const o=document.createElement('div');o.id='pePwBox';o.style.cssText='position:fixed;inset:0;z-index:30000;background:rgba(10,14,40,.75);display:grid;place-items:center;padding:16px';
+  o.innerHTML=`<form class="card" style="width:min(400px,100%);display:grid;gap:12px"><h2>Set a new password</h2><div class="field"><label>New password (min 8 characters)</label><input id="pePw1" type="password" minlength="8" required autocomplete="new-password"></div><div class="field"><label>Confirm password</label><input id="pePw2" type="password" minlength="8" required autocomplete="new-password"></div><button class="btn primary">Save password</button><p id="pePwS" class="muted" style="font-size:13px"></p></form>`;
+  document.body.append(o);
+  o.firstChild.onsubmit=async ev=>{ev.preventDefault();const a=$('pePw1').value;if(a!==$('pePw2').value){$('pePwS').textContent='Passwords do not match.';return}
+    const {error}=await paceCloud.auth.updateUser({password:a});if(error){$('pePwS').textContent=error.message;return}
+    $('pePwS').textContent='Password updated ✓';setTimeout(()=>location.replace(back),700)};
+}
+paceCloud.auth.onAuthStateChange(ev=>{if(ev==='PASSWORD_RECOVERY')recovery()});
+if(/type=recovery/.test(location.hash))recovery();
+draw();
+})();
+
+/* ---------- Admin: Faculty Access tab (email / mobile per teacher) ---------- */
+(function(){
+if(/[?&](teacher|student)=1/.test(location.search)||window.__peFA||typeof paceCloud==='undefined'||!paceCloud)return;window.__peFA=true;
+const $=(s,r=document)=>r.querySelector(s);
+NAV_ITEMS.push({id:'access',ic:'🔐',label:'Faculty Access'});
+const normPhone=v=>{let d=String(v).replace(/[^\d+]/g,'');if(d[0]==='+')return/^\+\d{10,15}$/.test(d)?d:'';d=d.replace(/^0+/,'');if(/^\d{10}$/.test(d))return'+91'+d;if(/^91\d{10}$/.test(d))return'+'+d;return''};
+let dir={},linked=new Set(),note='';
+function paint(){
+  const v=$('#view');if(!v||UI.tab!=='access')return;
+  v.innerHTML=`<div class="card"><div class="cardhead"><h2>Faculty login mapping</h2></div>
+  <p class="muted" style="font-size:13px;margin-top:0">Enter each teacher's Gmail and/or mobile number. They can then sign in at <b>?teacher=1</b> with that email (create/reset password) or mobile OTP. Emails are stored in a private table and never mixed into the public timetable.</p>
+  ${note?`<p style="color:var(--coral);font-size:13px">${esc(note)}</p>`:''}
+  ${STATE.teachers.map(t=>{const d=dir[t.code]||{};return `<div class="fa-row"><b>${esc(t.name)} (${esc(t.code)})</b><input id="fe_${t.id}" type="email" placeholder="email@gmail.com" value="${esc(d.email||'')}"><input id="fp_${t.id}" type="tel" placeholder="Mobile (+91…)" value="${esc(d.phone||'')}"><span class="fa-ok">${linked.has(String(t.code).toUpperCase())?'✓ linked':''}</span></div>`}).join('')}
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px"><button class="btn primary" id="faSave">Save mapping</button><button class="btn ghost" id="faPub">Publish timetables now</button></div></div>`;
+  $('#faSave').onclick=save;
+  $('#faPub').onclick=()=>{if(typeof cloudUser==='undefined'||!cloudUser||!cloudEnabled){toast('Connect Google and turn on Back up first');return}cloudWrite()};
+}
+async function load(){
+  try{
+    if(typeof cloudUser==='undefined'||!cloudUser)throw new Error('Connect Google (admin account) in the top bar first.');
+    const a=await paceCloud.from('pace_faculty_directory').select('teacher_code,email,phone');if(a.error)throw a.error;
+    dir={};a.data.forEach(r=>dir[r.teacher_code]=r);
+    const b=await paceCloud.from('pace_teacher_accounts').select('teachers(code)');
+    linked=new Set((b.data||[]).map(r=>{const t=Array.isArray(r.teachers)?r.teachers[0]:r.teachers;return t&&String(t.code).toUpperCase()}).filter(Boolean));note='';
+  }catch(e){note=e.message}
+  paint();
+}
+async function save(){
+  const rows=[],del=[];
+  for(const t of STATE.teachers){
+    const e=$('#fe_'+t.id).value.trim().toLowerCase(),p=$('#fp_'+t.id).value.trim();
+    if(!e&&!p){del.push(t.code);continue}
+    if(e&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e))return toast('Invalid email for '+t.name);
+    const np=p?normPhone(p):null;if(p&&!np)return toast('Invalid mobile for '+t.name);
+    rows.push({teacher_code:t.code,email:e||null,phone:np,updated_at:new Date().toISOString()});
+  }
+  if(rows.length){const r=await paceCloud.from('pace_faculty_directory').upsert(rows,{onConflict:'teacher_code'});if(r.error)return toast(r.error.message)}
+  if(del.length)await paceCloud.from('pace_faculty_directory').delete().in('teacher_code',del);
+  toast('Faculty access saved ✓');load();
+}
+const prev=render;
+render=function(){prev.apply(this,arguments);if(UI.tab==='access'&&UI.accessRole==='admin'){paint();load()}};
+render();
+})();
+</script>
+
+<!-- ===== PACE AI Import: read in parts + never drop rows silently ===== -->
+<script>
+(function(){
+if(window.__peAI||/[?&](teacher|student)=1/.test(location.search))return;window.__peAI=true;
+const $=id=>document.getElementById(id);
+async function tiles(f,n){
+  if(n<2||!f.type.startsWith('image/'))return[f];
+  try{
+    const bm=await createImageBitmap(f),W=bm.width,H=bm.height,vert=H>=W,L=vert?H:W,ov=Math.round(L*.12),size=Math.ceil((L+ov*(n-1))/n),out=[];
+    for(let i=0;i<n;i++){
+      const a=Math.max(0,Math.min(L-size,i*(size-ov))),s=Math.min(size,L-a),cw=vert?W:s,ch=vert?s:H,c=document.createElement('canvas');
+      c.width=cw;c.height=ch;c.getContext('2d').drawImage(bm,vert?0:a,vert?a:0,cw,ch,0,0,cw,ch);
+      out.push(new File([await new Promise(r=>c.toBlob(r,'image/jpeg',.92))],'part'+(i+1)+'.jpg',{type:'image/jpeg'}));
+    }
+    return out;
+  }catch(e){return[f]}
+}
+async function run(){
+  const f=$('aiFile').files&&$('aiFile').files[0],msg=$('aiMsg'),btn=$('aiRead');
+  if(!f)return toast('Choose an image or PDF first');
+  if(!(f.type==='application/pdf'||f.type.startsWith('image/')||/\.(png|jpe?g|webp|heic|heif|pdf)$/i.test(f.name)))return toast('Please choose an image or PDF');
+  if(f.size>15*1024*1024)return toast('Please choose a file smaller than 15 MB');
+  btn.disabled=true;
+  try{
+    const parts=await tiles(f,+($('aiParts')||{value:1}).value),raw=[];
+    for(let i=0;i<parts.length;i++){
+      msg.textContent=parts.length>1?`Reading part ${i+1} of ${parts.length}…`:'Reading timetable…';
+      const fd=new FormData();fd.append('file',parts[i]);fd.append('fallbackDate',$('aiDate').value);fd.append('fallbackCenter',$('aiCenter').value);fd.append('mode',$('aiMode').value);
+      const r=await fetch(PACE_CLOUD_URL+'/functions/v1/quick-function',{method:'POST',headers:{Authorization:'Bearer '+PACE_CLOUD_KEY,apikey:PACE_CLOUD_KEY},body:fd});
+      if(!r.ok)throw new Error('Part '+(i+1)+': '+await r.text());
+      raw.push(...((await r.json()).rows||[]));
+    }
+    const seen=new Set(),rows=[];
+    raw.forEach(r=>{const k=[r.date,r.center,r.batch,r.teacherCode,r.start,r.end].join('|').toLowerCase();if(!seen.has(k)){seen.add(k);rows.push(r)}});
+    if(!rows.length){msg.textContent='No classes could be read. Try “Read in parts” with a clearer photo.';return}
+    const ns=structuredClone(STATE),have=new Set(STATE.classes.map(c=>[c.date,c.batchId||('c:'+(c.customBatchLabel||'').toLowerCase()),c.teacherId,c.start,c.end].join('|')));
+    let added=0,dup=0;const review=[],skipped=[];
+    const ALIAS={phy:'Physics',chem:'Chemistry',math:'Maths',mathematics:'Maths',bio:'Biology',zoo:'Biology',bot:'Biology'};
+    const canon=w=>{const k=String(w||'').toLowerCase().replace(/[^a-z]/g,'');return STATE.subjects.find(x=>x.toLowerCase().replace(/[^a-z]/g,'')===k)||ALIAS[k]||''};
+    const subjIn=txt=>{const o=[];String(txt).replace(/[A-Za-z]+/g,w=>{const c=canon(w);if(c&&!o.includes(c))o.push(c);return w});return o};
+    const topicsOf=txt=>{const res=[],re=/([A-Za-z]+)\s*[:\-–]\s*([^;\n|]+?)(?=\s+[A-Za-z]+\s*[:\-–]|[;\n|]|$)/g;let m;while((m=re.exec(txt))){const c=canon(m[1]);if(c)res.push({subject:c,topic:m[2].trim()})}return res};
+    for(const r of rows){
+      const date=r.date||$('aiDate').value,start=normAiTime(r.start),end=normAiTime(r.end),
+        center=normalizeAiCenter(r.center||$('aiCenter').value),bl=normalizeAiBatch(r.batch),code=normalizeAiTeacherCode(r.teacherCode),cl=center.toLowerCase();
+      const label=`${r.batch||'?'} · ${r.teacherCode||'?'} · ${r.start||'?'}–${r.end||'?'}`;
+      if(!date||!start||!end){skipped.push([label,'time or date not readable']);continue}
+      const txt=Object.entries(r).filter(([k,v])=>typeof v==='string'&&!['date','center','start','end','confidence','batch'].includes(k)).map(e=>e[1]).join(' ');
+      const isTest=/\b(exam|test|twt|mt)\b/i.test(txt),isPractice=!isTest&&/\bpract(?:ice|ise)s?\b/i.test(txt),noTeacher=isTest||isPractice;
+      let b=STATE.batches.find(x=>x.label.toLowerCase()===bl.toLowerCase()&&(!cl||x.center.toLowerCase()===cl))||STATE.batches.find(x=>x.label.toLowerCase()===bl.toLowerCase());
+      if(!b&&cl){const cb=STATE.batches.filter(x=>x.center.toLowerCase()===cl);if(cb.length===1)b=cb[0]}
+      const t=noTeacher?null:STATE.teachers.find(x=>x.code.toLowerCase()===code.toLowerCase());
+      if(!b&&!bl){skipped.push([label,'batch not readable']);continue}
+      const key=[date,b?b.id:'c:'+bl.toLowerCase(),t?t.id:'',start,end].join('|');
+      if(have.has(key)){dup++;continue}have.add(key);
+      if(!b||(!t&&!noTeacher))review.push([label,[!b?'batch “'+bl+'” not in Batches (added as custom)':'',(!t&&!noTeacher)?'teacher “'+(code||'?')+'” not found':''].filter(Boolean).join('; ')]);
+      const subs=subjIn(txt);
+      const e={id:uid('ai'),date,batchId:b?b.id:'',customBatchLabel:b?null:bl,customCenter:b?null:(center||null),teacherId:noTeacher?null:(t?t.id:''),
+        subject:isPractice?((subs[0]||'')+' Practice').trim():isTest?(subs.length===1?subs[0]:''):(r.subject||''),
+        chapter:noTeacher?'':(r.chapter||''),lectureNo:noTeacher?null:(parseInt(r.lectureNo,10)||null),chapterCompleted:false,topic:'',start,end,isDoubt:false};
+      if(isTest){e.isTest=true;let tp=topicsOf(txt);if(!tp.length&&r.chapter&&!/^\s*(exam|test|twt|mt)\s*$/i.test(r.chapter))tp=[{subject:subs[0]||'Topics',topic:String(r.chapter).trim()}];e.testTopics=tp}
+      if(isPractice)e.isPractice=true;
+      ns.classes.push(e);added++;
+    }
+    if(added)persist(ns);
+    const list=(h,a)=>a.length?`<h4 style="margin:12px 0 4px">${h} (${a.length})</h4>`+a.map(x=>`<div style="font-size:12.5px;padding:6px 0;border-bottom:1px solid var(--line)"><b>${esc(x[0])}</b><br><span class="muted">${esc(x[1])}</span></div>`).join(''):'';
+    $('aiTable').innerHTML=`<div class="pe-stats"><div class="pe-stat" style="--c:#2F6BEB"><i>📄</i><div><b>${rows.length}</b><span>Rows read</span></div></div><div class="pe-stat" style="--c:#1E9E5A"><i>✅</i><div><b>${added}</b><span>Added</span></div></div><div class="pe-stat" style="--c:#E8890C"><i>⚠️</i><div><b>${review.length}</b><span>Check</span></div></div><div class="pe-stat" style="--c:#D14363"><i>⏭️</i><div><b>${skipped.length}</b><span>Skipped</span></div></div></div>`+
+      (dup?`<p class="muted" style="font-size:12.5px">${dup} already in your schedule (not duplicated).</p>`:'')+list('Added — please check',review)+list('Skipped — add manually',skipped)+
+      (added?`<button class="btn primary" id="aiGo" style="margin-top:12px">Open Schedule</button>`:'');
+    msg.textContent=`✓ ${added} added · ${review.length} to check · ${skipped.length} skipped`;
+    if($('aiGo'))$('aiGo').onclick=()=>{UI.tab='schedule';UI.scheduleDate=ns.classes[ns.classes.length-1].date;render()};
+  }catch(e){msg.textContent='AI reader failed: '+(e.message||e)}
+  finally{btn.disabled=false}
+}
+const prev=render;
+render=function(){prev.apply(this,arguments);try{
+  if(UI.tab==='aiimport'&&$('aiRead')&&!$('aiParts')){
+    const d=document.createElement('div');d.className='field';
+    d.innerHTML='<label>Read in parts (for dense / small handwriting)</label><select id="aiParts"><option value="1">1 – whole image</option><option value="2">2 – two overlapping strips</option><option value="3">3 – three overlapping strips</option></select>';
+    $('aiRead').before(d);$('aiRead').onclick=run;
+  }}catch(e){console.error('ai',e)}};
+render();
+})();
+</script>
+
+<!-- ===== PACE message fix: show each center once ===== -->
+<script>
+(function(){
+if(window.__peMsg)return;window.__peMsg=true;
+facultyMessage=function(teacherId,date){
+  const t=teacherById(teacherId);if(!t)return '';
+  const e=classesFor(date).filter(c=>c.teacherId===teacherId).sort((a,b)=>a.start.localeCompare(b.start)||a.end.localeCompare(b.end));
+  if(!e.length)return null;
+  let out=`Good Evening\n*${t.name.split(' ')[0]} ${t.salutation||'Sir'}*\n\nDate:- ${fmtDateLong(date)}\nDay:- ${dayName(date)}\n`,last=null;
+  e.forEach(c=>{
+    const b=batchById(c.batchId),batch=c.customBatchLabel||(b?b.label:'Batch'),center=b?b.center:(c.customCenter||'Other');
+    if(center!==last){out+=`\n*${center} Center*\n`;last=center}
+    out+=c.isDoubt?`_${fmt12(c.start)} - ${fmt12(c.end)}: Doubt Session_\n`:`${fmt12(c.start)} - ${fmt12(c.end)}: ${batch}${c.subject?' ('+c.subject+')':''}\n`;
+  });
+  if(e.some(c=>!c.isDoubt&&c.end==='16:30')&&!e.some(c=>c.isDoubt&&c.start==='16:30'))out+=`\n_*4:30 PM - 6:00 PM: Doubt Session*_\n`;
+  return out+'\nThank you.';
+};
+})();
+</script>
 
 </body></html>
