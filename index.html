@@ -1363,7 +1363,7 @@ if (deleteAllBtn) {
   const isTestToggle = document.getElementById('f_isTest');
   const teacherSelect = document.getElementById('f_teacher');
   const noTeacherFields = ['f_subject','f_chapter','f_customBatch'];
-  const isExamOrTestText = (value)=>/\b(exam|test|twt|mt)\b/i.test(String(value||''));
+  const isExamOrTestText = (value)=>/\b(exam|test|twt|mt|practice|practise)\b/i.test(String(value||''));
   const syncExamTeacher = ()=>{ const batchEl=document.getElementById('f_batch'); const batchText=batchEl&&batchEl.value==='custom'?document.getElementById('f_customBatch')?.value:(batchById(batchEl?.value)?.label||''); const textMatch=noTeacherFields.some(id=>isExamOrTestText(document.getElementById(id)?.value))||isExamOrTestText(batchText); const noTeacher=isTestToggle.checked||textMatch; if(noTeacher){teacherSelect.value='';teacherSelect.disabled=true;}else{teacherSelect.disabled=false;} };
   isTestToggle.addEventListener('change', syncExamTeacher);
   noTeacherFields.forEach(id=>document.getElementById(id)?.addEventListener('input',syncExamTeacher));
@@ -1399,7 +1399,7 @@ if (deleteAllBtn) {
       isTest: document.getElementById('f_isTest').checked,
     };
     const secondBatchId = batch2Sel ? batch2Sel.value : '';
-    const noTeacherClass = entry.isTest || /\b(exam|test|twt|mt)\b/i.test([entry.subject,entry.chapter,entry.topic,entry.customBatchLabel,batchById(entry.batchId)?.label].filter(Boolean).join(' '));
+    const noTeacherClass = entry.isTest || /\b(exam|test|twt|mt|practice|practise)\b/i.test([entry.subject,entry.chapter,entry.topic,entry.customBatchLabel,batchById(entry.batchId)?.label].filter(Boolean).join(' '));
     if(noTeacherClass){ entry.teacherId=null; if(entry.isTest){entry.chapter='';entry.lectureNo=null;} }
     else if(!entry.teacherId){ toast('Please choose a teacher'); return; }
     if(secondBatchId && secondBatchId===entry.batchId){ toast('Choose a different second batch'); return; }
@@ -1810,18 +1810,25 @@ function renderAIImport(view){
    if(!resp.ok)throw new Error(await resp.text());
    const data=await resp.json();
 
-   UI.aiRows=(data.rows||[]).map(r=>({
-    date:r.date||document.getElementById('aiDate').value,
-    center:normalizeAiCenter(r.center||document.getElementById('aiCenter').value),
-    batch:normalizeAiBatch(r.batch),
-    teacherCode:normalizeAiTeacherCode(r.teacherCode),
-    subject:r.subject||'',
-    chapter:r.chapter||'',
-    lectureNo:r.lectureNo||'',
-    start:normAiTime(r.start),
-    end:normAiTime(r.end),
-    confidence:r.confidence||'auto'
-   }));
+   UI.aiRows=(data.rows||[]).map(r=>{
+    const rawActivity=[r.activity,r.subject,r.chapter,r.topic,r.notes].filter(Boolean).join(' ');
+    const isPractice=/\bpracti[cs]e(?:\s+session)?\b/i.test(rawActivity);
+    const isTest=/\b(test|tests|full\s*test|exam|twt|mt)\b/i.test(rawActivity);
+    return {
+     date:r.date||document.getElementById('aiDate').value,
+     center:normalizeAiCenter(r.center||document.getElementById('aiCenter').value),
+     batch:normalizeAiBatch(r.batch),
+     teacherCode:(isPractice||isTest)?'':normalizeAiTeacherCode(r.teacherCode),
+     subject:isPractice?'Practice Session':(isTest?'':(r.subject||r.activity||'')),
+     chapter:isPractice||isTest?'':(r.chapter||''),
+     lectureNo:isPractice||isTest?'':(r.lectureNo||''),
+     isPractice,
+     isTest,
+     start:normAiTime(r.start),
+     end:normAiTime(r.end),
+     confidence:r.confidence||'auto'
+    };
+   });
 
    if(!UI.aiRows.length){
     msg.textContent='No classes could be read from the timetable.';
@@ -1844,9 +1851,10 @@ function renderAIImport(view){
       if(centerBatches.length===1) b=centerBatches[0];
     }
 
-    const t=STATE.teachers.find(x=>x.code.toLowerCase()===normalizeAiTeacherCode(r.teacherCode).toLowerCase());
+    const noTeacherActivity=!!(r.isTest||r.isPractice);
+    const t=noTeacherActivity?null:STATE.teachers.find(x=>x.code.toLowerCase()===normalizeAiTeacherCode(r.teacherCode).toLowerCase());
 
-    if(!r.date||!r.start||!r.end||!b||!t){
+    if(!r.date||!r.start||!r.end||!b||(!noTeacherActivity&&!t)){
       failed.push(r);
       continue;
     }
@@ -1857,15 +1865,17 @@ function renderAIImport(view){
       batchId:b.id,
       customBatchLabel:null,
       customCenter:null,
-      teacherId:t.id,
-      subject:r.subject||'',
-      chapter:r.chapter||'',
-      lectureNo:parseInt(r.lectureNo,10)||null,
+      teacherId:t?t.id:null,
+      subject:r.isTest?'':(r.subject||''),
+      chapter:r.isTest||r.isPractice?'':(r.chapter||''),
+      lectureNo:r.isTest||r.isPractice?null:(parseInt(r.lectureNo,10)||null),
       chapterCompleted:false,
-      topic:'',
+      topic:r.isPractice?'Practice Session':'',
       start:r.start,
       end:r.end,
-      isDoubt:false
+      isDoubt:false,
+      ...(r.isTest?{isTest:true,testTopics:[]}:{}),
+      ...(r.isPractice?{isPractice:true}:{})
     });
    }
 
@@ -2220,7 +2230,7 @@ async function initPublicStudentView(){
       // Some older timetable rows have no subject saved. Use the teacher's known subject as a display fallback.
       const subjectFallback={AP:'Physics',VP:'Physics',PB:'Physics',NC:'Chemistry',DC:'Chemistry',GM:'Mathematics',SM:'Mathematics',RB:'Biology',MB:'Biology'};
       const subject=String(c.subject||c.testSubject||'').trim() || subjectFallback[code] || '';
-      const name=c.isTest?'Test':subject||'Class';
+      const name=c.isTest?'Test':(c.isPractice||/\bpracti[cs]e(?:\s+session)?\b/i.test(String(c.topic||c.subject||''))?'Practice Session':subject||'Class');
       const detail=c.isTest?(Array.isArray(c.testTopics)?c.testTopics.map(x=>`${x.subject}: ${x.topic}`).join(' · '):''):String(c.chapter||c.topic||'');
       return `<article style="border:1px solid var(--line);border-radius:10px;padding:13px"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><strong>${esc(name)}${code?' ('+esc(code)+')':''}</strong><strong>${esc(fmt12(c.start))} – ${esc(fmt12(c.end))}</strong></div>${detail?`<div style="margin-top:5px;color:var(--text-muted);font-size:13px">${esc(detail)}</div>`:''}${c.online?'<div style="margin-top:5px;font-size:12px;color:var(--teal)">Online class</div>':''}</article>`;
     }).join('')}</div></div>`;
