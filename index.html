@@ -3020,7 +3020,7 @@ facultyMessage=function(teacherId,date){
 .pg-wrap{max-width:720px;margin:0 auto;padding:16px}
 .pg-c{background:var(--card);border-radius:14px;padding:13px 14px;margin-bottom:10px;border-left:4px solid var(--c);box-shadow:0 2px 14px rgba(30,36,90,.07)}
 .pg-c b{display:block;font-size:14px}.pg-c span{font-size:12.5px;color:var(--text-muted)}.pg-c em{font-style:normal;font-weight:700;color:var(--ink-2);font-size:12.5px;display:block;margin-bottom:2px}
-.ma-row{display:grid;grid-template-columns:1fr 1.3fr 1fr 1fr 56px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.ma-row{display:grid;grid-template-columns:1fr 1.4fr 1fr 56px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
 @media(max-width:780px){.ma-row{grid-template-columns:1fr 1fr}.ma-row>:first-child{grid-column:1/-1}}
 </style>
 <div id="peAuthBox"></div><div id="peMember"></div>
@@ -3058,7 +3058,7 @@ function form(){
 }
 function drawAuth(){
   const chip=(m,t)=>`<button type="button" class="pe-chip${F.mode===m?' act':''}" data-m="${m}">${t}</button>`;
-  A.innerHTML=`<div class="card"><button type="button" class="btn ghost" data-a="back" style="margin-bottom:10px">← Back</button><h2>${LABEL[F.role]} Login</h2><p class="muted">Use the Gmail registered with PACE. You will stay signed in on this device.</p><div class="pe-filter">${chip('email','Password')}${chip('eotp','Email code')}${chip('phone','Mobile OTP')}</div>${form()}<p id="pgS" class="muted" style="font-size:13px;min-height:18px;margin-top:10px"></p></div>`;
+  A.innerHTML=`<div class="card"><button type="button" class="btn ghost" data-a="back" style="margin-bottom:10px">← Back</button><h2>${LABEL[F.role]} Login</h2><p class="muted">Use the Gmail registered with PACE. You will stay signed in on this device.</p><div class="pe-filter">${chip('email','Password')}${chip('eotp','Email code')}${F.role==='teacher'?chip('phone','Mobile OTP'):''}</div>${form()}<p id="pgS" class="muted" style="font-size:13px;min-height:18px;margin-top:10px"></p></div>`;
   A.classList.add('open');
 }
 const say=(m,bad)=>{const s=$('pgS');if(s){s.textContent=m;s.style.color=bad?'var(--coral)':'var(--text-muted)'}};
@@ -3189,9 +3189,9 @@ function paintM(){
   const rows=MR.all.filter(r=>r.role===MR.role),bo=r=>STATE.batches.map(b=>`<option value="${b.id}"${b.id===r.batch_id?' selected':''}>${esc(b.label)} (${esc(b.center)})</option>`).join('');
   v.innerHTML=`<div class="card"><div class="cardhead"><h2>Student &amp; parent login mapping</h2></div>
   <div class="pe-filter"><button class="pe-chip${MR.role==='student'?' act':''}" data-role="student">Students</button><button class="pe-chip${MR.role==='parent'?' act':''}" data-role="parent">Parents</button></div>
-  <p class="muted" style="font-size:13px;margin-top:0">Add each person's Gmail (and optional mobile) and pick their batch. They open the main app link, choose <b>${MR.role==='student'?'Student':'Parent'} Login</b> and see only that batch's timetable.${MR.role==='parent'?' Two children in different batches? Add two rows with the same Gmail.':''}</p>
+  <p class="muted" style="font-size:13px;margin-top:0">Add each person's Gmail and pick their batch. They open the main app link, choose <b>${MR.role==='student'?'Student':'Parent'} Login</b> and see only that batch's timetable.${MR.role==='parent'?' Two children in different batches? Add two rows with the same Gmail.':''}</p>
   ${MR.note?`<p style="color:var(--coral);font-size:13px">${esc(MR.note)}</p>`:''}
-  ${rows.map(r=>`<div class="ma-row" data-id="${r.id}"><input data-f="name" placeholder="Name" value="${esc(r.name||'')}"><input data-f="email" type="email" placeholder="email@gmail.com" value="${esc(r.email||'')}"><input data-f="phone" type="tel" placeholder="Mobile (+91…)" value="${esc(r.phone||'')}"><select data-f="batch_id">${bo(r)}</select><span>${MR.linked.has(r.id)?'<b class="fa-ok" title="Has signed in">✓</b> ':''}<button class="icon" data-del="${r.id}" title="Remove">✕</button></span></div>`).join('')||'<p class="muted">No entries yet.</p>'}
+  ${rows.map(r=>`<div class="ma-row" data-id="${r.id}"><input data-f="name" placeholder="Name" value="${esc(r.name||'')}"><input data-f="email" type="email" placeholder="email@gmail.com" value="${esc(r.email||'')}"><select data-f="batch_id">${bo(r)}</select><span>${MR.linked.has(r.id)?'<b class="fa-ok" title="Has signed in">✓</b> ':''}<button class="icon" data-del="${r.id}" title="Remove">✕</button></span></div>`).join('')||'<p class="muted">No entries yet.</p>'}
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0"><button class="btn ghost" id="maAdd">＋ Add row</button><button class="btn primary" id="maSave">Save</button><button class="btn ghost" id="maPub">Publish now</button></div>
   <details><summary class="muted" style="cursor:pointer">Bulk add from a list</summary><div class="field" style="margin-top:8px"><label>One per line: Name, Gmail, Batch (e.g. Aman Kumar, aman@gmail.com, XII JEE 1)</label><textarea id="maBulk" rows="5"></textarea></div><button class="btn ghost" id="maBulkGo">Add these rows</button></details></div>`;
   v.oninput=e=>{const row=e.target.closest('[data-id]'),f=e.target.dataset.f;if(!row||!f)return;const o=MR.all.find(x=>x.id===row.dataset.id);if(o)o[f]=e.target.value};
@@ -3214,8 +3214,8 @@ function paintM(){
 async function mSave(){
   const out=[];
   for(const r of MR.all){
-    const e=String(r.email||'').trim().toLowerCase(),ph=String(r.phone||'').trim();
-    if(!e&&!ph){if(r.saved)MR.gone.push(r.id);continue}
+    const e=String(r.email||'').trim().toLowerCase(),ph='';
+    if(!e){if(r.saved)MR.gone.push(r.id);continue}
     if(e&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e))return toast('Invalid email: '+e);
     const p=ph?normPhone(ph):null;if(ph&&!p)return toast('Invalid mobile for '+(r.name||e));
     if(!r.batch_id)return toast('Choose a batch for '+(r.name||e));
