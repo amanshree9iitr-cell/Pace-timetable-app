@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="light" style="color-scheme: light;"><head>
-<meta charset="UTF-8">
+<meta charset="UTF-8"><script>/* accept /#?teacher=1 and /#teacher=1 as well as /?teacher=1 */(function(){var m=location.hash.match(/^#\??((?:teacher|student)=1)$/);if(m&&!location.search)location.replace(location.pathname+"?"+m[1])})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png">
 
@@ -2631,7 +2631,7 @@ function profile(v){
   <div class="pl-r" data-a="out" style="color:var(--coral);border:0"><span>⎋</span>Switch role / Log out</div></div>`;
   v.onclick=e=>{const a=e.target.closest('[data-a]');if(!a)return;const k=a.dataset.a;
     if(k==='dark'){$('#peTheme').click();profile(v)}else if(k==='search')$('#peSearch').click();
-    else if(k==='week'){UI.tab='weekly';render()}else if(k==='mat'){UI.tab='materials';render()}else if(k==='out'){try{localStorage.removeItem('pace-role')}catch(_){}login()}};
+    else if(k==='week'){UI.tab='weekly';render()}else if(k==='mat'){UI.tab='materials';render()}else if(k==='out'){window.peSignOut?window.peSignOut():login()}};
 }
 
 /* ---------- Login / role launcher ---------- */
@@ -2654,7 +2654,6 @@ const VIEWS={weekly,materials,profile},prev=render;
 render=function(){prev.apply(this,arguments);try{const f=VIEWS[UI.tab];if(f){const v=$('#view');v.onclick=null;f(v)}}catch(e){console.error('screens',e)}};
 let saved=null;try{saved=JSON.parse(localStorage.getItem('pace-role')||'null')}catch(_){}
 if(saved&&saved.role){UI.accessRole=saved.role==='admin'?'admin':'teacher';UI.accessTeacher=saved.tid||'';UI.tab=saved.role==='admin'?'schedule':saved.role==='teacher'?'faculty':'students'}
-else login();
 render();
 })();
 </script>
@@ -2737,6 +2736,7 @@ async function afterAuth(otp){
 }
 /* a signed-in account with no timetable yet: link it to its teacher, never silently sign out */
 window.paceTeacherUnlinked=async function(user){
+  if(typeof PACE_GOOGLE_EMAIL!=='undefined'&&String(user.email||'').toLowerCase()===String(PACE_GOOGLE_EMAIL).toLowerCase()){draw();say('You are signed in as Admin on this browser. To test as a teacher, open this link in a private tab or on another phone.',1);return'wait'}
   const {data:name,error}=await paceCloud.rpc('claim_teacher_account');
   if(error){draw();say('Setup incomplete — ask the administrator to run faculty-auth.sql in Supabase. ('+error.message+')',1);return'wait'}
   if(!name)return false;
@@ -2816,11 +2816,12 @@ let dir={},linked=new Set(),note='';
 function paint(){
   const v=$('#view');if(!v||UI.tab!=='access')return;
   v.innerHTML=`<div class="card"><div class="cardhead"><h2>Faculty login mapping</h2></div>
+  <div class="pe-filter" style="margin-bottom:10px"><input readonly id="faLink" value="${location.origin+location.pathname}?teacher=1" onclick="this.select()"><button class="btn ghost" id="faCopy" type="button">Copy teacher link</button><a class="btn ghost" href="?teacher=1" target="_blank" rel="noopener">Open ↗</a></div>
   <p class="muted" style="font-size:13px;margin-top:0">Enter each teacher's Gmail and/or mobile number. They can then sign in at <b>?teacher=1</b> with that email (create/reset password) or mobile OTP. Emails are stored in a private table and never mixed into the public timetable.</p>
   ${note?`<p style="color:var(--coral);font-size:13px">${esc(note)}</p>`:''}
   ${STATE.teachers.map(t=>{const d=dir[t.code]||{};return `<div class="fa-row"><b>${esc(t.name)} (${esc(t.code)})</b><input id="fe_${t.id}" type="email" placeholder="email@gmail.com" value="${esc(d.email||'')}"><input id="fp_${t.id}" type="tel" placeholder="Mobile (+91…)" value="${esc(d.phone||'')}"><span class="fa-ok">${linked.has(String(t.code).toUpperCase())?'✓ linked':''}</span></div>`}).join('')}
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px"><button class="btn primary" id="faSave">Save mapping</button><button class="btn ghost" id="faPub">Publish timetables now</button></div></div>`;
-  $('#faSave').onclick=save;
+  $('#faSave').onclick=save;$('#faCopy').onclick=()=>{try{navigator.clipboard.writeText($('#faLink').value)}catch(_){}toast('Teacher link copied')};
   $('#faPub').onclick=()=>{if(typeof cloudUser==='undefined'||!cloudUser||!cloudEnabled){toast('Connect Google and turn on Back up first');return}cloudWrite()};
 }
 async function load(){
@@ -3008,4 +3009,243 @@ facultyMessage=function(teacherId,date){
 </script>
 
 <style id="pace-fixes2-css">.pe-aside{display:none!important}.pe-split{display:block!important}</style>
+<!-- ===== PACE Gateway: one link, choose role, sign in with Gmail (Student / Parent / Teacher / Admin) ===== -->
+<style id="pace-gateway-css">
+#peAuthBox{position:fixed;inset:0;z-index:20001;display:none;padding:16px;overflow:auto;background:rgba(10,14,40,.55);backdrop-filter:blur(4px)}
+#peAuthBox.open{display:grid}#peAuthBox .card{width:min(420px,100%);margin:auto}
+#peMember{position:fixed;inset:0;z-index:19999;background:var(--paper);overflow:auto;display:none}#peMember.open{display:block}
+.pg-top{display:flex;align-items:center;gap:12px;padding:14px 16px;background:#13151D;color:#fff;position:sticky;top:0;z-index:3}
+.pg-top .lg{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,#5560F0,#3640C6);display:grid;place-items:center;font:700 20px 'Space Grotesk',sans-serif}
+.pg-top b{display:block;font-size:15px}.pg-top span{font-size:12px;opacity:.75}
+.pg-wrap{max-width:720px;margin:0 auto;padding:16px}
+.pg-c{background:var(--card);border-radius:14px;padding:13px 14px;margin-bottom:10px;border-left:4px solid var(--c);box-shadow:0 2px 14px rgba(30,36,90,.07)}
+.pg-c b{display:block;font-size:14px}.pg-c span{font-size:12.5px;color:var(--text-muted)}.pg-c em{font-style:normal;font-weight:700;color:var(--ink-2);font-size:12.5px;display:block;margin-bottom:2px}
+.ma-row{display:grid;grid-template-columns:1fr 1.3fr 1fr 1fr 56px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+@media(max-width:780px){.ma-row{grid-template-columns:1fr 1fr}.ma-row>:first-child{grid-column:1/-1}}
+</style>
+<div id="peAuthBox"></div><div id="peMember"></div>
+<script>
+(function(){
+if(window.__peGate||/[?&](teacher|student)=1/.test(location.search)||typeof paceCloud==='undefined'||!paceCloud)return;window.__peGate=true;
+const $=id=>document.getElementById(id),Q=(s,r=document)=>r.querySelector(s);
+const ADMIN=String(PACE_GOOGLE_EMAIL).toLowerCase(),base=location.origin+location.pathname;
+const L=$('peLogin'),A=$('peAuthBox'),V=$('peMember'),LABEL={student:'Student',parent:'Parent',teacher:'Teacher',admin:'Admin'};
+const ICON={student:'🎓',parent:'👨‍👩‍👧',teacher:'🧑‍🏫',admin:'⚙️'};
+const normPhone=v=>{let d=String(v).replace(/[^\d+]/g,'');if(d[0]==='+')return/^\+\d{10,15}$/.test(d)?d:'';d=d.replace(/^0+/,'');if(/^\d{10}$/.test(d))return'+91'+d;if(/^91\d{10}$/.test(d))return'+'+d;return''};
+const addD=(s,n)=>{const d=new Date(s+'T00:00:00');d.setDate(d.getDate()+n);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const store=(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(_){}},read=k=>{try{return localStorage.getItem(k)||''}catch(_){return''}};
+store('pace-role',null);
+let F={role:'',mode:'email',step:1,phone:'',mail:read('pace-last-email')},cur=null;
+const head='<div class="lg">P</div><h1>PACE IIT &amp; Medical</h1>';
+L.innerHTML=head+'<p>Loading…</p>';L.classList.add('open');
+
+/* ---------- screens ---------- */
+function roles(note){
+  A.classList.remove('open');V.classList.remove('open');cur=null;
+  L.innerHTML=head+'<p>Choose how you want to sign in</p><div class="opts">'+['student','parent','teacher','admin'].map(r=>`<button data-r="${r}"><i>${ICON[r]}</i>${LABEL[r]} Login<u>›</u></button>`).join('')+'</div>'+(note?`<small style="color:#FFD2D2;opacity:1">${esc(note)}</small>`:'<small>Your schedule. Always with you.</small>');
+  L.classList.add('open');
+}
+L.onclick=e=>{const b=e.target.closest('[data-r]');if(b)pick(b.dataset.r)};
+async function pick(role){
+  F={role,mode:'email',step:1,phone:'',mail:read('pace-last-email')};store('pace-gate-role',role);
+  if(role==='admin'){await paceCloud.auth.signInWithOAuth({provider:'google',options:{redirectTo:base,queryParams:{prompt:'select_account'}}});return}
+  drawAuth();
+}
+function form(){
+  if(F.mode==='email')return `<form id="pgEF" style="display:grid;gap:12px"><div class="field"><label>Email</label><input id="pgE" type="email" autocomplete="username" required placeholder="you@gmail.com" value="${esc(F.mail)}"></div><div class="field"><label>Password</label><input id="pgP" type="password" autocomplete="current-password" required minlength="8"></div><button class="btn primary" type="submit">Sign in</button><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:13px"><a href="#" data-a="new">First time? Create password</a><a href="#" data-a="forgot">Forgot password?</a></div></form>`;
+  if(F.mode==='eotp')return `<form id="pgOF" style="display:grid;gap:12px"><div class="field"><label>Email</label><input id="pgE2" type="email" required placeholder="you@gmail.com" value="${esc(F.mail)}" ${F.step===2?'readonly':''}></div><div class="field" style="display:${F.step===2?'block':'none'}"><label>Code from your email</label><input id="pgO" inputmode="numeric" autocomplete="one-time-code" maxlength="8"></div><button class="btn primary" type="submit">${F.step===2?'Verify &amp; sign in':'Email me a code'}</button>${F.step===2?'<a href="#" data-a="again" style="font-size:13px">Use a different email / resend</a>':''}</form>`;
+  return `<form id="pgMF" style="display:grid;gap:12px"><div class="field"><label>Mobile number</label><input id="pgM" type="tel" required placeholder="98XXXXXXXX or +91…" value="${esc(F.phone)}" ${F.step===2?'readonly':''}></div><div class="field" style="display:${F.step===2?'block':'none'}"><label>OTP sent by SMS</label><input id="pgO" inputmode="numeric" autocomplete="one-time-code" maxlength="8"></div><button class="btn primary" type="submit">${F.step===2?'Verify &amp; sign in':'Send OTP'}</button>${F.step===2?'<a href="#" data-a="again" style="font-size:13px">Use a different number / resend</a>':''}</form>`;
+}
+function drawAuth(){
+  const chip=(m,t)=>`<button type="button" class="pe-chip${F.mode===m?' act':''}" data-m="${m}">${t}</button>`;
+  A.innerHTML=`<div class="card"><button type="button" class="btn ghost" data-a="back" style="margin-bottom:10px">← Back</button><h2>${LABEL[F.role]} Login</h2><p class="muted">Use the Gmail registered with PACE. You will stay signed in on this device.</p><div class="pe-filter">${chip('email','Password')}${chip('eotp','Email code')}${chip('phone','Mobile OTP')}</div>${form()}<p id="pgS" class="muted" style="font-size:13px;min-height:18px;margin-top:10px"></p></div>`;
+  A.classList.add('open');
+}
+const say=(m,bad)=>{const s=$('pgS');if(s){s.textContent=m;s.style.color=bad?'var(--coral)':'var(--text-muted)'}};
+A.onclick=async e=>{
+  const m=e.target.closest('[data-m]'),a=e.target.closest('[data-a]');
+  if(m){F.mode=m.dataset.m;F.step=1;drawAuth();return}
+  if(!a)return;e.preventDefault();
+  if(a.dataset.a==='back'){A.classList.remove('open');roles();return}
+  if(a.dataset.a==='again'){F.step=1;drawAuth();return}
+  const email=(($('pgE')||{}).value||'').trim().toLowerCase(),pw=($('pgP')||{}).value||'';
+  if(a.dataset.a==='new'){
+    if(!email||pw.length<8)return say('Enter your registered email and choose a password (min 8 characters), then tap “Create password”.',1);
+    say('Creating…');const {error}=await paceCloud.auth.signUp({email,password:pw,options:{emailRedirectTo:base}});store('pace-last-email',email);
+    say(error?'Could not create password: '+error.message:'Check your inbox: open the confirmation link, then sign in.',!!error);
+  }else if(a.dataset.a==='forgot'){
+    if(!email)return say('Type your email above first.',1);
+    const {error}=await paceCloud.auth.resetPasswordForEmail(email,{redirectTo:base});
+    say(error?'Could not send reset email: '+error.message:'If this email is registered, a password-reset link has been sent.',!!error);
+  }
+};
+A.onsubmit=async e=>{
+  e.preventDefault();const id=e.target.id;
+  if(id==='pgEF'){
+    const em=$('pgE').value.trim().toLowerCase();say('Signing in…');
+    const {error}=await paceCloud.auth.signInWithPassword({email:em,password:$('pgP').value});
+    if(error)return say('Sign-in failed. Check email and password, or use “Forgot password” / “Email code”.',1);store('pace-last-email',em);afterAuth(false);
+  }else if(id==='pgOF'){
+    const em=$('pgE2').value.trim().toLowerCase();
+    if(F.step===1){say('Sending code…');const {error}=await paceCloud.auth.signInWithOtp({email:em,options:{shouldCreateUser:true,emailRedirectTo:base}});
+      if(error)return say('Could not send code: '+error.message,1);F.mail=em;store('pace-last-email',em);F.step=2;drawAuth();say('A code was sent to '+em+'. It can take a minute — check spam too.')}
+    else{const t=$('pgO').value.trim();if(!t)return say('Enter the code.',1);say('Verifying…');
+      const {error}=await paceCloud.auth.verifyOtp({email:F.mail,token:t,type:'email'});if(error)return say('Wrong or expired code.',1);afterAuth(true)}
+  }else if(F.step===1){
+    const p=normPhone($('pgM').value);if(!p)return say('Enter a valid mobile number.',1);
+    say('Sending OTP…');const {error}=await paceCloud.auth.signInWithOtp({phone:p});
+    if(error)return say('Could not send OTP: '+error.message,1);F.phone=p;F.step=2;drawAuth();say('OTP sent to '+p+'.');
+  }else{
+    const t=$('pgO').value.trim();if(!t)return say('Enter the OTP.',1);say('Verifying…');
+    const {error}=await paceCloud.auth.verifyOtp({phone:F.phone,token:t,type:'sms'});if(error)return say('Wrong or expired OTP.',1);afterAuth(true);
+  }
+};
+
+/* ---------- who is this user? ---------- */
+async function resolve(user){
+  const r=[];let err='';
+  if((user.email||'').toLowerCase()===ADMIN)r.push('admin');
+  const t=await paceCloud.rpc('claim_teacher_account');if(t.error)err=t.error.message;else if(t.data)r.push('teacher');
+  const m=await paceCloud.rpc('claim_member_access');if(m.error)err=err||m.error.message;else(m.data||[]).forEach(x=>{if(!r.includes(x.role))r.push(x.role)});
+  return{roles:r,err};
+}
+async function afterAuth(otp){
+  const {data:{session}}=await paceCloud.auth.getSession();if(!session)return;
+  const r=await resolve(session.user);
+  if(!r.roles.includes(F.role)){await paceCloud.auth.signOut();drawAuth();say(r.roles.length||!r.err?'This email is not registered as '+LABEL[F.role]+'. Check the role you chose, or contact the administrator.':'Setup incomplete — ask the administrator to run the SQL files in Supabase. ('+r.err+')',1);return}
+  store('pace-gate-role',F.role);
+  if(otp)pwBox(true,()=>open(session.user,F.role));else open(session.user,F.role);
+}
+async function boot(){
+  const {data:{session}}=await paceCloud.auth.getSession();
+  if(!session)return roles();
+  const r=await resolve(session.user);
+  if(!r.roles.length){await paceCloud.auth.signOut();return roles(r.err?'Setup incomplete — ask the administrator to run the SQL files. ('+r.err+')':'This email is not registered with PACE. Please contact the administrator.')}
+  let want=read('pace-gate-role');if(!r.roles.includes(want))want=r.roles[0];
+  open(session.user,want);
+}
+async function open(user,role){
+  store('pace-gate-role',role);A.classList.remove('open');
+  if(role==='admin'){L.classList.remove('open');UI.accessRole='admin';UI.tab='schedule';render();return}
+  if(role==='teacher'){location.replace(base+'?teacher=1');return}
+  L.classList.remove('open');await member(user,role);
+}
+async function signOut(){await paceCloud.auth.signOut();store('pace-gate-role',null);roles()}
+window.peSignOut=signOut;
+
+/* ---------- student / parent view ---------- */
+async function member(user,role){
+  cur={user,role};V.classList.add('open');
+  const {data,error}=await paceCloud.from('pace_member_timetables').select('payload').eq('user_id',user.id).maybeSingle();
+  const P=data&&data.payload,top=`<div class="pg-top"><div class="lg">P</div><div><b>PACE IIT &amp; Medical</b><span>${LABEL[role]}${P&&P.name?' · '+esc(P.name):''}</span></div><button class="btn ghost" id="pgOut" style="margin-left:auto">Sign out</button></div>`;
+  if(!P){V.innerHTML=top+`<div class="pg-wrap"><div class="card"><h2>Almost there</h2><p class="muted">${error?esc(error.message):'Your timetable will appear as soon as the administrator publishes it.'}</p><button class="btn primary" id="pgRef">Refresh</button></div></div>`;$('pgOut').onclick=signOut;$('pgRef').onclick=()=>member(user,role);return}
+  const T=Object.fromEntries((P.teachers||[]).map(t=>[t.id,t.name])),B=Object.fromEntries((P.batches||[]).map(b=>[b.id,b.label])),many=(P.batches||[]).length>1;
+  let day=todayStr();
+  const col=c=>c.isTest?'#D9A400':c.isPractice?'#0EA5A4':c.isDoubt?'#7C5CE8':'#2F6BEB';
+  function paint(){
+    const mon=addD(day,-((new Date(day+'T00:00:00').getDay()+6)%7)),days=[...Array(7)].map((_,i)=>addD(mon,i));
+    const list=P.classes.filter(c=>c.date===day).sort((a,b)=>a.start.localeCompare(b.start));
+    V.innerHTML=top+`<div class="pg-wrap"><div class="pe-strip"><button class="pe-nav" data-w="-7">‹</button><div class="pe-days">${days.map(d=>{const n=P.classes.filter(c=>c.date===d).length;return `<button class="pe-day${d===day?' act':''}${d===todayStr()?' today':''}" data-d="${d}">${n?`<em>${n}</em>`:''}${dayName(d).slice(0,3)}<b>${+d.slice(8)}</b></button>`}).join('')}</div><button class="pe-nav" data-w="7">›</button></div>
+    <h2 style="margin:6px 0 12px;font:700 18px 'Space Grotesk',sans-serif">${dayName(day)}, ${fmtDateLong(day)}</h2>`+
+    (list.length?list.map(c=>{
+      const title=c.isTest?'📝 Test':c.isPractice?'✍️ '+esc(c.subject||'Practice'):c.isDoubt?'Doubt session':esc(c.subject||'Class')+(c.chapter?' — '+esc(c.chapter):'')+(c.lectureNo?' · L'+c.lectureNo:'');
+      const tp=c.isTest&&(c.testTopics||[]).length?c.testTopics.map(x=>esc(x.subject)+': '+esc(x.topic)).join(' · '):'';
+      const sub=[many?B[c.batchId]:'',T[c.teacherId]].filter(Boolean).map(esc).join(' · ');
+      return `<div class="pg-c" style="--c:${col(c)}"><em>${fmt12(c.start)} – ${fmt12(c.end)}</em><b>${title}</b>${tp?`<span>${tp}</span><br>`:''}${sub?`<span>${sub}</span>`:''}</div>`}).join(''):'<div class="card"><p class="muted" style="margin:0">No classes on this day 🎉</p></div>')+'</div>';
+    $('pgOut').onclick=signOut;
+  }
+  V.onclick=e=>{const d=e.target.closest('[data-d]'),w=e.target.closest('[data-w]');if(d){day=d.dataset.d;paint()}else if(w){day=addD(day,+w.dataset.w);paint()}};
+  paint();
+}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&cur&&V.classList.contains('open'))member(cur.user,cur.role)});
+
+/* ---------- set / reset password ---------- */
+function pwBox(skippable,then){
+  if($('pePwBox'))return;const o=document.createElement('div');o.id='pePwBox';o.style.cssText='position:fixed;inset:0;z-index:30000;background:rgba(10,14,40,.75);display:grid;place-items:center;padding:16px';
+  o.innerHTML=`<form class="card" style="width:min(400px,100%);display:grid;gap:12px"><h2>${skippable?'Set a password (optional)':'Set a new password'}</h2>${skippable?'<p class="muted" style="margin:0;font-size:13px">So next time you can sign in without waiting for a code.</p>':''}<div class="field"><label>Password (min 8 characters)</label><input id="pePw1" type="password" minlength="8" required autocomplete="new-password"></div><div class="field"><label>Confirm password</label><input id="pePw2" type="password" minlength="8" required autocomplete="new-password"></div><button class="btn primary">Save password</button>${skippable?'<button type="button" class="btn ghost" id="pePwSkip">Skip for now</button>':''}<p id="pePwS" class="muted" style="font-size:13px"></p></form>`;
+  document.body.append(o);const done=()=>{o.remove();then&&then()};
+  if($('pePwSkip'))$('pePwSkip').onclick=done;
+  o.firstChild.onsubmit=async ev=>{ev.preventDefault();const a=$('pePw1').value;if(a!==$('pePw2').value){$('pePwS').textContent='Passwords do not match.';return}
+    const {error}=await paceCloud.auth.updateUser({password:a});if(error){$('pePwS').textContent=error.message;return}
+    $('pePwS').textContent='Password saved ✓';setTimeout(done,700)};
+}
+paceCloud.auth.onAuthStateChange(ev=>{if(ev==='PASSWORD_RECOVERY')pwBox(false,()=>location.replace(base))});
+if(/type=recovery/.test(location.hash))pwBox(false,()=>location.replace(base));
+
+/* ---------- admin: Student & Parent Access tab ---------- */
+NAV_ITEMS.push({id:'members',ic:'🎓',label:'Student & Parent Access'});
+const MR={role:'student',all:[],gone:[],linked:new Set(),note:''};
+async function mLoad(){
+  try{
+    if(typeof cloudUser==='undefined'||!cloudUser)throw new Error('Connect Google (admin account) in the top bar first.');
+    const a=await paceCloud.from('pace_member_directory').select('id,role,name,email,phone,batch_id').order('name');if(a.error)throw a.error;
+    MR.all=a.data.map(r=>({...r,saved:true}));
+    const b=await paceCloud.from('pace_member_accounts').select('directory_id');MR.linked=new Set((b.data||[]).map(x=>x.directory_id));MR.note='';
+  }catch(e){MR.note=e.message}
+  paintM();
+}
+function paintM(){
+  const v=$('view');if(!v||UI.tab!=='members')return;
+  const rows=MR.all.filter(r=>r.role===MR.role),bo=r=>STATE.batches.map(b=>`<option value="${b.id}"${b.id===r.batch_id?' selected':''}>${esc(b.label)} (${esc(b.center)})</option>`).join('');
+  v.innerHTML=`<div class="card"><div class="cardhead"><h2>Student &amp; parent login mapping</h2></div>
+  <div class="pe-filter"><button class="pe-chip${MR.role==='student'?' act':''}" data-role="student">Students</button><button class="pe-chip${MR.role==='parent'?' act':''}" data-role="parent">Parents</button></div>
+  <p class="muted" style="font-size:13px;margin-top:0">Add each person's Gmail (and optional mobile) and pick their batch. They open the main app link, choose <b>${MR.role==='student'?'Student':'Parent'} Login</b> and see only that batch's timetable.${MR.role==='parent'?' Two children in different batches? Add two rows with the same Gmail.':''}</p>
+  ${MR.note?`<p style="color:var(--coral);font-size:13px">${esc(MR.note)}</p>`:''}
+  ${rows.map(r=>`<div class="ma-row" data-id="${r.id}"><input data-f="name" placeholder="Name" value="${esc(r.name||'')}"><input data-f="email" type="email" placeholder="email@gmail.com" value="${esc(r.email||'')}"><input data-f="phone" type="tel" placeholder="Mobile (+91…)" value="${esc(r.phone||'')}"><select data-f="batch_id">${bo(r)}</select><span>${MR.linked.has(r.id)?'<b class="fa-ok" title="Has signed in">✓</b> ':''}<button class="icon" data-del="${r.id}" title="Remove">✕</button></span></div>`).join('')||'<p class="muted">No entries yet.</p>'}
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0"><button class="btn ghost" id="maAdd">＋ Add row</button><button class="btn primary" id="maSave">Save</button><button class="btn ghost" id="maPub">Publish now</button></div>
+  <details><summary class="muted" style="cursor:pointer">Bulk add from a list</summary><div class="field" style="margin-top:8px"><label>One per line: Name, Gmail, Batch (e.g. Aman Kumar, aman@gmail.com, XII JEE 1)</label><textarea id="maBulk" rows="5"></textarea></div><button class="btn ghost" id="maBulkGo">Add these rows</button></details></div>`;
+  v.oninput=e=>{const row=e.target.closest('[data-id]'),f=e.target.dataset.f;if(!row||!f)return;const o=MR.all.find(x=>x.id===row.dataset.id);if(o)o[f]=e.target.value};
+  v.onchange=v.oninput;
+  v.onclick=e=>{
+    const c=e.target.closest('[data-role]'),d=e.target.closest('[data-del]');
+    if(c){MR.role=c.dataset.role;paintM()}
+    else if(d){const o=MR.all.find(x=>x.id===d.dataset.del);if(o&&o.saved)MR.gone.push(o.id);MR.all=MR.all.filter(x=>x!==o);paintM()}
+    else if(e.target.id==='maAdd'){MR.all.push({id:crypto.randomUUID(),role:MR.role,name:'',email:'',phone:'',batch_id:(STATE.batches[0]||{}).id||''});paintM()}
+    else if(e.target.id==='maSave')mSave();
+    else if(e.target.id==='maPub'){if(typeof cloudUser==='undefined'||!cloudUser)return toast('Connect Google first');publishMembers().then(()=>toast('Published ✓'))}
+    else if(e.target.id==='maBulkGo'){
+      let ok=0,bad=0;($('maBulk').value||'').split(/\n/).map(l=>l.trim()).filter(Boolean).forEach(l=>{
+        const [n,em,bt]=l.split(',').map(x=>x.trim()),k=String(bt||'').toLowerCase(),b=STATE.batches.find(x=>x.label.toLowerCase()===k||String(x.name||'').toLowerCase()===k);
+        if(b&&em){MR.all.push({id:crypto.randomUUID(),role:MR.role,name:n||'',email:em,phone:'',batch_id:b.id});ok++}else bad++});
+      toast(ok+' added'+(bad?', '+bad+' skipped (check batch name)':''));paintM();
+    }
+  };
+}
+async function mSave(){
+  const out=[];
+  for(const r of MR.all){
+    const e=String(r.email||'').trim().toLowerCase(),ph=String(r.phone||'').trim();
+    if(!e&&!ph){if(r.saved)MR.gone.push(r.id);continue}
+    if(e&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e))return toast('Invalid email: '+e);
+    const p=ph?normPhone(ph):null;if(ph&&!p)return toast('Invalid mobile for '+(r.name||e));
+    if(!r.batch_id)return toast('Choose a batch for '+(r.name||e));
+    out.push({id:r.id,role:r.role,name:String(r.name||'').trim(),email:e||null,phone:p,batch_id:r.batch_id,updated_at:new Date().toISOString()});
+  }
+  if(out.length){const x=await paceCloud.from('pace_member_directory').upsert(out,{onConflict:'id'});if(x.error)return toast(x.error.message)}
+  const keep=new Set(out.map(o=>o.id)),del=MR.gone.filter(id=>!keep.has(id));
+  if(del.length)await paceCloud.from('pace_member_directory').delete().in('id',del);
+  MR.gone=[];toast('Saved ✓');mLoad();
+}
+
+/* ---------- publish each student's / parent's batch timetable ---------- */
+async function publishMembers(){
+  const a=await paceCloud.from('pace_member_accounts').select('user_id,role,batch_id,name');
+  if(a.error||!(a.data||[]).length)return;
+  const by={};a.data.forEach(x=>(by[x.user_id]=by[x.user_id]||[]).push(x));
+  const rows=Object.entries(by).map(([uid,list])=>{
+    const ids=new Set(list.map(x=>x.batch_id)),
+      classes=STATE.classes.filter(c=>ids.has(c.batchId)||ids.has(c.secondBatchId)).map(c=>({id:c.id,date:c.date,batchId:c.batchId,teacherId:c.teacherId,subject:c.subject,chapter:c.chapter,lectureNo:c.lectureNo,start:c.start,end:c.end,isDoubt:!!c.isDoubt,isTest:!!c.isTest,isPractice:!!c.isPractice,testTopics:c.testTopics||[]})),
+      tids=new Set(classes.map(c=>c.teacherId));
+    return{user_id:uid,updated_at:new Date().toISOString(),payload:{name:list[0].name||'',role:list[0].role,batches:STATE.batches.filter(b=>ids.has(b.id)).map(b=>({id:b.id,label:b.label,center:b.center})),teachers:STATE.teachers.filter(t=>tids.has(t.id)).map(t=>({id:t.id,name:t.name})),classes}};
+  });
+  const r=await paceCloud.from('pace_member_timetables').upsert(rows,{onConflict:'user_id'});if(r.error)console.warn('member publish',r.error.message);
+}
+const ocw=cloudWrite;
+cloudWrite=async function(){const r=await ocw.apply(this,arguments);try{if(typeof cloudUser!=='undefined'&&cloudUser)await publishMembers()}catch(e){console.warn(e)}return r};
+const prev=render;
+render=function(){prev.apply(this,arguments);if(UI.tab==='members'&&UI.accessRole==='admin'){paintM();mLoad()}};
+boot();
+})();
+</script>
+
 </body></html>
