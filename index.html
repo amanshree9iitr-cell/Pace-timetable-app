@@ -2834,6 +2834,7 @@ function process(rows){
     (dup?`<p class="muted" style="font-size:12.5px">${dup} already in your schedule (not duplicated).</p>`:'')+list('Added — please check',review)+list('Skipped — add manually',skipped)+
     (added?`<button class="btn primary" id="aiGo" style="margin-top:12px">Open Schedule</button>`:'');
   msg.textContent=`✓ ${added} added · ${review.length} to check · ${skipped.length} skipped`;
+  {const pm=$('pubMsg');if(pm&&added){pm.style.color='var(--text-muted)';pm.textContent='● '+added+' new class(es) added — tap “Publish now” so faculty and students see them.'}}
   if($('aiGo'))$('aiGo').onclick=()=>{UI.tab='schedule';UI.scheduleDate=ns.classes[ns.classes.length-1].date;render()};
 }
 
@@ -2859,6 +2860,24 @@ async function run(){
   }catch(e){msg.textContent='AI reader failed: '+(e.message||e)}
   finally{btn.disabled=false}
 }
+async function publishAll(){
+  const m=$('pubMsg'),b=$('pubGo');if(!m||!b)return;
+  const say=(t,bad)=>{m.style.color=bad?'var(--coral)':'var(--text-muted)';m.textContent=t};
+  if(typeof cloudUser==='undefined'||!cloudUser)return say('Connect Google (admin) in the top bar first.',1);
+  if(!cloudEnabled)return say('Turn on cloud backup first: tap “Back up to cloud” in the top bar once, then come back here.',1);
+  if(!STATE.classes.length&&!confirm('This device has no classes. Publishing will REPLACE the cloud copy with an empty timetable. Continue?'))return;
+  b.disabled=true;say('Publishing…');
+  const wait=async()=>{for(let i=0;i<40&&cloudBusy;i++)await new Promise(r=>setTimeout(r,250))};
+  try{
+    await wait();await cloudWrite();await wait();await new Promise(r=>setTimeout(r,300));
+    const st=(document.getElementById('cloudstatus')||{}).textContent||'';
+    if(/error/i.test(st))return say('Publishing failed — check your internet connection and try again.',1);
+    const cnt=async t=>{const r=await paceCloud.from(t).select('user_id',{count:'exact',head:true});return r.error?null:r.count};
+    const [tc,mc]=await Promise.all([cnt('pace_teacher_timetables'),cnt('pace_member_timetables')]);
+    say('✓ Published at '+new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})+(tc!=null?' · '+tc+' faculty':'')+(mc!=null?' · '+mc+' students/parents':'')+'. They now see the latest timetable.');
+  }catch(e){say('Could not publish: '+(e.message||e),1)}
+  finally{b.disabled=false}
+}
 function runText(){
   const t=($('aiText')||{}).value||'';
   if(!t.trim())return toast('Paste the message text first');
@@ -2875,7 +2894,13 @@ render=function(){prev.apply(this,arguments);try{
     const w=document.createElement('div');w.style.marginTop='16px';
     w.innerHTML='<div class="field"><label>Or paste the WhatsApp message (reads Tests &amp; Practice exactly)</label><textarea id="aiText" rows="7" placeholder="Vasai&#10;11th JEE- NC and GM&#10;&#10;Virar&#10;12th-1 Test (9:30 am to 12:30 pm) and Physics Practise (1pm to 3pm)"></textarea></div><button class="btn primary" id="aiTextGo" type="button">📝 Read text &amp; add to Schedule</button>';
     $('aiMsg').after(w);$('aiTextGo').onclick=runText;
-  }}catch(e){console.error('ai',e)}};
+  }
+  if(UI.tab==='aiimport'&&$('aiRead')&&!$('pePub')){
+    const c=document.createElement('div');c.id='pePub';c.className='card';c.style.marginTop='16px';
+    c.innerHTML='<div class="cardhead"><h2>Publish to students &amp; faculty</h2></div><p class="muted" style="font-size:13px;margin-top:0">After importing or changing the timetable, tap this once. Faculty, students and parents then see the latest timetable, batch materials and doubt availability.</p><button class="btn primary" id="pubGo" type="button">📤 Publish now</button><p id="pubMsg" class="muted" style="font-size:13px;min-height:18px;margin-top:10px"></p>';
+    $('view').append(c);$('pubGo').onclick=publishAll;
+  }
+}catch(e){console.error('ai',e)}};
 render();
 })();
 </script>
