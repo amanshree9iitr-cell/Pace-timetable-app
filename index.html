@@ -3274,6 +3274,7 @@ if(sc.style.display!=='none')build();
 (function(){
 if(window.__peTests||/[?&](teacher|student)=1/.test(location.search)||typeof paceCloud==='undefined'||!paceCloud)return;window.__peTests=true;
 const $=id=>document.getElementById(id);
+const esc=x=>window.esc(String(x==null?'':x)); // marks and numbers must be turned into text first
 const errMsg=async e=>{try{const j=await e.context.json();return j.error||e.message}catch(_){return e.message||String(e)}};
 
 /* ---------- student: Tests tab ---------- */
@@ -3351,5 +3352,89 @@ const prev=render;
 render=function(){prev.apply(this,arguments);if(UI.tab==='tests'&&UI.accessRole==='admin')paintT()};
 })();
 </script>
+  <!-- ===== PACE AI-checked tests: admin creates tests, students upload answer-sheet PDFs ===== -->
+<script>
+(function(){
+if(window.__peTests||/[?&](teacher|student)=1/.test(location.search)||typeof paceCloud==='undefined'||!paceCloud)return;window.__peTests=true;
+const $=id=>document.getElementById(id);
+const esc=x=>window.esc(String(x==null?'':x)); // marks and numbers must be turned into text first
+const errMsg=async e=>{try{const j=await e.context.json();return j.error||e.message}catch(_){return e.message||String(e)}};
+
+/* ---------- student: Tests tab ---------- */
+window.peTests=async function(box,user,role){
+  if(!box)return;
+  if(role!=='student'){box.innerHTML='<div class="card"><p class="muted" style="margin:0">Tests are submitted by students from their own login.</p></div>';return}
+  box.innerHTML='<p class="muted">Loading tests…</p>';
+  const [t,s,k]=await Promise.all([paceCloud.from('pace_tests').select('id,title,subject,max_marks,question_text').order('created_at',{ascending:false}),
+    paceCloud.from('pace_test_submissions').select('test_id,status,score,max_marks,result,error').eq('user_id',user.id),
+    paceCloud.from('pace_test_keys').select('test_id,scheme_text')]);
+  if(t.error){box.innerHTML=`<div class="card"><p class="muted" style="margin:0">${esc(t.error.message)}</p></div>`;return}
+  const S=Object.fromEntries((s.data||[]).map(x=>[x.test_id,x])),K=Object.fromEntries((k.data||[]).map(x=>[x.test_id,x.scheme_text]));
+  const card=x=>{
+    const u=S[x.id];let st='';
+    if(u&&u.status==='done'){const r=u.result||{};
+      st=`<div style="margin-top:10px"><b style="font-size:18px">${u.score} / ${u.max_marks}</b> <span class="muted">· checked by AI, your teacher may review it</span>${r.overall_feedback?`<p style="margin:6px 0">${esc(r.overall_feedback)}</p>`:''}${(r.questions||[]).map(q=>`<div style="font-size:13px;padding:5px 0;border-top:1px solid var(--line)"><b>Q${esc(q.q)}</b> · ${esc(q.marks)}/${esc(q.max)} — ${esc(q.feedback||'')}</div>`).join('')}${(r.unreadable||[]).length?`<p class="muted" style="font-size:12.5px">Could not read: Q${esc(r.unreadable.join(', Q'))}. Write clearly and scan in good light.</p>`:''}${K[x.id]?`<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--ink-2)">Marking scheme</summary><pre style="white-space:pre-wrap;font:13px/1.5 Inter,sans-serif;margin:8px 0 0">${esc(K[x.id])}</pre></details>`:''}</div>`}
+    else if(u&&u.status==='checking')st='<p class="muted" style="margin-top:10px">⏳ Your answers are being checked. Tap Tests again in a minute.</p>';
+    else st=`${u&&u.status==='error'?`<p style="color:var(--coral);font-size:13px">Last attempt failed: ${esc(u.error||'')}. You can upload again.</p>`:''}<div style="margin-top:10px;display:grid;gap:8px"><input type="file" accept="application/pdf" data-f="${x.id}"><button class="btn primary" data-go="${x.id}">Submit answer sheet</button><p class="muted" data-m="${x.id}" style="font-size:13px;margin:0"></p></div>`;
+    return `<div class="card" style="margin-bottom:12px"><b>${esc(x.title)}</b><div class="muted" style="font-size:12.5px">${esc(x.subject||'')} · ${x.max_marks} marks</div>${x.question_text?`<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--ink-2)">Question paper</summary><pre style="white-space:pre-wrap;font:13px/1.5 Inter,sans-serif;margin:8px 0 0">${esc(x.question_text)}</pre></details>`:''}${st}</div>`;
+  };
+  box.innerHTML=(t.data||[]).map(card).join('')||'<div class="card"><p class="muted" style="margin:0">No tests right now.</p></div>';
+  box.onclick=async e=>{
+    const g=e.target.closest('[data-go]');if(!g)return;const id=g.dataset.go,m=box.querySelector(`[data-m="${id}"]`),f=(box.querySelector(`[data-f="${id}"]`).files||[])[0];
+    const say=(x,bad)=>{m.style.color=bad?'var(--coral)':'var(--text-muted)';m.textContent=x};
+    if(!f)return say('Choose your answer sheet PDF first.',1);
+    if(!/\.pdf$/i.test(f.name)&&f.type!=='application/pdf')return say('Only PDF files are accepted.',1);
+    if(f.size>10*1024*1024)return say('The file is larger than 10 MB. Please scan at a lower quality.',1);
+    g.disabled=true;say('Uploading…');
+    const b=await paceCloud.rpc('begin_submission',{p_test:id});if(b.error){g.disabled=false;return say(b.error.message,1)}
+    const row=Array.isArray(b.data)?b.data[0]:b.data;
+    const up=await paceCloud.storage.from('answer-sheets').upload(row.sub_path,f,{contentType:'application/pdf',upsert:true});
+    if(up.error){g.disabled=false;return say('Upload failed: '+up.error.message,1)}
+    say('Checking your answers… this can take up to a minute. Please keep this screen open.');
+    const r=await paceCloud.functions.invoke('super-task',{body:{submission_id:row.sub_id}});
+    if(r.error)say(await errMsg(r.error),1);
+    window.peTests(box,user,role);
+  };
+};
+
+/* ---------- admin: Tests tab ---------- */
+NAV_ITEMS.push({id:'tests',ic:'📝',label:'Tests (AI check)'});
+const T={open:null};
+async function paintT(){try{await paintT0()}catch(e){const v=$('view');if(v)v.innerHTML='<div class="card"><p style="color:var(--coral)">Could not load tests: '+esc(e.message||e)+'</p></div>'}}
+async function paintT0(){
+  const v=$('view');if(!v||UI.tab!=='tests')return;
+  const [t,s]=await Promise.all([paceCloud.from('pace_tests').select('id,batch_id,title,subject,max_marks,is_open,created_at').order('created_at',{ascending:false}),
+    paceCloud.from('pace_test_submissions').select('id,test_id,student_name,status,score,max_marks,result,error,file_path')]);
+  const bn=id=>{const b=STATE.batches.find(x=>x.id===id);return b?b.label:'Batch'};
+  const note=t.error?`<p style="color:var(--coral);font-size:13px">${esc(t.error.message)} — connect Google (admin) first, and make sure tests.sql was run.</p>`:'';
+  const by={};(s.data||[]).forEach(x=>(by[x.test_id]=by[x.test_id]||[]).push(x));
+  v.innerHTML=`<div class="card"><div class="cardhead"><h2>Create a test</h2></div>${note}
+  <form id="tF" style="display:grid;gap:12px"><div class="row"><div class="field"><label>Batch</label><select id="tB">${STATE.batches.map(b=>`<option value="${b.id}">${esc(b.label)} (${esc(b.center)})</option>`).join('')}</select></div><div class="field"><label>Subject</label><input id="tS" placeholder="e.g. Physics"></div><div class="field"><label>Max marks</label><input id="tM" type="number" min="1" value="100"></div></div>
+  <div class="field"><label>Title</label><input id="tT" required placeholder="e.g. Chemistry Unit Test 1"></div>
+  <div class="field"><label>Question paper (paste from ChatGPT; students can read this)</label><textarea id="tQ" rows="7" required></textarea></div>
+  <div class="field"><label>Marking scheme / model answers (students can NOT see this)</label><textarea id="tK" rows="7" placeholder="Paste the answer key with marks for each question"></textarea></div>
+  <label style="display:flex;gap:8px;align-items:center;font-size:13px"><input type="checkbox" id="tR" style="width:auto"> Show the marking scheme to students after their answers are checked</label>
+  <button class="btn primary" type="submit">Create test</button></form></div>
+  <div class="card" style="margin-top:16px"><div class="cardhead"><h2>Tests &amp; results</h2></div>${(t.data||[]).map(x=>{const L=by[x.id]||[];return `<div style="padding:10px 0;border-bottom:1px solid var(--line)"><b>${esc(x.title)}</b> <span class="muted" style="font-size:12.5px">${esc(bn(x.batch_id))} · ${x.max_marks} marks · ${L.length} submitted</span><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"><button class="btn ghost" data-tg="${x.id}" data-o="${x.is_open?1:0}">${x.is_open?'Close test':'Reopen test'}</button><button class="btn ghost" data-dt="${x.id}">Delete</button></div><details data-tid="${x.id}"${T.open===x.id?' open':''} style="margin-top:8px"><summary style="cursor:pointer;color:var(--ink-2);font-weight:600">Results (${L.length})</summary>${L.map(u=>`<div style="padding:8px 0;border-top:1px solid var(--line);font-size:13px"><b>${esc(u.student_name||'Student')}</b> · ${u.status==='done'?u.score+' / '+u.max_marks:u.status}${u.error?` <span style="color:var(--coral)">${esc(u.error)}</span>`:''} <button class="btn ghost" data-sheet="${esc(u.file_path)}">Sheet ↗</button> ${['uploaded','error','checking'].includes(u.status)?`<button class="btn ghost" data-chk="${u.id}">Check now</button> `:''}<button class="btn ghost" data-rs="${u.id}">Reset</button>${u.result?`<div class="muted" style="margin-top:4px">${esc(u.result.overall_feedback||'')}</div>${(u.result.questions||[]).map(q=>`<div>Q${esc(q.q)}: ${esc(q.marks)}/${esc(q.max)} — ${esc(q.feedback||'')}</div>`).join('')}`:''}</div>`).join('')||'<p class="muted" style="font-size:13px">No submissions yet.</p>'}</details></div>`}).join('')||'<p class="muted">No tests yet.</p>'}</div>`;
+  $('tF').onsubmit=async e=>{e.preventDefault();
+    const a=await paceCloud.from('pace_tests').insert({batch_id:$('tB').value,title:$('tT').value.trim(),subject:$('tS').value.trim(),max_marks:+$('tM').value||100,question_text:$('tQ').value.trim(),reveal_key:$('tR').checked}).select('id').single();
+    if(a.error)return toast(a.error.message);
+    if($('tK').value.trim())await paceCloud.from('pace_test_keys').insert({test_id:a.data.id,scheme_text:$('tK').value.trim()});
+    toast('Test created ✓');paintT()};
+  v.onclick=async e=>{
+    const b=e.target.closest('button');if(!b)return;
+    const dt=b.closest('details');if(dt)T.open=dt.dataset.tid;
+    if(b.dataset.tg){await paceCloud.from('pace_tests').update({is_open:b.dataset.o!=='1'}).eq('id',b.dataset.tg);paintT()}
+    else if(b.dataset.dt){if(confirm('Delete this test and all its submissions?')){await paceCloud.from('pace_tests').delete().eq('id',b.dataset.dt);paintT()}}
+    else if(b.dataset.chk){b.disabled=true;b.textContent='Checking…';const r=await paceCloud.functions.invoke('super-task',{body:{submission_id:b.dataset.chk}});if(r.error)alert('Could not check: '+await errMsg(r.error));paintT()}
+    else if(b.dataset.rs){if(confirm('Reset this submission so the student can submit again?')){await paceCloud.from('pace_test_submissions').delete().eq('id',b.dataset.rs);paintT()}}
+    else if(b.dataset.sheet){const r=await paceCloud.storage.from('answer-sheets').createSignedUrl(b.dataset.sheet,120);if(r.error)toast(r.error.message);else window.open(r.data.signedUrl,'_blank','noopener')}
+  };
+}
+const prev=render;
+render=function(){prev.apply(this,arguments);if(UI.tab==='tests'&&UI.accessRole==='admin')paintT()};
+})();
+</script>
+
 
 </body></html>
