@@ -3307,7 +3307,7 @@ window.peTests=async function(box,user,role){
     const up=await paceCloud.storage.from('answer-sheets').upload(row.sub_path,f,{contentType:'application/pdf',upsert:true});
     if(up.error){g.disabled=false;return say('Upload failed: '+up.error.message,1)}
     say('Checking your answers… this can take up to a minute. Please keep this screen open.');
-    const r=await paceCloud.functions.invoke('grade-answer',{body:{submission_id:row.sub_id}});
+    const r=await paceCloud.functions.invoke('super-task',{body:{submission_id:row.sub_id}});
     if(r.error)say(await errMsg(r.error),1);
     window.peTests(box,user,role);
   };
