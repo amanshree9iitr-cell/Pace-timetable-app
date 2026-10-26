@@ -2586,7 +2586,7 @@ input[type=date],input[type=time]{min-width:0;max-width:100%;width:100%}
 if(!/[?&]teacher=1/.test(location.search)||window.__peTA||typeof paceCloud==='undefined'||!paceCloud)return;
 const card=document.getElementById('teacherLoginCard');if(!card)return;window.__peTA=true;
 const $=id=>document.getElementById(id),back=location.origin+location.pathname+'?teacher=1';
-let mode='email',step=1,phone='',mail='';
+let mode='email',step=1,phone='',mail='';const GOOGLE_ONLY=true; // true = faculty sign in ONLY with their Google account
 try{mail=localStorage.getItem('pace-last-email')||''}catch(_){}
 const normPhone=v=>{let d=String(v).replace(/[^\d+]/g,'');if(d[0]==='+')return/^\+\d{10,15}$/.test(d)?d:'';d=d.replace(/^0+/,'');if(/^\d{10}$/.test(d))return'+91'+d;if(/^91\d{10}$/.test(d))return'+'+d;return''};
 const say=(m,bad)=>{const s=$('peTS');if(!s)return;s.textContent=m;s.style.color=bad?'var(--coral)':'var(--text-muted)'};
@@ -2609,7 +2609,7 @@ function form(){
 }
 function draw(){
   const chip=(m,t)=>`<button type="button" class="pe-chip${mode===m?' act':''}" data-m="${m}">${t}</button>`;
-  card.innerHTML=`<h2>Faculty Login</h2><p class="muted">Sign in once — you will stay signed in on this device.</p><div class="pe-filter">${chip('email','Password')}${chip('eotp','Email code')}${chip('phone','Mobile OTP')}</div>${form()}<p id="peTS" class="muted" style="font-size:13px;min-height:18px;margin-top:10px"></p>`;
+  card.innerHTML=`<h2>Faculty Login</h2><p class="muted">Sign in once — you will stay signed in on this device.</p><button type="button" class="btn primary" data-a="google" style="width:100%;margin-bottom:6px">Continue with Google</button><p class="muted" style="font-size:12.5px;margin:0 0 12px">Choose the Gmail that PACE registered for you.</p>${GOOGLE_ONLY?'':`<div class="pe-filter">${chip('email','Password')}${chip('eotp','Email code')}${chip('phone','Mobile OTP')}</div>${form()}`}<p id="peTS" class="muted" style="font-size:13px;min-height:18px;margin-top:10px"></p>`;
 }
 async function afterAuth(otp){
   const {data:{session}}=await paceCloud.auth.getSession();if(!session)return;
@@ -2633,6 +2633,7 @@ card.onclick=async e=>{
   const m=e.target.closest('[data-m]'),a=e.target.closest('[data-a]');
   if(m){mode=m.dataset.m;step=1;draw();return}
   if(!a)return;e.preventDefault();
+  if(a.dataset.a==='google'){await paceCloud.auth.signInWithOAuth({provider:'google',options:{redirectTo:back,queryParams:{prompt:'select_account'}}});return}
   const email=(($('peE')||{}).value||'').trim().toLowerCase(),pw=($('peP')||{}).value||'';
   if(a.dataset.a==='new'){
     if(!email||pw.length<8)return say('Enter your registered email and choose a password of at least 8 characters, then tap “Create password”.',1);
@@ -2947,7 +2948,7 @@ facultyMessage=function(teacherId,date){
 (function(){
 if(window.__peGate||/[?&](teacher|student)=1/.test(location.search)||typeof paceCloud==='undefined'||!paceCloud)return;window.__peGate=true;
 const $=id=>document.getElementById(id),Q=(s,r=document)=>r.querySelector(s);
-const ADMIN=String(PACE_GOOGLE_EMAIL).toLowerCase(),base=location.origin+location.pathname;
+const ADMIN=String(PACE_GOOGLE_EMAIL).toLowerCase(),base=location.origin+location.pathname,GOOGLE_ONLY=true; // true = students, parents and teachers sign in ONLY with their Google account
 const L=$('peLogin'),A=$('peAuthBox'),V=$('peMember'),LABEL={student:'Student',parent:'Parent',teacher:'Teacher',admin:'Admin'};
 const ICON={student:'🎓',parent:'👨‍👩‍👧',teacher:'🧑‍🏫',admin:'⚙️'};
 const normPhone=v=>{let d=String(v).replace(/[^\d+]/g,'');if(d[0]==='+')return/^\+\d{10,15}$/.test(d)?d:'';d=d.replace(/^0+/,'');if(/^\d{10}$/.test(d))return'+91'+d;if(/^91\d{10}$/.test(d))return'+'+d;return''};
@@ -2977,7 +2978,7 @@ function form(){
 }
 function drawAuth(){
   const chip=(m,t)=>`<button type="button" class="pe-chip${F.mode===m?' act':''}" data-m="${m}">${t}</button>`;
-  A.innerHTML=`<div class="card"><button type="button" class="btn ghost" data-a="back" style="margin-bottom:10px">← Back</button><h2>${LABEL[F.role]} Login</h2><p class="muted">Use the Gmail registered with PACE. You will stay signed in on this device.</p><div class="pe-filter">${chip('email','Password')}${chip('eotp','Email code')}${F.role==='teacher'?chip('phone','Mobile OTP'):''}</div>${form()}<p id="pgS" class="muted" style="font-size:13px;min-height:18px;margin-top:10px"></p></div>`;
+  A.innerHTML=`<div class="card"><button type="button" class="btn ghost" data-a="back" style="margin-bottom:10px">← Back</button><h2>${LABEL[F.role]} Login</h2><p class="muted">Use the Gmail registered with PACE. You will stay signed in on this device.</p><button type="button" class="btn primary" data-a="google" style="width:100%;margin-bottom:6px">Continue with Google</button><p class="muted" style="font-size:12.5px;margin:0 0 12px">Choose the Gmail that PACE registered for you. Only that account can open this page.</p>${GOOGLE_ONLY?'':`<div class="pe-filter">${chip('email','Password')}${chip('eotp','Email code')}${F.role==='teacher'?chip('phone','Mobile OTP'):''}</div>${form()}`}<p id="pgS" class="muted" style="font-size:13px;min-height:18px;margin-top:10px"></p></div>`;
   A.classList.add('open');
 }
 const say=(m,bad)=>{const s=$('pgS');if(s){s.textContent=m;s.style.color=bad?'var(--coral)':'var(--text-muted)'}};
@@ -2987,6 +2988,7 @@ A.onclick=async e=>{
   if(!a)return;e.preventDefault();
   if(a.dataset.a==='back'){A.classList.remove('open');roles();return}
   if(a.dataset.a==='again'){F.step=1;drawAuth();return}
+  if(a.dataset.a==='google'){await paceCloud.auth.signInWithOAuth({provider:'google',options:{redirectTo:base,queryParams:{prompt:'select_account'}}});return}
   const email=(($('pgE')||{}).value||'').trim().toLowerCase(),pw=($('pgP')||{}).value||'';
   if(a.dataset.a==='new'){
     if(!email||pw.length<8)return say('Enter your registered email and choose a password (min 8 characters), then tap “Create password”.',1);
@@ -3053,13 +3055,25 @@ async function signOut(){await paceCloud.auth.signOut();store('pace-gate-role',n
 window.peSignOut=signOut;
 
 /* ---------- student / parent view ---------- */
+function mergeBatches(rows,acc,role){
+  if(!rows||!rows.length)return null;
+  const P={name:(acc&&acc[0]&&acc[0].name)||'',role,batches:[],teachers:[],classes:[],materials:[],doubts:[]},st=new Set(),sc=new Set(),sm=new Set(),sd=new Map();
+  rows.forEach(r=>{const x=r.payload||{};P.batches.push(...(x.batches||[]));
+    (x.teachers||[]).forEach(t=>{if(!st.has(t.id)){st.add(t.id);P.teachers.push(t)}});
+    (x.classes||[]).forEach(c=>{if(!sc.has(c.id)){sc.add(c.id);P.classes.push(c)}});
+    (x.materials||[]).forEach(m=>{if(!sm.has(m.id)){sm.add(m.id);P.materials.push(m)}});
+    (x.doubts||[]).forEach(d=>{const k=d.d+'|'+d.t,o=sd.get(k);if(o)o.m=Math.max(o.m||0,d.m||0);else{const c={...d};sd.set(k,c);P.doubts.push(c)}})});
+  return P;
+}
 async function member(user,role){
   cur={user,role};V.classList.add('open');
-  const [tt,hw]=await Promise.all([
+  const [tt,hw,bt,ac]=await Promise.all([
     paceCloud.from('pace_member_timetables').select('payload').eq('user_id',user.id).maybeSingle(),
-    paceCloud.from('pace_homework').select('id,batch_id,teacher_name,subject,title,details,due_date,link').order('due_date',{ascending:true})]);
+    paceCloud.from('pace_homework').select('id,batch_id,teacher_name,subject,title,details,due_date,link').order('due_date',{ascending:true}),
+    paceCloud.from('pace_batch_timetables').select('batch_id,payload'),
+    paceCloud.from('pace_member_accounts').select('batch_id,name')]);
   const data=tt.data,error=tt.error,HW=hw.data||[];
-  const P=data&&data.payload,top=`<div class="pg-top"><div class="lg">P</div><div><b>PACE IIT &amp; Medical</b><span>${LABEL[role]}${P&&P.name?' · '+esc(P.name):''}</span></div><button class="btn ghost" id="pgOut" style="margin-left:auto">Sign out</button></div>`;
+  const P=mergeBatches(bt.data,ac.data,role)||(data&&data.payload),top=`<div class="pg-top"><div class="lg">P</div><div><b>PACE IIT &amp; Medical</b><span>${LABEL[role]}${P&&P.name?' · '+esc(P.name):''}</span></div><button class="btn ghost" id="pgOut" style="margin-left:auto">Sign out</button></div>`;
   if(!P){V.innerHTML=top+`<div class="pg-wrap"><div class="card"><h2>Almost there</h2><p class="muted">${error?esc(error.message):'Your timetable will appear as soon as the administrator publishes it.'}</p><button class="btn primary" id="pgRef">Refresh</button></div></div>`;$('pgOut').onclick=signOut;$('pgRef').onclick=()=>member(user,role);return}
   const T=Object.fromEntries((P.teachers||[]).map(t=>[t.id,t.name])),B=Object.fromEntries((P.batches||[]).map(b=>[b.id,b.label])),many=(P.batches||[]).length>1;
   let day=todayStr(),tab='tt',sub='';
@@ -3192,7 +3206,7 @@ async function mSave(){
 /* ---------- publish each student's / parent's batch timetable ---------- */
 async function publishMembers(){
   const [a,d]=await Promise.all([paceCloud.from('pace_member_accounts').select('user_id,directory_id'),paceCloud.from('pace_member_directory').select('id,role,name,batch_id')]);
-  if(a.error||d.error||!(a.data||[]).length)return;
+  if(a.error||d.error)return;
   const D=Object.fromEntries(d.data.map(x=>[x.id,x])),by={};
   a.data.forEach(x=>{const m=D[x.directory_id];if(m)(by[x.user_id]=by[x.user_id]||[]).push(m)});
   /* teachers free for doubts: for each of the next 8 days, 2 hours after a teacher's last class, at that class's center */
@@ -3205,6 +3219,17 @@ async function publishMembers(){
       if(t&&cof(last))doubts.push({d:date,t:tid,n:t.name,c:cof(last),e:last.end,s:[...new Set(cl.map(c=>c.subject).filter(Boolean))]});
     });
   });
+  /* one timetable per batch: readable by every student/parent of that batch, even on their first login */
+  const bids=[...new Set(d.data.map(x=>x.batch_id))];
+  const brows=bids.map(bid=>{
+    const b=STATE.batches.find(x=>x.id===bid);if(!b)return null;
+    const cl=STATE.classes.filter(c=>c.batchId===bid||c.secondBatchId===bid).map(c=>({id:c.id,date:c.date,batchId:c.batchId,teacherId:c.teacherId,subject:c.subject,chapter:c.chapter,lectureNo:c.lectureNo,start:c.start,end:c.end,isDoubt:!!c.isDoubt,isTest:!!c.isTest,isPractice:!!c.isPractice,testTopics:c.testTopics||[]})),
+      tids=new Set(cl.map(c=>c.teacherId));
+    return{batch_id:bid,updated_at:new Date().toISOString(),payload:{batches:[{id:b.id,label:b.label,center:b.center}],teachers:STATE.teachers.filter(t=>tids.has(t.id)).map(t=>({id:t.id,name:t.name})),classes:cl,
+      materials:(STATE.materials||[]).filter(m=>!m.batchId||m.batchId===bid).map(m=>({id:m.id,title:m.title,url:m.url,kind:m.kind,subject:m.subject||''})),
+      doubts:doubts.filter(x=>String(x.c).toLowerCase()===String(b.center||'').toLowerCase()).map(x=>({...x,m:tids.has(x.t)?1:0}))}};
+  }).filter(Boolean);
+  for(let i=0;i<brows.length;i+=20){const r=await paceCloud.from('pace_batch_timetables').upsert(brows.slice(i,i+20),{onConflict:'batch_id'});if(r.error){console.warn('batch publish',r.error.message);break}}
   const rows=Object.entries(by).map(([uid,list])=>{
     const ids=new Set(list.map(x=>x.batch_id)),
       classes=STATE.classes.filter(c=>ids.has(c.batchId)||ids.has(c.secondBatchId)).map(c=>({id:c.id,date:c.date,batchId:c.batchId,teacherId:c.teacherId,subject:c.subject,chapter:c.chapter,lectureNo:c.lectureNo,start:c.start,end:c.end,isDoubt:!!c.isDoubt,isTest:!!c.isTest,isPractice:!!c.isPractice,testTopics:c.testTopics||[]})),
