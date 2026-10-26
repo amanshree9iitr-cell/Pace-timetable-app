@@ -3051,7 +3051,7 @@ async function open(user,role){
   if(role==='teacher'){location.replace(base+'?teacher=1');return}
   L.classList.remove('open');await member(user,role);
 }
-async function signOut(){await paceCloud.auth.signOut();store('pace-gate-role',null);roles()}
+async function signOut(){window.__pgTab=null;await paceCloud.auth.signOut();store('pace-gate-role',null);roles()}
 window.peSignOut=signOut;
 
 /* ---------- student / parent view ---------- */
@@ -3076,7 +3076,7 @@ async function member(user,role){
   const P=mergeBatches(bt.data,ac.data,role)||(data&&data.payload),top=`<div class="pg-top"><div class="lg">P</div><div><b>PACE IIT &amp; Medical</b><span>${LABEL[role]}${P&&P.name?' · '+esc(P.name):''}</span></div><button class="btn ghost" id="pgOut" style="margin-left:auto">Sign out</button></div>`;
   if(!P){V.innerHTML=top+`<div class="pg-wrap"><div class="card"><h2>Almost there</h2><p class="muted">${error?esc(error.message):'Your timetable will appear as soon as the administrator publishes it.'}</p><button class="btn primary" id="pgRef">Refresh</button></div></div>`;$('pgOut').onclick=signOut;$('pgRef').onclick=()=>member(user,role);return}
   const T=Object.fromEntries((P.teachers||[]).map(t=>[t.id,t.name])),B=Object.fromEntries((P.batches||[]).map(b=>[b.id,b.label])),many=(P.batches||[]).length>1;
-  let day=todayStr(),tab='tt',sub='';
+  let day=todayStr(),tab=window.__pgTab||'tt',sub='';
   const col=c=>c.isTest?'#D9A400':c.isPractice?'#0EA5A4':c.isDoubt?'#7C5CE8':'#2F6BEB';
   const mins=t=>{const [h,m]=String(t).split(':').map(Number);return h*60+m},hhmm=m=>String(Math.floor(m/60)%24).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
   const safe=u=>/^https?:\/\//i.test(u||'')?u:'';
@@ -3121,13 +3121,20 @@ async function member(user,role){
   }
   V.onclick=e=>{
     const d=e.target.closest('[data-d]'),w=e.target.closest('[data-w]'),k=e.target.closest('[data-tab]'),s=e.target.closest('[data-sub]');
-    if(k){tab=k.dataset.tab;paint()}else if(s){sub=s.dataset.sub;paint()}
+    if(k){tab=k.dataset.tab;window.__pgTab=tab;paint()}else if(s){sub=s.dataset.sub;paint()}
     else if(d){day=d.dataset.d;paint()}else if(w){day=addD(day,+w.dataset.w);paint()}
   };
   clearInterval(window.__pgT);window.__pgT=setInterval(()=>{const el=$('pgDoubt');if(el&&V.classList.contains('open'))el.innerHTML=doubtHTML()},60000);
   paint();
 }
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&cur&&V.classList.contains('open'))member(cur.user,cur.role)});
+let hiddenAt=0;
+document.addEventListener('visibilitychange',()=>{
+  /* coming back from the photo picker / camera must NOT rebuild the page and lose the student's upload */
+  if(document.hidden){hiddenAt=Date.now();return}
+  if(!cur||!V.classList.contains('open'))return;
+  const busy=V.querySelector('[data-tab="tst"].act')||[...V.querySelectorAll('[data-f]')].some(i=>i.files&&i.files.length);
+  if(!busy&&Date.now()-hiddenAt>5*60*1000)member(cur.user,cur.role);
+});
 
 /* ---------- set / reset password ---------- */
 function pwBox(skippable,then){
