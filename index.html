@@ -2683,7 +2683,7 @@ paceCloud.auth.onAuthStateChange(ev=>{if(ev==='PASSWORD_RECOVERY')pwBox(false)})
 if(/type=recovery/.test(location.hash))pwBox(false);
 /* when already signed in, give a small way to set/change the password */
 paceCloud.auth.getSession().then(({data})=>{
-  if(!data||!data.session)return;
+  if(GOOGLE_ONLY||!data||!data.session)return;   // no passwords when everyone signs in with Google
   const b=document.createElement('button');b.className='btn ghost';b.textContent='🔑 Set / change password';b.style.cssText='position:fixed;left:12px;bottom:12px;z-index:900;font-size:12px;padding:8px 12px';
   b.onclick=()=>pwBox(true);document.body.append(b);
 });
@@ -3243,7 +3243,18 @@ async function publishMembers(){
 const ocw=cloudWrite;
 cloudWrite=async function(){const r=await ocw.apply(this,arguments);try{if(typeof cloudUser!=='undefined'&&cloudUser)await publishMembers()}catch(e){console.warn(e)}return r};
 const prev=render;
-render=function(){prev.apply(this,arguments);if(UI.tab==='members'&&UI.accessRole==='admin'){paintM();mLoad()}};
+/* warn the admin when this device is NOT sending changes to teachers (backup switched off in this browser) */
+function syncBanner(){
+  let b=$('peSync');
+  if(!b){const v=$('view');if(!v)return;b=document.createElement('div');b.id='peSync';b.style.cssText='margin:0 0 14px;padding:12px 14px;border-radius:12px;background:color-mix(in srgb,var(--coral) 14%,var(--card));border:1px solid var(--coral);color:var(--text);font-size:13.5px;display:none;line-height:1.5';v.before(b);
+    b.onclick=e=>{if(e.target.id==='peSyncBtn'){const u=$('cloudUpload');if(u)u.click()}}}
+  const bad=UI.accessRole==='admin'&&typeof cloudUser!=='undefined'&&!!cloudUser&&typeof cloudEnabled!=='undefined'&&!cloudEnabled;
+  b.style.display=bad?'block':'none';
+  if(bad&&!b.dataset.on){b.dataset.on=1;b.innerHTML='⚠ <b>Teachers are not receiving your changes from this device.</b> Backup is switched off in this browser. If this device has the latest timetable, tap the button once. <button class="btn ghost" id="peSyncBtn" type="button" style="margin-top:6px">Back up to cloud</button>'}
+  if(!bad)delete b.dataset.on;
+}
+setInterval(()=>{try{syncBanner()}catch(_){}},3000);
+render=function(){prev.apply(this,arguments);if(UI.tab==='members'&&UI.accessRole==='admin'){paintM();mLoad()}try{syncBanner()}catch(_){}};
 boot();
 })();
 </script>
