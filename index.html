@@ -3212,6 +3212,7 @@ async function mSave(){
 
 /* ---------- publish each student's / parent's batch timetable ---------- */
 async function publishMembers(){
+  if(!STATE.batches.length&&!STATE.classes.length){toast('This device has no timetable yet. Tap Restore cloud first.');return}
   const [a,d]=await Promise.all([paceCloud.from('pace_member_accounts').select('user_id,directory_id'),paceCloud.from('pace_member_directory').select('id,role,name,batch_id')]);
   if(a.error||d.error)return;
   const D=Object.fromEntries(d.data.map(x=>[x.id,x])),by={};
@@ -3248,17 +3249,19 @@ async function publishMembers(){
   for(let i=0;i<rows.length;i+=40){const r=await paceCloud.from('pace_member_timetables').upsert(rows.slice(i,i+40),{onConflict:'user_id'});if(r.error){console.warn('member publish',r.error.message);break}}
 }
 const ocw=cloudWrite;
-cloudWrite=async function(){const r=await ocw.apply(this,arguments);try{if(typeof cloudUser!=='undefined'&&cloudUser)await publishMembers()}catch(e){console.warn(e)}return r};
+cloudWrite=async function(){if(!STATE.batches.length&&!STATE.classes.length){toast('This device has no timetable yet. Tap Restore cloud first.');return}const r=await ocw.apply(this,arguments);try{if(typeof cloudUser!=='undefined'&&cloudUser)await publishMembers()}catch(e){console.warn(e)}return r};
 const prev=render;
 /* warn the admin when this device is NOT sending changes to teachers (backup switched off in this browser) */
 function syncBanner(){
   let b=$('peSync');
   if(!b){const v=$('view');if(!v)return;b=document.createElement('div');b.id='peSync';b.style.cssText='margin:0 0 14px;padding:12px 14px;border-radius:12px;background:color-mix(in srgb,var(--coral) 14%,var(--card));border:1px solid var(--coral);color:var(--text);font-size:13.5px;display:none;line-height:1.5';v.before(b);
-    b.onclick=e=>{if(e.target.id==='peSyncBtn'){const u=$('cloudUpload');if(u)u.click()}}}
-  const bad=UI.accessRole==='admin'&&typeof cloudUser!=='undefined'&&!!cloudUser&&typeof cloudEnabled!=='undefined'&&!cloudEnabled;
-  b.style.display=bad?'block':'none';
-  if(bad&&!b.dataset.on){b.dataset.on=1;b.innerHTML='⚠ <b>Teachers are not receiving your changes from this device.</b> Backup is switched off in this browser. If this device has the latest timetable, tap the button once. <button class="btn ghost" id="peSyncBtn" type="button" style="margin-top:6px">Back up to cloud</button>'}
-  if(!bad)delete b.dataset.on;
+    b.onclick=e=>{const id=e.target.id,u=id==='peSyncBtn'?$('cloudUpload'):id==='peRestoreBtn'?$('cloudDownload'):null;if(u)u.click()}}
+  const admin=UI.accessRole==='admin'&&typeof cloudUser!=='undefined'&&!!cloudUser;
+  const empty=admin&&!STATE.batches.length&&!STATE.classes.length,off=admin&&!empty&&typeof cloudEnabled!=='undefined'&&!cloudEnabled,mode=empty?'empty':off?'off':'';
+  b.style.display=mode?'block':'none';
+  if(b.dataset.mode!==mode){b.dataset.mode=mode;
+    b.innerHTML=mode==='empty'?'⚠ <b>This device has no timetable loaded yet.</b> Tap <b>Restore cloud</b> once to load it. Do <u>not</u> tap Back up on this device. <button class="btn ghost" id="peRestoreBtn" type="button" style="margin-top:6px">Restore cloud</button>'
+      :mode==='off'?'⚠ <b>Teachers are not receiving your changes from this device.</b> Backup is switched off in this browser. If this device has the latest timetable, tap the button once. <button class="btn ghost" id="peSyncBtn" type="button" style="margin-top:6px">Back up to cloud</button>':''}
 }
 setInterval(()=>{try{syncBanner()}catch(_){}},3000);
 render=function(){prev.apply(this,arguments);if(UI.tab==='members'&&UI.accessRole==='admin'){paintM();mLoad()}try{syncBanner()}catch(_){}};
@@ -3414,7 +3417,7 @@ async function paintT0(){
   const bn=id=>{const b=STATE.batches.find(x=>x.id===id);return b?b.label:'Batch'};
   const note=t.error?`<p style="color:var(--coral);font-size:13px">${esc(t.error.message)} — connect Google (admin) first, and make sure tests.sql was run.</p>`:'';
   const by={};(s.data||[]).forEach(x=>(by[x.test_id]=by[x.test_id]||[]).push(x));
-  v.innerHTML=`<div class="card"><div class="cardhead"><h2>Create a test</h2></div>${note}
+  v.innerHTML=`<div class="card"><div class="cardhead"><h2>Create a test</h2></div>${note}${STATE.batches.length?'':'<p style="color:var(--coral);font-size:13px">No batches are loaded on this device yet. Tap “Restore cloud” in the top bar first, then come back here.</p>'}
   <form id="tF" style="display:grid;gap:12px"><div class="row"><div class="field"><label>Batch</label><select id="tB">${STATE.batches.map(b=>`<option value="${b.id}">${esc(b.label)} (${esc(b.center)})</option>`).join('')}</select></div><div class="field"><label>Subject</label><input id="tS" placeholder="e.g. Physics"></div><div class="field"><label>Max marks</label><input id="tM" type="number" min="1" value="100"></div></div>
   <div class="field"><label>Title</label><input id="tT" required placeholder="e.g. Chemistry Unit Test 1"></div>
   <div class="field"><label>Question paper (paste from ChatGPT; students can read this)</label><textarea id="tQ" rows="7"></textarea><label style="margin-top:8px;font-size:12.5px">…or attach the question paper as a PDF</label><input type="file" id="tQF" accept="application/pdf"></div>
