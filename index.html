@@ -3249,6 +3249,13 @@ async function publishMembers(){
   for(let i=0;i<rows.length;i+=40){const r=await paceCloud.from('pace_member_timetables').upsert(rows.slice(i,i+40),{onConflict:'user_id'});if(r.error){console.warn('member publish',r.error.message);break}}
 }
 const ocw=cloudWrite;
+/* never "restore" an EMPTY cloud copy over a device (it would erase that device too) */
+const odl=downloadCloud;
+downloadCloud=async function(){
+  try{const row=await cloudRead();if(row&&row.state&&!(row.state.batches||[]).length&&!(row.state.classes||[]).length){alert('The cloud copy is EMPTY, so restoring would erase this device as well. Do NOT restore. Open the admin app on the device that still has your timetable and tap “Back up to cloud” there.');return}}catch(_){}
+  return odl.apply(this,arguments);
+};
+setInterval(()=>{const b=document.getElementById('cloudDownload');if(b&&b.onclick!==downloadCloud)b.onclick=downloadCloud},1500);
 cloudWrite=async function(){if(!STATE.batches.length&&!STATE.classes.length){toast('This device has no timetable yet. Tap Restore cloud first.');return}const r=await ocw.apply(this,arguments);try{if(typeof cloudUser!=='undefined'&&cloudUser)await publishMembers()}catch(e){console.warn(e)}return r};
 const prev=render;
 /* warn the admin when this device is NOT sending changes to teachers (backup switched off in this browser) */
@@ -3453,4 +3460,11 @@ render=function(){prev.apply(this,arguments);if(UI.tab==='tests'&&UI.accessRole=
 })();
 </script>
 
+<style id="pace-logo-css">
+/* PACE logo instead of the letter "P" (uses icon-512.png from your repository) */
+#peLogin .lg,.pg-top .lg{font-size:0!important;color:transparent!important;background:#fff url(./icon-512.png) center/cover no-repeat!important;box-shadow:0 0 0 3px rgba(255,255,255,.92),0 14px 40px rgba(0,0,0,.35)!important;overflow:hidden}
+#peLogin .lg{width:96px!important;height:96px!important;border-radius:26px!important}
+.pg-top .lg{box-shadow:0 0 0 2px rgba(255,255,255,.85)!important;border-radius:11px!important}
+#brand::before{content:""!important;background:#fff url(./icon-512.png) center/cover no-repeat!important;box-shadow:0 0 0 2px rgba(255,255,255,.85)}
+</style>
 </body></html>
