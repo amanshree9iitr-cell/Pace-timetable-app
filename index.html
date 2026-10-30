@@ -1626,7 +1626,7 @@ function renderAIImport(view){
    const resp=await fetch('https://fzgftorhxxpnihipmiix.supabase.co/functions/v1/quick-function',{
     method:'POST',
     headers:{
-     'Authorization':'Bearer sb_publishable_WMyKmv0cunkBSwkkaPHtuQ_WE7rfZdb',
+     'Authorization':'Bearer '+((await paceCloud?.auth.getSession())?.data?.session?.access_token||''),
      'apikey':'sb_publishable_WMyKmv0cunkBSwkkaPHtuQ_WE7rfZdb'
     },
     body:fd
