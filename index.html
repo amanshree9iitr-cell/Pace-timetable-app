@@ -2850,7 +2850,7 @@ async function run(){
     for(let i=0;i<parts.length;i++){
       msg.textContent=parts.length>1?`Reading part ${i+1} of ${parts.length}…`:'Reading timetable…';
       const fd=new FormData();fd.append('file',parts[i]);fd.append('fallbackDate',$('aiDate').value);fd.append('fallbackCenter',$('aiCenter').value);fd.append('mode',$('aiMode').value);
-      const r=await fetch(PACE_CLOUD_URL+'/functions/v1/quick-function',{method:'POST',headers:{Authorization:'Bearer '+PACE_CLOUD_KEY,apikey:PACE_CLOUD_KEY},body:fd});
+      const r=await fetch(PACE_CLOUD_URL+'/functions/v1/quick-function',{method:'POST',headers:{Authorization:'Bearer '+(((await paceCloud.auth.getSession()).data.session||{}).access_token||''),apikey:PACE_CLOUD_KEY},body:fd});
       if(!r.ok)throw new Error('Part '+(i+1)+': '+await r.text());
       raw.push(...((await r.json()).rows||[]));
     }
