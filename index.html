@@ -2606,7 +2606,7 @@ try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}ca
   document.querySelectorAll('link[rel=manifest]').forEach(l=>l.remove());
   const base=location.origin+location.pathname.replace(/[^/]*$/,''),add=(t,a)=>{const e=document.createElement(t);Object.entries(a).forEach(([k,v])=>e.setAttribute(k,v));document.head.append(e)};
   add('meta',{name:'apple-mobile-web-app-capable',content:'yes'});add('meta',{name:'mobile-web-app-capable',content:'yes'});add('meta',{name:'theme-color',content:'#3640C6'});
-  add('link',{rel:'manifest',href:'data:application/manifest+json,'+encodeURIComponent(JSON.stringify({name:'PACE Faculty',short_name:'PACE',start_url:back,scope:base,display:'standalone',background_color:'#3640C6',theme_color:'#3640C6',icons:[{src:base+'icon-192.png',sizes:'192x192',type:'image/png'},{src:base+'icon-512.png',sizes:'512x512',type:'image/png'}]}))});
+  add('link',{rel:'manifest',href:'./manifest-teacher.webmanifest'});
 })();
 
 function form(){
@@ -3009,6 +3009,7 @@ facultyMessage=function(teacherId,date){
 .pg-sheet .card{width:min(460px,100%);border-radius:20px;padding:18px}
 .pg-inst .btn,.pg-sheet .btn{box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;text-align:center;max-width:100%}
 .pg-sheet .card{box-sizing:border-box}
+#teacherLoginCard .btn,#teacherLoginCard input{box-sizing:border-box;max-width:100%}
 .pg-steps{margin:0 0 14px;padding-left:22px;display:grid;gap:10px;font-size:14px;line-height:1.45}
 .pg-key{display:inline-grid;place-items:center;min-width:24px;height:24px;border-radius:6px;border:1px solid var(--line);background:var(--paper,#f4f6fb);font-size:13px;margin-left:2px}
 @media(max-width:420px){.pg-inst{flex-wrap:wrap}.pg-inst .btn{width:100%}}
@@ -3026,6 +3027,21 @@ window.paceInstallKind=()=>{const ua=navigator.userAgent;
   if(/FBAN|FBAV|Instagram|Line\/|WhatsApp|Snapchat|wv\)/i.test(ua))return'inapp';
   if(/iPhone|iPad|iPod/i.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1))return/CriOS|FxiOS|EdgiOS/i.test(ua)?'ios-other':'ios';
   return'android'};
+window.paceInstallSheet=function(title){
+  const k=window.paceInstallKind(),stp=a=>`<ol class="pg-steps">${a.map(x=>`<li>${x}</li>`).join('')}</ol>`;
+  const body=k==='ios'?stp(['Tap the <b>Share</b> button <span class="pg-key">⬆︎</span> at the bottom of Safari','Scroll down and tap <b>Add to Home Screen</b> <span class="pg-key">＋</span>','Tap <b>Add</b> — the PACE icon appears on your home screen'])
+    :k==='ios-other'?stp(['Open this page in <b>Safari</b> (iPhone apps can only be added from Safari)','Tap <b>Share</b> <span class="pg-key">⬆︎</span> → <b>Add to Home Screen</b>','Tap <b>Add</b>'])
+    :k==='inapp'?stp(['Tap the <b>⋮</b> or <b>…</b> menu at the top right','Choose <b>Open in Chrome</b> (or Open in browser)','Then tap <b>Install</b> on the PACE card again'])
+    :stp(['Tap the <b>⋮</b> menu at the top right of Chrome','Tap <b>Add to Home screen</b> or <b>Install app</b>','Tap <b>Install</b> — the PACE icon appears on your home screen']);
+  const o=document.createElement('div');o.className='pg-sheet';
+  o.innerHTML=`<div class="card"><h2 style="margin:0 0 4px">📲 ${title||'Add PACE to your home screen'}</h2><p class="muted" style="margin:0 0 10px;font-size:13px">It takes 10 seconds and you only do it once.</p>${body}<button class="btn primary" style="width:100%" data-x>Got it</button></div>`;
+  o.onclick=e=>{if(e.target===o||e.target.closest('[data-x]'))o.remove()};document.body.append(o);
+};
+/* tap Install: use the phone's own install pop-up when available, otherwise show the steps */
+window.paceInstall=function(title,done){
+  if(window.__paceBIP){const ev=window.__paceBIP;window.__paceBIP=null;ev.prompt();ev.userChoice.then(r=>{if(r&&r.outcome==='accepted'){try{localStorage.setItem('pace-installed','1')}catch(_){}}done&&done()}).catch(()=>{})}
+  else window.paceInstallSheet(title);
+};
 window.paceLoadKatex=function(){
   if(window.katex)return Promise.resolve(window.katex);
   if(window.__pfKatex)return window.__pfKatex;
@@ -3262,16 +3278,6 @@ async function member(user,role){
     try{const h=+localStorage.getItem('pace-inst-hide')||0;if(Date.now()<h)return''}catch(_){}
     return `<div class="pg-inst"><span class="pg-inst-ic">📲</span><div><b>Get the PACE app</b><small>Add it to your home screen — opens in one tap, like a real app.</small></div><button class="btn primary" data-inst="go"${window.__paceBIP?' data-ready="1"':''}>Install</button><button class="pg-inst-x" data-inst="later" aria-label="Not now">✕</button></div>`;
   }
-  function installSheet(){
-    const k=window.paceInstallKind(),stp=a=>`<ol class="pg-steps">${a.map(x=>`<li>${x}</li>`).join('')}</ol>`;
-    const body=k==='ios'?stp(['Tap the <b>Share</b> button <span class="pg-key">⬆︎</span> at the bottom of Safari','Scroll down and tap <b>Add to Home Screen</b> <span class="pg-key">＋</span>','Tap <b>Add</b> — the PACE icon appears on your home screen'])
-      :k==='ios-other'?stp(['Open this page in <b>Safari</b> (iPhone apps can only be added from Safari)','Tap <b>Share</b> <span class="pg-key">⬆︎</span> → <b>Add to Home Screen</b>','Tap <b>Add</b>'])
-      :k==='inapp'?stp(['Tap the <b>⋮</b> or <b>…</b> menu at the top right','Choose <b>Open in Chrome</b> (or Open in browser)','Then tap <b>Install</b> on the PACE card again'])
-      :stp(['Tap the <b>⋮</b> menu at the top right of Chrome','Tap <b>Add to Home screen</b> or <b>Install app</b>','Tap <b>Install</b> — the PACE icon appears on your home screen']);
-    const o=document.createElement('div');o.className='pg-sheet';
-    o.innerHTML=`<div class="card"><h2 style="margin:0 0 4px">📲 Add PACE to your home screen</h2><p class="muted" style="margin:0 0 10px;font-size:13px">It takes 10 seconds and you only do it once.</p>${body}<button class="btn primary" style="width:100%" data-x>Got it</button></div>`;
-    o.onclick=e=>{if(e.target===o||e.target.closest('[data-x]'))o.remove()};document.body.append(o);
-  }
   function upNext(){
     const t=todayStr(),n=nowMin(),L=P.classes.filter(c=>c.date===t).sort((a,b)=>a.start.localeCompare(b.start));
     if(!L.length)return '';
@@ -3330,7 +3336,7 @@ async function member(user,role){
     if(fx){const nd=addD(fday,+fx.dataset.fx);if(nd<=todayStr()){fday=nd;paint()}return}
     const ins=e.target.closest('[data-inst]');
     if(ins){if(ins.dataset.inst==='later'){try{localStorage.setItem('pace-inst-hide',String(Date.now()+7*864e5))}catch(_){}paint();return}
-      if(window.__paceBIP){const ev=window.__paceBIP;window.__paceBIP=null;ev.prompt();ev.userChoice.then(r=>{if(r&&r.outcome==='accepted'){try{localStorage.setItem('pace-installed','1')}catch(_){}}paint()}).catch(()=>{})}else installSheet();return}
+      window.paceInstall('Add PACE to your home screen',paint);return}
     const fm=e.target.closest('[data-fm]'),qa=e.target.closest('[data-qa]'),qn=e.target.closest('[data-qn]'),sb=e.target.closest('[data-star]');
     if(fm){const m=fm.dataset.fm;if(m==='retry'){Q=buildQuiz(todayStr());fmode='quiz'}else{fmode=m;if(m==='quiz'&&(!Q||Q.i>=Q.qs.length&&FX.done[todayStr()]==null))Q=buildQuiz(todayStr());if(m==='day')fday=todayStr()}paint();V.scrollTop=0;window.scrollTo(0,0);return}
     if(qa&&Q&&Q.ans==null){Q.ans=+qa.dataset.qa;const q=Q.qs[Q.i];if(q.opts[Q.ans]===q.a)Q.score++;paint();return}
@@ -3526,6 +3532,28 @@ function syncBanner(){
 setInterval(()=>{try{syncBanner()}catch(_){}},3000);
 render=function(){prev.apply(this,arguments);if(UI.tab==='members'&&UI.accessRole==='admin'){paintM();mLoad()}try{syncBanner()}catch(_){}};
 boot();
+})();
+</script>
+
+<!-- ===== PACE Faculty: install as app ===== -->
+<script>
+(function(){
+if(!/[?&]teacher=1/.test(location.search)||!window.paceInstall)return;
+const KEY='pace-inst-hide-t';
+function place(){
+  document.querySelectorAll('.pg-inst').forEach(x=>x.remove());
+  if(window.paceIsInstalled())return;
+  try{if(Date.now()<(+localStorage.getItem(KEY)||0))return}catch(_){}
+  const head=document.querySelector('#shell main header');if(!head)return;
+  const c=document.createElement('div');c.className='pg-inst';c.style.marginTop='-4px';
+  c.innerHTML='<span class="pg-inst-ic">📲</span><div><b>Get the PACE Faculty app</b><small>Add it to your home screen — your timetable opens in one tap, and you stay signed in.</small></div><button class="btn primary" data-ti="go">Install</button><button class="pg-inst-x" data-ti="later" aria-label="Not now">✕</button>';
+  c.onclick=e=>{const b=e.target.closest('[data-ti]');if(!b)return;
+    if(b.dataset.ti==='later'){try{localStorage.setItem(KEY,String(Date.now()+7*864e5))}catch(_){}c.remove();return}
+    window.paceInstall('Add PACE Faculty to your home screen',place)};
+  head.after(c);
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',place);else place();
+window.addEventListener('appinstalled',()=>document.querySelectorAll('.pg-inst').forEach(x=>x.remove()));
 })();
 </script>
 
