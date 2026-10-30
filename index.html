@@ -1804,6 +1804,13 @@ function renderSetup(view){
 }
 
 
+/* teacher login -> teacher mapping, joined here (the two tables store the teacher id in different types, so the database can't join them) */
+async function paceTeacherAccounts(){
+ const [a,t]=await Promise.all([paceCloud.from('pace_teacher_accounts').select('user_id,teacher_id'),paceCloud.from('teachers').select('id,code,name')]);
+ if(a.error)return{data:null,error:a.error};
+ const byId=new Map((t.data||[]).map(x=>[String(x.id),x]));
+ return{data:(a.data||[]).map(r=>({user_id:r.user_id,teacher_id:r.teacher_id,teachers:byId.get(String(r.teacher_id))||null})),error:null};
+}
 /* Google sign-in and Supabase cloud backup. Local storage remains the offline fallback. */
 const PACE_CLOUD_URL='https://fzgftorhxxpnihipmiix.supabase.co';
 const PACE_CLOUD_KEY='sb_publishable_WMyKmv0cunkBSwkkaPHtuQ_WE7rfZdb';
@@ -1832,7 +1839,7 @@ async function cloudWrite(){
   const {error:pubError}=await paceCloud.from('pace_public_timetable').upsert({id:'main',payload:publicSnapshot,updated_at:new Date().toISOString()},{onConflict:'id'});
   if(pubError)throw pubError;
   // Publish each teacher's own private projection, linked to their Supabase Auth account.
-  const {data:teacherAccounts,error:accountsError}=await paceCloud.from('pace_teacher_accounts').select('user_id,teacher_id,teachers(code,name)');
+  const {data:teacherAccounts,error:accountsError}=await paceTeacherAccounts();
   if(accountsError)throw accountsError;
   if((teacherAccounts||[]).length){
     const teacherRows=teacherAccounts.map(a=>{
@@ -3487,7 +3494,7 @@ async function publishTeachers(){
     return{teacher,batches:(STATE.batches||[]).filter(b=>classes.some(c=>c.batchId===b.id)||Object.prototype.hasOwnProperty.call(wp,b.id)),classes,holidays:(STATE.holidays||[]).filter(h=>h.teacherId===id),weeklyPattern:wp};
   };
   const byCode=c=>STATE.teachers.find(t=>String(t.code||'').toUpperCase()===String(c||'').toUpperCase());
-  const [acc,dbt]=await Promise.all([paceCloud.from('pace_teacher_accounts').select('user_id,teacher_id,teachers(code,name)'),paceCloud.from('teachers').select('id,code')]);
+  const [acc,dbt]=await Promise.all([paceTeacherAccounts(),paceCloud.from('teachers').select('id,code')]);
   const now=new Date().toISOString();
   const rows=(acc.data||[]).map(a=>{const lt=Array.isArray(a.teachers)?a.teachers[0]:a.teachers,t=STATE.teachers.find(x=>x.id===a.teacher_id)||(lt&&byCode(lt.code));return t?{user_id:a.user_id,payload:build(t),updated_at:now}:null}).filter(Boolean);
   let err=acc.error?acc.error.message:'';for(let i=0;i<rows.length;i+=20){const r=await paceCloud.from('pace_teacher_timetables').upsert(rows.slice(i,i+20),{onConflict:'user_id'});if(r.error){err=r.error.message;console.warn('teacher publish',err);break}}
