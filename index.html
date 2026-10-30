@@ -1978,7 +1978,7 @@ async function initPrivateTeacherView(){
     // Keep every class in one chronological list; do not label time slots.
     classes.sort((a,b)=>String(a.start).localeCompare(String(b.start))||String(a.end).localeCompare(String(b.end)));
 
-    const renderClass=c=>{const b=batchMap.get(c.batchId),name=c.customBatchLabel||(b?.label||b?.name||'Batch'),center=b?.center||c.customCenter||'';const detail=c.isTest?(Array.isArray(c.testTopics)?c.testTopics.map(x=>`${x.subject}: ${x.topic}`).join(' · '):''):String(c.chapter||c.topic||'');return `<article style="border:1px solid var(--line);border-radius:10px;padding:13px"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><strong>${esc(name)}${c.subject?' · '+esc(c.subject):''}</strong><strong>${esc(fmt12(c.start))} – ${esc(fmt12(c.end))}</strong></div>${center?`<div class="muted" style="margin-top:4px">${esc(center)} Centre</div>`:''}${detail?`<div style="margin-top:5px;color:var(--text-muted);font-size:13px">${esc(detail)}</div>`:''}${c.online?'<div style="margin-top:5px;font-size:12px;color:var(--teal)">Online class</div>':''}</article>`;};
+    const renderClass=c=>{const b=batchMap.get(c.batchId),name=c.customBatchLabel||(b?.label||b?.name||'Batch'),center=b?.center||c.customCenter||'';const detail=c.isTest?(Array.isArray(c.testTopics)?c.testTopics.map(x=>`${x.subject}: ${x.topic}`).join(' · '):''):c.isDoubt||c.isPractice?'':((l=>l?'📖 '+l:'📖 Chapter not set — use “Set chapter” below')(window.PCH?PCH.label(c,payload.classes,()=>String(teacher.code||'').toUpperCase(),true):''));return `<article style="border:1px solid var(--line);border-radius:10px;padding:13px"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><strong>${esc(name)}${c.subject?' · '+esc(c.subject):''}</strong><strong>${esc(fmt12(c.start))} – ${esc(fmt12(c.end))}</strong></div>${center?`<div class="muted" style="margin-top:4px">${esc(center)} Centre</div>`:''}${detail?`<div style="margin-top:5px;color:var(--text-muted);font-size:13px">${esc(detail)}</div>`:''}${c.online?'<div style="margin-top:5px;font-size:12px;color:var(--teal)">Online class</div>':''}</article>`;};
     results.innerHTML=`<p class="muted">${esc(dayName(date))}, ${esc(fmtDateLong(date))}</p><section style="margin-top:14px"><div style="display:grid;gap:10px">${classes.map(renderClass).join('')}</div></section>`;
   }
   async function loadTeacher(session){
@@ -1992,6 +1992,9 @@ async function initPrivateTeacherView(){
       payload=data.payload;updatedAt=data.updated_at;loginCard.style.display='none';scheduleCard.style.display='block';renderTeacherResources(payload);
       document.getElementById('teacherName').textContent=(payload.teacher?.name||'Teacher')+' — Your Timetable';
       document.getElementById('teacherUpdated').textContent='Last published: '+(updatedAt?new Date(updatedAt).toLocaleString():'Not available');
+      for(let w=0;w<100&&!window.PCH;w++)await new Promise(r=>setTimeout(r,50));
+      if(window.PCH){await PCH.load();let cs=document.getElementById('peChap');if(!cs){cs=document.createElement('section');cs.className='card';cs.id='peChap';cs.style.marginTop='16px';scheduleCard.after(cs)}
+        PCH.panel(cs,{classes:payload.classes||[],teachers:[payload.teacher||{}],batches:payload.batches||[],codes:[String((payload.teacher||{}).code||'')],self:true,onChange:renderTeacherDay});}
       renderTeacherDay();
     }catch(e){status.textContent='Could not load your timetable: '+e.message;}
   }
@@ -3059,6 +3062,198 @@ window.paceDailyFormulas=function(day){
   return {set:set+1,sets,items:[...Array(10)].map((_,i)=>{const k=(set*10+i)%N,r=F.list[k];return {no:k+1,topic:F.topics[r[0]],name:r[1],tex:r[2]}})};
 };
 </script>
+<!-- ===== PACE chapters & lecture numbers ===== -->
+<style id="pace-chapters-css">
+.ch-wrap h2{margin:0 0 4px}
+.ch-row{border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-top:10px;background:var(--card)}
+.ch-h{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:baseline}
+.ch-h b{font-size:14.5px}.ch-h span{font-size:12.5px;color:var(--text-muted)}
+.ch-s{margin-top:6px;font-size:13.5px;line-height:1.45}
+.ch-s.none{color:var(--text-muted);font-style:italic}
+.ch-warn{margin-top:6px;font-size:12.5px;color:#C2410C;font-weight:600}
+.ch-b{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.ch-b .btn{min-height:36px;padding:6px 12px;font-size:13px}
+.ch-f{display:grid;gap:10px;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
+.ch-f .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ch-f input{box-sizing:border-box;width:100%}
+.ch-f small{color:var(--text-muted);font-size:12px}
+.ch-msg{font-size:13px;margin-top:4px}
+/* old per-class chapter / lecture fields are replaced by the Chapters screen */
+.field:has(#f_chapter),.field:has(#f_lecture),.field:has(#f_chapterDone),#chapterHint{display:none!important}
+</style>
+<script>
+(function(){
+const P2=n=>String(n).padStart(2,'0');
+const today=()=>{const d=new Date();return d.getFullYear()+'-'+P2(d.getMonth()+1)+'-'+P2(d.getDate())};
+const nowHM=()=>{const d=new Date();return P2(d.getHours())+':'+P2(d.getMinutes())};
+const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const regular=c=>c&&!c.isTest&&!c.isDoubt&&!c.isPractice;
+const inBatch=(c,b)=>c.batchId===b||c.secondBatchId===b;
+const before=(x,c)=>x.date<c.date||(x.date===c.date&&(x.start<c.start||(x.start===c.start&&String(x.id)<String(c.id))));
+const nice=d=>{const x=new Date(d+'T00:00:00');return x.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})};
+
+const PCH=window.PCH={rows:[],loaded:false,
+  async load(){
+    if(typeof paceCloud==='undefined'||!paceCloud)return 'offline';
+    const r=await paceCloud.from('pace_chapters').select('id,batch_id,teacher_code,name,total,start_no,from_date,created_at').order('from_date',{ascending:true});
+    if(r.error)return r.error.message;
+    this.rows=r.data||[];this.loaded=true;return '';
+  },
+  /* the chapter in force for (batch, teacher code) on a date */
+  active(batchId,code,date){
+    code=String(code||'').toUpperCase();
+    const L=this.rows.filter(r=>r.batch_id===batchId&&String(r.teacher_code).toUpperCase()===code&&r.from_date<=date);
+    L.sort((a,b)=>a.from_date.localeCompare(b.from_date)||String(a.created_at).localeCompare(String(b.created_at)));
+    return L[L.length-1]||null;
+  },
+  /* {name,no,total} for a class, or null for tests/doubts, or {none:true} if no chapter set */
+  info(c,classes,codeOf,batchId){
+    if(!regular(c))return null;
+    const b=batchId||c.batchId,code=codeOf(c.teacherId);if(!code)return{none:true};
+    const a=this.active(b,code,c.date);if(!a)return{none:true};
+    const n=(classes||[]).filter(x=>regular(x)&&x!==c&&x.id!==c.id&&x.teacherId===c.teacherId&&inBatch(x,b)&&x.date>=a.from_date&&before(x,c)).length;
+    return{name:a.name,no:(+a.start_no||1)+n,total:a.total?+a.total:null,row:a};
+  },
+  label(c,classes,codeOf,withTotal,batchId){
+    const i=this.info(c,classes,codeOf,batchId);if(!i)return'';if(i.none)return'';
+    return `${i.name} (Lecture ${i.no}${withTotal&&i.total?' out of '+i.total:''})`;
+  },
+  /* the "Chapters" panel: o={classes,teachers,batches,codes:[allowed codes] or null for all,self:bool,onChange} */
+  panel(el,o){
+    const t0=today(),hm=nowHM(),lo=(()=>{const d=new Date();d.setDate(d.getDate()-30);return d.toISOString().slice(0,10)})();
+    const T=new Map((o.teachers||[]).map(t=>[t.id,t])),B=new Map((o.batches||[]).map(b=>[b.id,b]));
+    const codeOf=id=>String((T.get(id)||{}).code||'').toUpperCase();
+    const allowed=c=>!o.codes||o.codes.map(x=>String(x).toUpperCase()).includes(c);
+    const pairs=new Map();
+    (o.classes||[]).filter(c=>regular(c)&&c.date>=lo).forEach(c=>{
+      [c.batchId,c.secondBatchId].filter(Boolean).forEach(b=>{
+        const code=codeOf(c.teacherId);if(!code||!allowed(code)||!B.has(b))return;
+        const k=b+'|'+c.teacherId;const p=pairs.get(k)||{k,b,tid:c.teacherId,code,subject:'',list:[]};
+        p.list.push(c);if(c.subject)p.subject=c.subject;pairs.set(k,p);
+      });
+    });
+    const P=[...pairs.values()].sort((a,b)=>String((B.get(a.b)||{}).label).localeCompare(String((B.get(b.b)||{}).label))||a.code.localeCompare(b.code));
+    const nextOf=p=>p.list.filter(c=>c.date>t0||(c.date===t0&&c.end>hm)).sort((a,b)=>before(a,b)?-1:1)[0]||null;
+    const draw=()=>{
+      el.innerHTML=`<div class="ch-wrap"><h2>📖 ${o.self?'My Chapters':'Chapters'}</h2><p class="muted" style="margin:0;font-size:13px">Set the chapter being taught in each batch. Lecture numbers then count up automatically with every class, and restart at 1 for a new chapter.</p>`+
+      (P.length?P.map(p=>{
+        const b=B.get(p.b)||{},nx=nextOf(p),ref=nx||{date:t0,start:'23:59',id:'~',teacherId:p.tid,batchId:p.b};
+        const i=this.info(ref,o.classes,codeOf,p.b),a=this.active(p.b,p.code,ref.date);
+        const tn=(T.get(p.tid)||{}).name||p.code;
+        const status=!a?`<div class="ch-s none">Chapter not set — students see “Chapter: —”</div>`
+          :`<div class="ch-s">📖 <b>${E(a.name)}</b>${nx?` · next class: <b>Lecture ${i.no}${i.total?' of '+i.total:''}</b> on ${E(nice(nx.date))}`:' · no upcoming classes'}</div>`+
+           (nx&&i.total&&i.no>i.total?`<div class="ch-warn">⚠ Past the planned ${i.total} lectures — start the next chapter when this one is done.</div>`:'');
+        return `<div class="ch-row" data-k="${E(p.k)}"><div class="ch-h"><b>${E(b.label||'Batch')}${b.short?' '+E(b.short):''}${p.subject?' · '+E(p.subject):''}</b><span>${o.self?E(b.center||''):E(tn)+' ('+E(p.code)+')'}</span></div>${status}
+          <div class="ch-b"><button class="btn ${a?'ghost':'primary'}" data-ch="new">${a?'Start new chapter':'Set chapter'}</button>${a?'<button class="btn ghost" data-ch="edit">Edit current</button>':''}</div><div class="ch-fx"></div></div>`;
+      }).join(''):`<p class="muted" style="margin-top:12px">No classes found in the timetable${o.self?' for you':''} yet.</p>`)+`</div>`;
+    };
+    el.onclick=async e=>{
+      const btn=e.target.closest('[data-ch]');if(!btn)return;
+      const row=btn.closest('.ch-row'),p=pairs.get(row.dataset.k),fx=row.querySelector('.ch-fx');
+      const nx=nextOf(p),def=nx?nx.date:t0,a=this.active(p.b,p.code,def);
+      const mode=btn.dataset.ch;
+      if(mode==='cancel'){fx.innerHTML='';return}
+      if(mode==='new'||mode==='edit'){
+        const ed=mode==='edit'&&a;
+        fx.innerHTML=`<form class="ch-f"><div class="field"><label>Chapter name</label><input name="n" required maxlength="120" value="${ed?E(a.name):''}" placeholder="e.g. Thermodynamics"></div>
+          <div class="two"><div class="field"><label>Total lectures (planned)</label><input name="t" type="number" min="1" max="300" inputmode="numeric" value="${ed&&a.total?a.total:''}" placeholder="e.g. 8"></div>
+          <div class="field"><label>${ed?'First lecture number':'Next class is lecture'}</label><input name="s" type="number" min="1" max="300" inputmode="numeric" required value="${ed?a.start_no:1}"></div></div>
+          <div class="field"><label>Starts from class on</label><input name="d" type="date" required value="${ed?a.from_date:def}"><small>Classes from this date onwards count towards this chapter.${ed?'':' Use “Next class is lecture” if you are already part-way through it.'}</small></div>
+          <div class="ch-b"><button class="btn primary" type="submit">${ed?'Save changes':'Save chapter'}</button><button class="btn ghost" type="button" data-ch="cancel">Cancel</button></div><div class="ch-msg"></div></form>`;
+        const f=fx.querySelector('form');f.n.focus();
+        f.onsubmit=async ev=>{ev.preventDefault();const m=f.querySelector('.ch-msg');
+          const rec={name:f.n.value.trim(),total:f.t.value?Math.max(1,Math.min(300,+f.t.value)):null,start_no:Math.max(1,Math.min(300,+f.s.value||1)),from_date:f.d.value,updated_at:new Date().toISOString()};
+          if(!rec.name||!rec.from_date){m.textContent='Enter the chapter name and date.';return}
+          m.style.color='';m.textContent='Saving…';
+          const r=ed?await paceCloud.from('pace_chapters').update(rec).eq('id',a.id)
+                    :await paceCloud.from('pace_chapters').insert({...rec,batch_id:p.b,teacher_code:p.code});
+          if(r.error){m.style.color='var(--coral)';m.textContent='Could not save: '+r.error.message;return}
+          await this.load();draw();o.onChange&&o.onChange();
+          if(typeof toast==='function')try{toast('Chapter saved ✓')}catch(_){}
+        };
+      }
+    };
+    draw();
+  }
+};
+
+/* ---------- messages (admin: Faculty / Student Timetables) ---------- */
+if(typeof facultyMessage==='function'&&typeof STATE!=='undefined'){
+  const codeOf=id=>String((teacherById(id)||{}).code||'').toUpperCase();
+  const who=t=>t?`${String(t.name||'').trim().split(/\s+/)[0]} ${t.salutation||'Sir'}`:'—';
+  const topics=c=>(c.testTopics||[]).map(x=>x.subject+': '+x.topic).join(', ');
+  const DOUBT='\n*Doubt Session*\nTime: 4:30 PM - 6:30 PM\n';
+  studentMessage=function(batchId,date){
+    const b=batchById(batchId);if(!b)return '';
+    const e=classesFor(date).filter(c=>inBatch(c,batchId)).sort((a,b)=>a.start.localeCompare(b.start)||a.end.localeCompare(b.end));
+    if(!e.length)return null;
+    const main=e.filter(c=>!c.isDoubt),d=e.filter(c=>c.isDoubt);
+    const st=main.length?main.reduce((m,c)=>c.start<m?c.start:m,main[0].start):null,en=main.length?main.reduce((m,c)=>c.end>m?c.end:m,main[0].end):null;
+    let out=`Good Evening\nDear Students\n(${b.label})${b.short?' '+b.short:''}\n\n${relLabel(date)?relLabel(date)+' ':''}${fmtDateLong(date)} ${dayName(date)}\nClass timings are as follows -\n`;
+    if(st&&en)out+=`${fmt12(st)} to ${fmt12(en)}\n`;
+    out+='\n';let n=0;
+    main.forEach(c=>{
+      const t=teacherById(c.teacherId);
+      if(c.isTest){out+=`\n*Test*\nTime: ${fmt12(c.start)} - ${fmt12(c.end)}\n${topics(c)?'Syllabus: '+topics(c)+'\n':c.subject?'Subject: '+c.subject+'\n':''}`;return}
+      n++;const i=PCH.info(c,STATE.classes,codeOf,batchId);
+      out+=`\n*Lecture ${n}*\nFaculty: ${who(t)}\n${c.isPractice?'Practice: '+(c.subject||'Practice session'):'Chapter: '+(i&&!i.none?`${i.name} (Lecture ${i.no})`:'—')}\n`;
+    });
+    d.forEach(c=>{out+=`\n*Doubt Session*\nTime: ${fmt12(c.start)} - ${fmt12(c.end)}\n`});
+    if(main.some(c=>c.end==='16:30')&&!d.some(c=>c.start==='16:30'))out+=DOUBT;
+    return out+'\nThank You';
+  };
+  facultyMessage=function(teacherId,date){
+    const t=teacherById(teacherId);if(!t)return '';
+    let e=classesFor(date).filter(c=>c.teacherId===teacherId).sort((a,b)=>a.start.localeCompare(b.start)||a.end.localeCompare(b.end));
+    if(!e.length)return null;
+    /* a combined class is saved once per batch — show it once */
+    const seen=new Map(),G=[];
+    e.forEach(c=>{const g=c.combinedGroupId;if(g&&seen.has(g)){seen.get(g).push(c);return}const a=[c];if(g)seen.set(g,a);G.push(a)});
+    let out=`Good Evening\n*${who(t)}*\nDate :- ${fmtDateLong(date)}\nDay :- ${dayName(date)}\n`,last=null,n=0;
+    G.forEach(grp=>{
+      const c=grp[0],bs=grp.map(x=>{const b=batchById(x.batchId);return{b,label:x.customBatchLabel||(b?b.label:'Batch'),id:x.batchId,c:x}});
+      const center=bs[0].b?bs[0].b.center:(c.customCenter||'Other');
+      if(center!==last){out+=`\n*${center} Center*\n`;last=center}
+      if(c.isDoubt){out+=`\n*Doubt Session*\nTime: ${fmt12(c.start)} - ${fmt12(c.end)}\n`;return}
+      n++;out+=`\n*Class ${n}*\nBatch: ${bs.map(x=>x.label).join(' + ')}\nTime: ${fmt12(c.start)} - ${fmt12(c.end)}\n`;
+      if(c.isTest){out+=`Test: ${topics(c)||c.subject||'—'}\n`;return}
+      if(c.isPractice){out+=`Practice: ${c.subject||'Practice session'}\n`;return}
+      const L=bs.map(x=>{const i=PCH.info(x.c,STATE.classes,codeOf,x.id);return i&&!i.none?`${i.name} (Lecture ${i.no}${i.total?' out of '+i.total:''})`:'—'});
+      const same=L.every(x=>x===L[0]);
+      out+=`Chapter: ${same?L[0]:bs.map((x,k)=>x.label+' – '+L[k]).join('; ')}\n`;
+    });
+    if(e.some(c=>!c.isDoubt&&c.end==='16:30')&&!e.some(c=>c.isDoubt&&c.start==='16:30'))out+=DOUBT;
+    return out+'\nThank you.';
+  };
+}
+
+/* ---------- admin: Chapters screen + one-time clean-up + keep chapters fresh ---------- */
+if(typeof NAV_ITEMS!=='undefined'&&typeof render==='function'&&!/[?&](teacher|student)=1/.test(location.search)){
+  if(!NAV_ITEMS.some(x=>x.id==='chapters'))NAV_ITEMS.splice(Math.max(0,NAV_ITEMS.findIndex(x=>x.id==='predict')),0,{id:'chapters',label:'Chapters',ic:'📖'});
+  /* delete all old per-class chapter names / lecture numbers once (also after restoring an old cloud copy) */
+  function wipeOld(){
+    if(STATE.chapterReset2026||!(STATE.classes||[]).length)return;
+    const ns=structuredClone(STATE);
+    ns.classes.forEach(c=>{delete c.chapter;delete c.lectureNo;delete c.chapterDone});
+    ns.chapterProgress={};ns.chapterReset2026=true;persist(ns);
+  }
+  const prevR=render;let sig='';
+  render=function(){
+    try{wipeOld()}catch(e){console.warn('chapter reset',e)}
+    prevR.apply(this,arguments);
+    if(UI.tab==='chapters'){const v=document.getElementById('view');if(v){
+      if(UI.accessRole!=='admin'){v.innerHTML='<div class="card"><p class="muted">Admin only.</p></div>';return}
+      if(!document.getElementById('chAdmin')){v.innerHTML='<div class="card" id="chAdmin"><p class="muted">Loading chapters…</p></div>';}
+      const el=document.getElementById('chAdmin');
+      const go=()=>PCH.panel(el,{classes:STATE.classes,teachers:STATE.teachers,batches:STATE.batches,codes:null,self:false});
+      if(PCH.loaded)go();else PCH.load().then(err=>{if(err&&err!=='offline')el.innerHTML=`<p class="muted">Could not load chapters: ${E(err)}. Run chapters.sql in Supabase.</p>`;else go()});
+    }}
+  };
+  const refresh=async()=>{if(document.hidden)return;const err=await PCH.load();if(err)return;const s=JSON.stringify(PCH.rows);if(s!==sig){sig=s;if(['faculty','students'].includes(UI.tab))render()}};
+  setTimeout(refresh,1500);setInterval(refresh,60000);
+}
+})();
+</script>
 <div id="peAuthBox"></div><div id="peMember"></div>
 <script>
 (function(){
@@ -3183,7 +3378,7 @@ function mergeBatches(rows,acc,role){
 }
 async function member(user,role){
   cur={user,role};V.classList.add('open');
-  const [tt,hw,bt,ac]=await Promise.all([
+  const [,tt,hw,bt,ac]=await Promise.all([window.PCH?PCH.load():null,
     paceCloud.from('pace_member_timetables').select('payload').eq('user_id',user.id).maybeSingle(),
     paceCloud.from('pace_homework').select('id,batch_id,teacher_name,subject,title,details,due_date,link').order('due_date',{ascending:true}),
     paceCloud.from('pace_batch_timetables').select('batch_id,payload'),
@@ -3191,6 +3386,7 @@ async function member(user,role){
   const data=tt.data,error=tt.error,HW=hw.data||[];
   const P=mergeBatches(bt.data,ac.data,role)||(data&&data.payload),top=`<div class="pg-top"><div class="lg">P</div><div><b>PACE IIT &amp; Medical</b><span>${LABEL[role]}${P&&P.name?' · '+esc(P.name):''}</span></div><button class="btn ghost" id="pgOut" style="margin-left:auto">Sign out</button></div>`;
   if(!P){V.innerHTML=top+`<div class="pg-wrap"><div class="card"><h2>Almost there</h2><p class="muted">${error?esc(error.message):'Your timetable will appear as soon as the administrator publishes it.'}</p><button class="btn primary" id="pgRef">Refresh</button></div></div>`;$('pgOut').onclick=signOut;$('pgRef').onclick=()=>member(user,role);return}
+  const TC=Object.fromEntries((P.teachers||[]).map(t=>[t.id,String(t.code||'').toUpperCase()])),chap=(c,b)=>{const i=window.PCH&&PCH.info(c,P.classes,id=>TC[id],b||c.batchId);return i&&!i.none?i:null};
   const T=Object.fromEntries((P.teachers||[]).map(t=>[t.id,t.name])),B=Object.fromEntries((P.batches||[]).map(b=>[b.id,b.label])),many=(P.batches||[]).length>1;
   let day=todayStr(),tab=window.__pgTab||'tt',sub='',fday=todayStr();
   const isStu=role==='student'&&!!window.PACE_FORMULAS;
@@ -3283,7 +3479,7 @@ async function member(user,role){
     if(!L.length)return '';
     const mm=x=>{const[a,b]=String(x).split(':').map(Number);return a*60+b},dur=m=>m>=60?Math.floor(m/60)+'h'+(m%60?' '+m%60+'m':''):m+'m';
     const on=L.find(c=>mm(c.start)<=n&&n<mm(c.end)),nx=L.find(c=>mm(c.start)>n);
-    const nm=c=>c.isTest?'Test':c.isDoubt?'Doubt session':esc(c.subject||'Class')+(c.chapter?' — '+esc(c.chapter):'');
+    const nm=c=>c.isTest?'Test':c.isDoubt?'Doubt session':esc(c.subject||'Class')+((i=>i?' — '+esc(i.name)+' · Lecture '+i.no:'')(chap(c)));
     if(on){const pc=Math.round(100*(n-mm(on.start))/Math.max(1,mm(on.end)-mm(on.start)));
       return `<div class="pg-next on" style="--c:${col(on)}"><span class="pg-ic">${icon(on)}</span><div><em><i class="pg-live"></i>Happening now · ends ${fmt12(on.end)}</em><b>${nm(on)}</b><div class="pg-bar"><i style="width:${pc}%"></i></div></div></div>`}
     if(nx)return `<div class="pg-next" style="--c:${col(nx)}"><span class="pg-ic">${icon(nx)}</span><div><em>Up next · in ${dur(mm(nx.start)-n)}</em><b>${nm(nx)}</b><span>${fmt12(nx.start)} – ${fmt12(nx.end)}${T[nx.teacherId]?' · '+esc(T[nx.teacherId]):''}</span></div></div>`;
@@ -3307,7 +3503,7 @@ async function member(user,role){
     return `<div class="pe-strip"><button class="pe-nav" data-w="-7">‹</button><div class="pe-days">${days.map(d=>{const n=P.classes.filter(c=>c.date===d).length;return `<button class="pe-day${d===day?' act':''}${d===todayStr()?' today':''}" data-d="${d}">${n?`<em>${n}</em>`:''}${dayName(d).slice(0,3)}<b>${+d.slice(8)}</b></button>`}).join('')}</div><button class="pe-nav" data-w="7">›</button></div>
     <h2 style="margin:6px 0 12px;font:700 18px 'Space Grotesk',sans-serif">${dayName(day)}, ${fmtDateLong(day)}</h2>`+
     (list.length?list.map(c=>{
-      const title=c.isTest?'📝 Test':c.isPractice?'✍️ '+esc(c.subject||'Practice'):c.isDoubt?'Doubt session':esc(c.subject||'Class')+(c.chapter?' — '+esc(c.chapter):'')+(c.lectureNo?' · L'+c.lectureNo:'');
+      const title=c.isTest?'📝 Test':c.isPractice?'✍️ '+esc(c.subject||'Practice'):c.isDoubt?'Doubt session':esc(c.subject||'Class')+((i=>i?' — '+esc(i.name)+' · Lecture '+i.no:'')(chap(c)));
       const tp=c.isTest&&(c.testTopics||[]).length?c.testTopics.map(x=>esc(x.subject)+': '+esc(x.topic)).join(' · '):'';
       const s2=[many?B[c.batchId]:'',T[c.teacherId]].filter(Boolean).map(esc).join(' · ');
       const tn=day===todayStr()?nowMin():-1,cm=x=>{const[a,b]=String(x).split(':').map(Number);return a*60+b},isOn=tn>=cm(c.start)&&tn<cm(c.end),past=tn>=cm(c.end);
@@ -3474,7 +3670,7 @@ async function publishMembers(){
     const b=STATE.batches.find(x=>x.id===bid);if(!b)return null;
     const cl=STATE.classes.filter(c=>c.batchId===bid||c.secondBatchId===bid).map(c=>({id:c.id,date:c.date,batchId:c.batchId,teacherId:c.teacherId,subject:c.subject,chapter:c.chapter,lectureNo:c.lectureNo,start:c.start,end:c.end,isDoubt:!!c.isDoubt,isTest:!!c.isTest,isPractice:!!c.isPractice,testTopics:c.testTopics||[]})),
       tids=new Set(cl.map(c=>c.teacherId));
-    return{batch_id:bid,updated_at:new Date().toISOString(),payload:{batches:[{id:b.id,label:b.label,center:b.center}],teachers:STATE.teachers.filter(t=>tids.has(t.id)).map(t=>({id:t.id,name:t.name})),classes:cl,
+    return{batch_id:bid,updated_at:new Date().toISOString(),payload:{batches:[{id:b.id,label:b.label,center:b.center}],teachers:STATE.teachers.filter(t=>tids.has(t.id)).map(t=>({id:t.id,name:t.name,code:t.code||''})),classes:cl,
       materials:(STATE.materials||[]).filter(m=>!m.batchId||m.batchId===bid).map(m=>({id:m.id,title:m.title,url:m.url,kind:m.kind,subject:m.subject||''})),
       doubts:doubts.filter(x=>String(x.c).toLowerCase()===String(b.center||'').toLowerCase()).map(x=>({...x,m:tids.has(x.t)?1:0}))}};
   }).filter(Boolean);
@@ -3483,7 +3679,7 @@ async function publishMembers(){
     const ids=new Set(list.map(x=>x.batch_id)),
       classes=STATE.classes.filter(c=>ids.has(c.batchId)||ids.has(c.secondBatchId)).map(c=>({id:c.id,date:c.date,batchId:c.batchId,teacherId:c.teacherId,subject:c.subject,chapter:c.chapter,lectureNo:c.lectureNo,start:c.start,end:c.end,isDoubt:!!c.isDoubt,isTest:!!c.isTest,isPractice:!!c.isPractice,testTopics:c.testTopics||[]})),
       tids=new Set(classes.map(c=>c.teacherId)),batches=STATE.batches.filter(b=>ids.has(b.id)),centers=new Set(batches.map(b=>String(b.center||'').toLowerCase()));
-    return{user_id:uid,updated_at:new Date().toISOString(),payload:{name:list[0].name||'',role:list[0].role,batches:batches.map(b=>({id:b.id,label:b.label,center:b.center})),teachers:STATE.teachers.filter(t=>tids.has(t.id)).map(t=>({id:t.id,name:t.name})),classes,
+    return{user_id:uid,updated_at:new Date().toISOString(),payload:{name:list[0].name||'',role:list[0].role,batches:batches.map(b=>({id:b.id,label:b.label,center:b.center})),teachers:STATE.teachers.filter(t=>tids.has(t.id)).map(t=>({id:t.id,name:t.name,code:t.code||''})),classes,
       materials:(STATE.materials||[]).filter(m=>!m.batchId||ids.has(m.batchId)).map(m=>({id:m.id,title:m.title,url:m.url,kind:m.kind,subject:m.subject||''})),
       doubts:doubts.filter(x=>centers.has(String(x.c).toLowerCase())).map(x=>({...x,m:tids.has(x.t)?1:0}))}};
   });
