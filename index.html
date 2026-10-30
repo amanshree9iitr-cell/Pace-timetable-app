@@ -2706,7 +2706,7 @@ function paint(){
   ${STATE.teachers.map(t=>{const d=dir[t.code]||{};return `<div class="fa-row"><b>${esc(t.name)} (${esc(t.code)})</b><input id="fe_${t.id}" type="email" placeholder="email@gmail.com" value="${esc(d.email||'')}"><input id="fp_${t.id}" type="tel" placeholder="Mobile (+91…)" value="${esc(d.phone||'')}"><span>${linked.has(String(t.code).toUpperCase())?'<span class="fa-ok">✓ linked</span> ':''}<button class="icon" data-rm="${esc(t.code)}" title="Remove login access">🗑️</button></span></div>`}).join('')}
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px"><button class="btn primary" id="faSave">Save mapping</button><button class="btn ghost" id="faPub">Publish timetables now</button></div></div>`;
   $('#faSave').onclick=save;v.onclick=e=>{const b=e.target.closest('[data-rm]');if(b)rmTeacher(b.dataset.rm)};$('#faCopy').onclick=()=>{try{navigator.clipboard.writeText($('#faLink').value)}catch(_){}toast('Teacher link copied')};
-  $('#faPub').onclick=()=>{if(typeof cloudUser==='undefined'||!cloudUser||!cloudEnabled){toast('Connect Google and turn on Back up first');return}cloudWrite()};
+  $('#faPub').onclick=async()=>{if(typeof cloudUser==='undefined'||!cloudUser){toast('Connect Google first');return}toast('Publishing…');await cloudWrite();const r=window.__pubTeachers;toast(r?(r.err?'Teacher publish failed: '+r.err:'Published to '+r.n+' teacher login(s) ✓'):'Published')};
 }
 async function load(){
   try{
@@ -2942,6 +2942,8 @@ facultyMessage=function(teacherId,date){
 .pg-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#1E9E5A;margin-right:7px;animation:pe-pulse 1.4s infinite}
 .ma-row{display:grid;grid-template-columns:1fr 1.4fr 1fr 56px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
 @media(max-width:780px){.ma-row{grid-template-columns:1fr 1fr}.ma-row>:first-child{grid-column:1/-1}}
+.ma-par{display:grid;grid-template-columns:96px 1fr 1fr 56px;gap:8px;align-items:center;padding:2px 0 10px;margin-bottom:6px;border-bottom:1px solid var(--line)}.ma-par input{min-height:38px}
+@media(max-width:780px){.ma-par{grid-template-columns:1fr 1fr}.ma-par>:first-child{grid-column:1/-1}}
 </style>
 <div id="peAuthBox"></div><div id="peMember"></div>
 <script>
@@ -3152,41 +3154,57 @@ if(/type=recovery/.test(location.hash))pwBox(false,()=>location.replace(base));
 /* ---------- admin: Student & Parent Access tab ---------- */
 NAV_ITEMS.push({id:'members',ic:'🎓',label:'Student & Parent Access'});
 const MR={role:'student',all:[],gone:[],linked:new Set(),note:''};
+const mailKey=x=>(x||'\uffff').toLowerCase();
+const byMail=(a,b)=>mailKey(a.email).localeCompare(mailKey(b.email))||String(a.name||'').localeCompare(String(b.name||''));
+function slotKids(){   /* each linked parent gets a fixed slot (0 or 1) under its student */
+  const g={};MR.all.filter(x=>x.role==='parent'&&x.child_id).forEach(x=>(g[x.child_id]=g[x.child_id]||[]).push(x));
+  Object.values(g).forEach(l=>l.sort(byMail).forEach((x,i)=>{if(x.slot==null)x.slot=i}));
+}
 async function mLoad(){
   try{
     if(typeof cloudUser==='undefined'||!cloudUser)throw new Error('Connect Google (admin account) in the top bar first.');
-    const a=await paceCloud.from('pace_member_directory').select('id,role,name,email,phone,batch_id').order('name');if(a.error)throw a.error;
-    MR.all=a.data.map(r=>({...r,saved:true,orig:String(r.email||'').toLowerCase()}));
+    const a=await paceCloud.from('pace_member_directory').select('id,role,name,email,phone,batch_id,child_id');if(a.error)throw a.error;
+    MR.all=a.data.map(r=>({...r,saved:true,orig:String(r.email||'').toLowerCase()}));slotKids();
     const b=await paceCloud.from('pace_member_accounts').select('directory_id');MR.linked=new Set((b.data||[]).map(x=>x.directory_id));MR.note='';
-  }catch(e){MR.note=e.message}
+  }catch(e){MR.note=e.message+(/child_id/.test(e.message)?' (run v3.sql in Supabase)':'')}
   paintM();
 }
 function paintM(){
   const v=$('view');if(!v||UI.tab!=='members')return;
-  const rows=MR.all.filter(r=>r.role===MR.role),bo=r=>STATE.batches.map(b=>`<option value="${b.id}"${b.id===r.batch_id?' selected':''}>${esc(b.label)} (${esc(b.center)})</option>`).join('');
+  const stu=MR.role==='student',rows=MR.all.filter(r=>r.role===MR.role&&(stu||!r.child_id)).sort(byMail),
+    bo=r=>STATE.batches.map(b=>`<option value="${b.id}"${b.id===r.batch_id?' selected':''}>${esc(b.label)} (${esc(b.center)})</option>`).join(''),
+    kid=(sid,i)=>MR.all.find(x=>x.role==='parent'&&x.child_id===sid&&x.slot===i)||{};
   v.innerHTML=`<div class="card"><div class="cardhead"><h2>Student &amp; parent login mapping</h2></div>
-  <div class="pe-filter"><button class="pe-chip${MR.role==='student'?' act':''}" data-role="student">Students</button><button class="pe-chip${MR.role==='parent'?' act':''}" data-role="parent">Parents</button></div>
-  <p class="muted" style="font-size:13px;margin-top:0">Add each person's Gmail and pick their batch. They open the main app link, choose <b>${MR.role==='student'?'Student':'Parent'} Login</b> and see only that batch's timetable.${MR.role==='parent'?' Two children in different batches? Add two rows with the same Gmail. To change a Gmail, edit it and tap Save. Tap ✕ to remove someone; the old Gmail loses access straight away.':''}</p>
+  <div class="pe-filter"><button class="pe-chip${stu?' act':''}" data-role="student">Students</button><button class="pe-chip${stu?'':' act'}" data-role="parent">Parents (not linked)</button></div>
+  <p class="muted" style="font-size:13px;margin-top:0">${stu?'Add each student’s Gmail and pick their batch. Under each student, add the <b>parent’s Gmail</b> (up to 2): parents then see that student’s timetable <b>and test marks</b>. The list is sorted by Gmail.':'Parents added here are not tied to a student, so they see only the batch timetable, homework and materials — no marks. Add parents <b>under their child in the Students tab</b> to show marks.'} To change a Gmail, edit it and tap Save. Tap ✕ to remove someone; the old Gmail loses access straight away.</p>
   ${MR.note?`<p style="color:var(--coral);font-size:13px">${esc(MR.note)}</p>`:''}
-  ${rows.map(r=>`<div class="ma-row" data-id="${r.id}"><input data-f="name" placeholder="Name" value="${esc(r.name||'')}"><input data-f="email" type="email" placeholder="email@gmail.com" value="${esc(r.email||'')}"><select data-f="batch_id">${bo(r)}</select><span>${MR.linked.has(r.id)?'<b class="fa-ok" title="Has signed in">✓</b> ':''}<button class="icon" data-del="${r.id}" title="Remove">✕</button></span></div>`).join('')||'<p class="muted">No entries yet.</p>'}
+  ${rows.map(r=>`<div class="ma-row" data-id="${r.id}"><input data-f="name" placeholder="Name" value="${esc(r.name||'')}"><input data-f="email" type="email" placeholder="email@gmail.com" value="${esc(r.email||'')}"><select data-f="batch_id">${bo(r)}</select><span>${MR.linked.has(r.id)?'<b class="fa-ok" title="Has signed in">✓</b> ':''}<button class="icon" data-del="${r.id}" title="Remove">✕</button></span></div>${stu?`<div class="ma-par" data-sid="${r.id}"><span class="muted" style="font-size:12px">Parent Gmail</span><input data-pf="0" type="email" placeholder="parent@gmail.com" value="${esc(kid(r.id,0).email||'')}"><input data-pf="1" type="email" placeholder="2nd parent (optional)" value="${esc(kid(r.id,1).email||'')}"><span>${(MR.linked.has(kid(r.id,0).id)||MR.linked.has(kid(r.id,1).id))?'<b class="fa-ok" title="Has signed in">✓</b>':''}</span></div>`:''}`).join('')||'<p class="muted">No entries yet.</p>'}
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0"><button class="btn ghost" id="maAdd">＋ Add row</button><button class="btn primary" id="maSave">Save</button><button class="btn ghost" id="maPub">Publish now</button></div>
-  <details><summary class="muted" style="cursor:pointer">Bulk add from a list</summary><div class="field" style="margin-top:8px"><label>One per line: Name, Gmail, Batch (e.g. Student Name, student@gmail.com, XII JEE 1)</label><textarea id="maBulk" rows="5"></textarea></div><button class="btn ghost" id="maBulkGo">Add these rows</button></details></div>`;
-  v.oninput=e=>{const row=e.target.closest('[data-id]'),f=e.target.dataset.f;if(!row||!f)return;const o=MR.all.find(x=>x.id===row.dataset.id);if(o)o[f]=e.target.value};
+  <details><summary class="muted" style="cursor:pointer">Bulk add from a list</summary><div class="field" style="margin-top:8px"><label>One per line: Name, Gmail, Batch${stu?', Parent Gmail, 2nd Parent Gmail (optional)':''} — e.g. Student Name, student@gmail.com, XII JEE 1${stu?', parent@gmail.com':''}</label><textarea id="maBulk" rows="5"></textarea></div><button class="btn ghost" id="maBulkGo">Add these rows</button></details></div>`;
+  v.oninput=e=>{
+    const f=e.target.dataset.f,pf=e.target.dataset.pf;
+    if(f){const row=e.target.closest('[data-id]'),o=row&&MR.all.find(x=>x.id===row.dataset.id);if(o)o[f]=e.target.value;return}
+    if(pf!==undefined){const sid=e.target.closest('[data-sid]').dataset.sid,i=+pf,val=e.target.value.trim(),p=MR.all.find(x=>x.role==='parent'&&x.child_id===sid&&x.slot===i);
+      if(p)p.email=val;else if(val)MR.all.push({id:crypto.randomUUID(),role:'parent',name:'',email:val,phone:'',batch_id:'',child_id:sid,slot:i})}
+  };
   v.onchange=v.oninput;
   v.onclick=e=>{
     const c=e.target.closest('[data-role]'),d=e.target.closest('[data-del]');
     if(c){MR.role=c.dataset.role;paintM()}
-    else if(d){const o=MR.all.find(x=>x.id===d.dataset.del);if(!o)return;
-      if(!o.saved){MR.all=MR.all.filter(x=>x!==o);paintM();return}
-      if(!confirm('Remove '+(o.name||o.email)+'? They will lose access immediately.'))return;
-      paceCloud.rpc('admin_revoke_member',{p_ids:[o.id]}).then(async r=>{if(r.error)return toast(r.error.message);await paceCloud.from('pace_member_directory').delete().eq('id',o.id);toast('Removed ✓');mLoad()})}
+    else if(d){
+      const o=MR.all.find(x=>x.id===d.dataset.del);if(!o)return;
+      const ids=[o.id,...MR.all.filter(x=>x.child_id===o.id).map(x=>x.id)],saved=ids.filter(id=>(MR.all.find(x=>x.id===id)||{}).saved);
+      if(!saved.length){MR.all=MR.all.filter(x=>!ids.includes(x.id));paintM();return}
+      if(!confirm('Remove '+(o.name||o.email)+(ids.length>1?' and the linked parent login(s)':'')+'? They will lose access immediately.'))return;
+      paceCloud.rpc('admin_revoke_member',{p_ids:saved}).then(async r=>{if(r.error)return toast(r.error.message);await paceCloud.from('pace_member_directory').delete().in('id',saved);toast('Removed ✓');mLoad()})}
     else if(e.target.id==='maAdd'){MR.all.push({id:crypto.randomUUID(),role:MR.role,name:'',email:'',phone:'',batch_id:(STATE.batches[0]||{}).id||''});paintM()}
     else if(e.target.id==='maSave')mSave();
     else if(e.target.id==='maPub'){if(typeof cloudUser==='undefined'||!cloudUser)return toast('Connect Google first');publishMembers().then(()=>toast('Published ✓'))}
     else if(e.target.id==='maBulkGo'){
       let ok=0,bad=0;($('maBulk').value||'').split(/\n/).map(l=>l.trim()).filter(Boolean).forEach(l=>{
-        const [n,em,bt]=l.split(',').map(x=>x.trim()),k=String(bt||'').toLowerCase(),b=STATE.batches.find(x=>x.label.toLowerCase()===k||String(x.name||'').toLowerCase()===k);
-        if(b&&em){MR.all.push({id:crypto.randomUUID(),role:MR.role,name:n||'',email:em,phone:'',batch_id:b.id});ok++}else bad++});
+        const [n,em,bt,p1,p2]=l.split(',').map(x=>x.trim()),k=String(bt||'').toLowerCase(),b=STATE.batches.find(x=>x.label.toLowerCase()===k||String(x.name||'').toLowerCase()===k);
+        if(b&&em){const sid=crypto.randomUUID();MR.all.push({id:sid,role:MR.role,name:n||'',email:em,phone:'',batch_id:b.id});ok++;
+          if(MR.role==='student')[p1,p2].forEach((pe,i)=>{if(pe)MR.all.push({id:crypto.randomUUID(),role:'parent',name:n||'',email:pe,phone:'',batch_id:b.id,child_id:sid,slot:i})})}else bad++});
       toast(ok+' added'+(bad?', '+bad+' skipped (check batch name)':''));paintM();
     }
   };
@@ -3194,13 +3212,17 @@ function paintM(){
 async function mSave(){
   const out=[],rv=[];
   for(const r of MR.all){
-    const e=String(r.email||'').trim().toLowerCase(),ph='';
+    const e=String(r.email||'').trim().toLowerCase();
+    if(r.child_id){   /* a parent under a student: follows that student's batch and name */
+      const st=MR.all.find(x=>x.id===r.child_id);
+      if(!st||!String(st.email||'').trim()){if(r.saved)MR.gone.push(r.id);continue}
+      r.batch_id=st.batch_id;r.name=st.name;
+    }
     if(!e){if(r.saved)MR.gone.push(r.id);continue}
-    if(e&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e))return toast('Invalid email: '+e);
-    const p=ph?normPhone(ph):null;if(ph&&!p)return toast('Invalid mobile for '+(r.name||e));
-    if(r.saved&&r.orig!==e)rv.push(r.id);
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e))return toast('Invalid email: '+e);
     if(!r.batch_id)return toast('Choose a batch for '+(r.name||e));
-    out.push({id:r.id,role:r.role,name:String(r.name||'').trim(),email:e||null,phone:p,batch_id:r.batch_id,updated_at:new Date().toISOString()});
+    if(r.saved&&r.orig!==e)rv.push(r.id);
+    out.push({id:r.id,role:r.role,name:String(r.name||'').trim(),email:e,phone:null,batch_id:r.batch_id,child_id:r.child_id||null,updated_at:new Date().toISOString()});
   }
   const rvAll=[...new Set([...rv,...MR.gone])];
   if(rvAll.length){const y=await paceCloud.rpc('admin_revoke_member',{p_ids:rvAll});if(y.error)return toast(y.error.message)}
@@ -3252,7 +3274,7 @@ const ocw=cloudWrite;
 /* teachers: write every teacher's timetable (same shape the app always used) - works even if backup is off in this browser,
    and also keeps a copy per teacher so a first-time Google login sees the timetable immediately */
 async function publishTeachers(){
-  if(!STATE.batches.length&&!STATE.classes.length)return;
+  if(!STATE.batches.length&&!STATE.classes.length){window.__pubTeachers={n:0,err:'this device has no timetable (tap Restore cloud first)'};return}
   const build=teacher=>{
     const id=teacher.id,classes=(STATE.classes||[]).filter(c=>c.teacherId===id),wp={};
     Object.entries(STATE.weeklyPattern||{}).forEach(([bid,days])=>{Object.entries(days||{}).forEach(([day,slots])=>{const own=(slots||[]).filter(s=>s.teacherId===id);if(own.length){wp[bid]=wp[bid]||{};wp[bid][day]=own}})});
@@ -3262,9 +3284,10 @@ async function publishTeachers(){
   const [acc,dbt]=await Promise.all([paceCloud.from('pace_teacher_accounts').select('user_id,teacher_id,teachers(code,name)'),paceCloud.from('teachers').select('id,code')]);
   const now=new Date().toISOString();
   const rows=(acc.data||[]).map(a=>{const lt=Array.isArray(a.teachers)?a.teachers[0]:a.teachers,t=STATE.teachers.find(x=>x.id===a.teacher_id)||(lt&&byCode(lt.code));return t?{user_id:a.user_id,payload:build(t),updated_at:now}:null}).filter(Boolean);
-  for(let i=0;i<rows.length;i+=20){const r=await paceCloud.from('pace_teacher_timetables').upsert(rows.slice(i,i+20),{onConflict:'user_id'});if(r.error){console.warn('teacher publish',r.error.message);break}}
+  let err=acc.error?acc.error.message:'';for(let i=0;i<rows.length;i+=20){const r=await paceCloud.from('pace_teacher_timetables').upsert(rows.slice(i,i+20),{onConflict:'user_id'});if(r.error){err=r.error.message;console.warn('teacher publish',err);break}}
   const tp=(dbt.data||[]).map(d=>{const t=byCode(d.code);return t?{teacher_id:String(d.id),payload:build(t),updated_at:now}:null}).filter(Boolean);
-  for(let i=0;i<tp.length;i+=20){const r=await paceCloud.from('pace_teacher_payloads').upsert(tp.slice(i,i+20),{onConflict:'teacher_id'});if(r.error){console.warn('teacher payloads',r.error.message);break}}
+  for(let i=0;i<tp.length;i+=20){const r=await paceCloud.from('pace_teacher_payloads').upsert(tp.slice(i,i+20),{onConflict:'teacher_id'});if(r.error){err=err||r.error.message;console.warn('teacher payloads',r.error.message);break}}
+  window.__pubTeachers={n:rows.length,err};
 }
 /* never "restore" an EMPTY cloud copy over a device (it would erase that device too) */
 const odl=downloadCloud;
@@ -3333,16 +3356,19 @@ async function build(){
   $('hwList').onclick=async e=>{const b=e.target.closest('[data-del]');if(!b||!confirm('Delete this homework? Students will no longer see it.'))return;
     const x=await paceCloud.rpc('teacher_delete_homework',{p_id:b.dataset.del});if(x.error)alert(x.error.message);list()};
   list();
+  const tsec=document.createElement('div');tsec.id='peTT';tsec.style.marginTop='16px';sec.after(tsec);
+  if(window.peTeacherTests)window.peTeacherTests(tsec,B);   /* AI-checked tests for the teacher's batches */
 }
-new MutationObserver(()=>{const s=$('peHw'),vis=sc.style.display!=='none';if(vis)build();if(s)s.style.display=vis?'':'none'}).observe(sc,{attributes:true,attributeFilter:['style']});
+new MutationObserver(()=>{const s=$('peHw'),s2=$('peTT'),vis=sc.style.display!=='none';if(vis)build();if(s)s.style.display=vis?'':'none';if(s2)s2.style.display=vis?'':'none'}).observe(sc,{attributes:true,attributeFilter:['style']});
 if(sc.style.display!=='none')build();
 })();
 </script>
 
-<!-- ===== PACE AI-checked tests: admin creates tests, students upload answer-sheet PDFs ===== -->
+<!-- ===== PACE AI-checked tests: admin + teachers create tests, students upload answer sheets, parents see marks, Excel export ===== -->
 <script>
 (function(){
-if(window.__peTests||/[?&](teacher|student)=1/.test(location.search)||typeof paceCloud==='undefined'||!paceCloud)return;window.__peTests=true;
+if(window.__peTests||/[?&]student=1/.test(location.search)||typeof paceCloud==='undefined'||!paceCloud)return;window.__peTests=true;
+const TEACHER=/[?&]teacher=1/.test(location.search);
 const $=id=>document.getElementById(id);
 const esc=x=>window.esc(String(x==null?'':x)); // marks and numbers must be turned into text first
 const errMsg=async e=>{try{const j=await e.context.json();return j.error||e.message}catch(_){return e.message||String(e)}};
@@ -3385,9 +3411,21 @@ async function openSigned(bucket,path){
   if(w)w.location.href=r.data.signedUrl;else location.href=r.data.signedUrl;
 }
 
+/* parents: read-only list of their child's marks */
+async function parentTests(box){
+  box.innerHTML='<p class="muted">Loading…</p>';
+  const [t,s]=await Promise.all([paceCloud.from('pace_tests').select('id,title,subject,max_marks').order('created_at',{ascending:false}),
+    paceCloud.from('pace_test_submissions').select('test_id,student_name,status,score,max_marks,result')]);
+  if(t.error){box.innerHTML=`<div class="card"><p class="muted" style="margin:0">${esc(t.error.message)}</p></div>`;return}
+  const by={};(s.data||[]).forEach(x=>(by[x.test_id]=by[x.test_id]||[]).push(x));
+  box.innerHTML='<p class="muted" style="font-size:12.5px;margin:0 0 10px">Marks of your child’s AI-checked tests appear here once they have submitted.</p>'+
+    ((t.data||[]).map(x=>{const L=by[x.id]||[];return `<div class="card" style="margin-bottom:12px"><b>${esc(x.title)}</b><div class="muted" style="font-size:12.5px">${esc(x.subject||'')} · ${x.max_marks} marks</div>${L.length?L.map(u=>`<div style="margin-top:8px"><b>${esc(u.student_name||'Student')}</b>: ${u.status==='done'?`<b style="font-size:17px">${u.score} / ${u.max_marks}</b>`:esc(u.status==='checking'?'being checked':'not checked yet')}${u.status==='done'&&(u.result||{}).overall_feedback?`<p style="margin:4px 0;font-size:13px">${esc(u.result.overall_feedback)}</p>`:''}</div>`).join(''):'<p class="muted" style="margin:8px 0 0">Not submitted yet.</p>'}</div>`}).join('')||'<div class="card"><p class="muted" style="margin:0">No tests right now.</p></div>');
+}
+
 /* ---------- student: Tests tab ---------- */
 window.peTests=async function(box,user,role){
   if(!box)return;
+  if(role==='parent')return parentTests(box);
   if(role!=='student'){box.innerHTML='<div class="card"><p class="muted" style="margin:0">Tests are submitted by students from their own login.</p></div>';return}
   box.innerHTML='<p class="muted">Loading tests…</p>';
   const [t,s,k]=await Promise.all([paceCloud.from('pace_tests').select('id,title,subject,max_marks,question_text,question_file').order('created_at',{ascending:false}),
@@ -3430,50 +3468,99 @@ window.peTests=async function(box,user,role){
   };
 };
 
-/* ---------- admin: Tests tab ---------- */
-NAV_ITEMS.push({id:'tests',ic:'📝',label:'Tests (AI check)'});
+/* ---------- Tests manager: admin tab + teacher card (create, results, Excel) ---------- */
 const T={open:null};
-async function paintT(){try{await paintT0()}catch(e){const v=$('view');if(v)v.innerHTML='<div class="card"><p style="color:var(--coral)">Could not load tests: '+esc(e.message||e)+'</p></div>'}}
-async function paintT0(){
-  const v=$('view');if(!v||UI.tab!=='tests')return;
-  const [t,s]=await Promise.all([paceCloud.from('pace_tests').select('id,batch_id,title,subject,max_marks,is_open,created_at').order('created_at',{ascending:false}),
-    paceCloud.from('pace_test_submissions').select('id,test_id,student_name,status,score,max_marks,result,error,file_path,annotated_path')]);
-  const bn=id=>{const b=STATE.batches.find(x=>x.id===id);return b?b.label:'Batch'};
-  const note=t.error?`<p style="color:var(--coral);font-size:13px">${esc(t.error.message)} — connect Google (admin) first, and make sure tests.sql was run.</p>`:'';
+const tip=m=>{try{toast(m)}catch(_){alert(m)}};
+const csvEsc=x=>{const s=String(x==null?'':x);return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};
+async function saveSheet(name,rows){
+  try{
+    if(!window.XLSX)await new Promise((ok,no)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';s.onload=ok;s.onerror=no;document.head.append(s)});
+    const wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols']=rows[0].map((_,i)=>({wch:Math.min(42,Math.max(10,...rows.map(r=>String(r[i]==null?'':r[i]).length)))}));
+    XLSX.utils.book_append_sheet(wb,ws,'Marks');XLSX.writeFile(wb,name+'.xlsx');
+  }catch(_){
+    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([rows.map(r=>r.map(csvEsc).join(',')).join('\n')],{type:'text/csv'}));a.download=name+'.csv';a.click();
+  }
+}
+const mailKey=x=>(x||'\uffff').toLowerCase();
+/* one batch: students down the side (sorted by Gmail), one column per test, then total and percentage */
+function batchRows(batchId,tests,subs,roster){
+  const ts=tests.filter(t=>t.batch_id===batchId).sort((a,b)=>String(a.created_at).localeCompare(String(b.created_at)));
+  const by={};subs.forEach(s=>{by[s.test_id+'|'+s.user_id]=s});
+  const people=roster.slice(),known=new Set(people.map(p=>p.uid).filter(Boolean));
+  subs.filter(s=>ts.some(t=>t.id===s.test_id)).forEach(s=>{if(!known.has(s.user_id)){known.add(s.user_id);people.push({name:s.student_name||'Student',email:'',uid:s.user_id})}});
+  people.sort((a,b)=>mailKey(a.email).localeCompare(mailKey(b.email))||String(a.name).localeCompare(String(b.name)));
+  const head=['Name','Gmail',...ts.map(t=>t.title+' (out of '+t.max_marks+')'),'Total','Out of','Percentage'];
+  return [head,...people.map(p=>{let tot=0,out=0;
+    const cells=ts.map(t=>{const s=p.uid&&by[t.id+'|'+p.uid];if(s&&s.status==='done'){tot+=Number(s.score)||0;out+=Number(t.max_marks)||0;return Number(s.score)}return s?s.status:''});
+    return[p.name,p.email,...cells,out?tot:'',out||'',out?Math.round(tot/out*1000)/10:'']})];
+}
+function testRows(t,subs,emailOf){
+  const qn=Math.max(0,...subs.map(s=>((s.result||{}).questions||[]).length));
+  const head=['Name','Gmail','Status','Marks','Out of','Percentage',...Array.from({length:qn},(_,i)=>'Q'+(i+1)),'Overall feedback'];
+  return [head,...subs.slice().sort((a,b)=>mailKey(emailOf(a)).localeCompare(mailKey(emailOf(b)))).map(s=>{const qs=(s.result||{}).questions||[],done=s.status==='done';
+    return[s.student_name||'Student',emailOf(s),s.status,done?Number(s.score):'',t.max_marks,done&&t.max_marks?Math.round(Number(s.score)/t.max_marks*1000)/10:'',...Array.from({length:qn},(_,i)=>qs[i]?Number(qs[i].marks):''),(s.result||{}).overall_feedback||'']})];
+}
+async function paintTests(host,ctx){
+  try{await paintTests0(host,ctx)}catch(e){if(host)host.innerHTML='<div class="card"><p style="color:var(--coral)">Could not load tests: '+esc(e.message||e)+'</p></div>'}
+}
+async function paintTests0(host,ctx){
+  if(!host)return;const TE=!!ctx.teacher;
+  const qs=[paceCloud.from('pace_tests').select('id,batch_id,title,subject,max_marks,is_open,created_at').order('created_at',{ascending:false}),
+    paceCloud.from('pace_test_submissions').select('id,test_id,user_id,student_name,status,score,max_marks,result,error,file_path,annotated_path')];
+  if(!TE)qs.push(paceCloud.from('pace_member_directory').select('id,role,name,email,batch_id'),paceCloud.from('pace_member_accounts').select('user_id,directory_id'));
+  const [t,s,dir,acc]=await Promise.all(qs);
+  const bl=ctx.batches||[],bn=id=>{const b=bl.find(x=>x.id===id);return b?(b.label||b.name):'Batch'};
+  const D=Object.fromEntries(((dir&&dir.data)||[]).map(x=>[x.id,x])),uidByDir={},emailByUid={};
+  ((acc&&acc.data)||[]).forEach(a=>{uidByDir[a.directory_id]=a.user_id;const d=D[a.directory_id];if(d&&d.role==='student')emailByUid[a.user_id]=d.email||''});
+  const emailOf=u=>emailByUid[u.user_id]||'';
+  const note=t.error?`<p style="color:var(--coral);font-size:13px">${esc(t.error.message)} — ${TE?'ask the administrator to run v3.sql':'connect Google (admin) first, and make sure the SQL files were run'}.</p>`:'';
   const by={};(s.data||[]).forEach(x=>(by[x.test_id]=by[x.test_id]||[]).push(x));
-  v.innerHTML=`<div class="card"><div class="cardhead"><h2>Create a test</h2></div>${note}${STATE.batches.length?'':'<p style="color:var(--coral);font-size:13px">No batches are loaded on this device yet. Tap “Restore cloud” in the top bar first, then come back here.</p>'}
-  <form id="tF" style="display:grid;gap:12px"><div class="row"><div class="field"><label>Batch</label><select id="tB">${STATE.batches.map(b=>`<option value="${b.id}">${esc(b.label)} (${esc(b.center)})</option>`).join('')}</select></div><div class="field"><label>Subject</label><input id="tS" placeholder="e.g. Physics"></div><div class="field"><label>Max marks</label><input id="tM" type="number" min="1" value="100"></div></div>
+  const opts=bl.map(b=>`<option value="${esc(b.id)}">${esc(b.label||b.name)}${b.center?' ('+esc(b.center)+')':''}</option>`).join('');
+  host.innerHTML=`<div class="card" style="margin-bottom:16px"><div class="cardhead"><h2>${TE?'Assign an AI-checked test':'Create a test'}</h2></div>${note}${bl.length?'':`<p style="color:var(--coral);font-size:13px">${TE?'No batches yet — your timetable has not been published.':'No batches are loaded on this device yet. Tap “Restore cloud” in the top bar first, then come back here.'}</p>`}
+  <form id="tF" style="display:grid;gap:12px"><div class="row"><div class="field"><label>Batch</label><select id="tB">${opts}</select></div><div class="field"><label>Subject</label><input id="tS" placeholder="e.g. Physics"></div><div class="field"><label>Max marks</label><input id="tM" type="number" min="1" value="100"></div></div>
   <div class="field"><label>Title</label><input id="tT" required placeholder="e.g. Chemistry Unit Test 1"></div>
   <div class="field"><label>Question paper (paste from ChatGPT; students can read this)</label><textarea id="tQ" rows="7"></textarea><label style="margin-top:8px;font-size:12.5px">…or attach the question paper as a PDF</label><input type="file" id="tQF" accept="application/pdf"></div>
   <div class="field"><label>Marking scheme / model answers (students can NOT see this)</label><textarea id="tK" rows="7" placeholder="Paste the answer key with marks for each question"></textarea><label style="margin-top:8px;font-size:12.5px">…or attach the marking scheme as a PDF</label><input type="file" id="tKF" accept="application/pdf"></div>
   <label style="display:flex;gap:8px;align-items:center;font-size:13px"><input type="checkbox" id="tR" style="width:auto"> Show the marking scheme to students after their answers are checked</label>
   <button class="btn primary" type="submit">Create test</button></form></div>
-  <div class="card" style="margin-top:16px"><div class="cardhead"><h2>Tests &amp; results</h2></div>${(t.data||[]).map(x=>{const L=by[x.id]||[];return `<div style="padding:10px 0;border-bottom:1px solid var(--line)"><b>${esc(x.title)}</b> <span class="muted" style="font-size:12.5px">${esc(bn(x.batch_id))} · ${x.max_marks} marks · ${L.length} submitted</span><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"><button class="btn ghost" data-tg="${x.id}" data-o="${x.is_open?1:0}">${x.is_open?'Close test':'Reopen test'}</button><button class="btn ghost" data-dt="${x.id}">Delete</button></div><details data-tid="${x.id}"${T.open===x.id?' open':''} style="margin-top:8px"><summary style="cursor:pointer;color:var(--ink-2);font-weight:600">Results (${L.length})</summary>${L.map(u=>`<div style="padding:8px 0;border-top:1px solid var(--line);font-size:13px"><b>${esc(u.student_name||'Student')}</b> · ${u.status==='done'?u.score+' / '+u.max_marks:u.status}${u.error?` <span style="color:var(--coral)">${esc(u.error)}</span>`:''} <button class="btn ghost" data-sheet="${esc(u.file_path)}">Sheet ↗</button>${u.annotated_path?` <button class="btn ghost" data-ck="${esc(u.annotated_path)}">Checked paper ↗</button>`:''} ${['uploaded','error','checking'].includes(u.status)?`<button class="btn ghost" data-chk="${u.id}">Check now</button> `:''}<button class="btn ghost" data-rs="${u.id}">Reset</button>${u.result?`<div class="muted" style="margin-top:4px">${esc(u.result.overall_feedback||'')}</div>${(u.result.questions||[]).map(q=>`<div>Q${esc(q.q)}: ${esc(q.marks)}/${esc(q.max)} — ${esc(q.feedback||'')}</div>`).join('')}`:''}</div>`).join('')||'<p class="muted" style="font-size:13px">No submissions yet.</p>'}</details></div>`}).join('')||'<p class="muted">No tests yet.</p>'}</div>`;
+  <div class="card"><div class="cardhead"><h2>Tests &amp; results</h2></div>
+  ${bl.length?`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 10px"><select id="xB" style="width:auto;flex:0 1 220px">${opts}</select><button class="btn ghost" id="xBatch" type="button">⬇ Download batch marks (Excel)</button></div>`:''}
+  ${(t.data||[]).map(x=>{const L=by[x.id]||[];return `<div style="padding:10px 0;border-bottom:1px solid var(--line)"><b>${esc(x.title)}</b> <span class="muted" style="font-size:12.5px">${esc(bn(x.batch_id))} · ${x.max_marks} marks · ${L.length} submitted</span><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"><button class="btn ghost" data-tg="${x.id}" data-o="${x.is_open?1:0}">${x.is_open?'Close test':'Reopen test'}</button><button class="btn ghost" data-xl="${x.id}">⬇ Excel</button><button class="btn ghost" data-dt="${x.id}">Delete</button></div><details data-tid="${x.id}"${T.open===x.id?' open':''} style="margin-top:8px"><summary style="cursor:pointer;color:var(--ink-2);font-weight:600">Results (${L.length})</summary>${L.map(u=>`<div style="padding:8px 0;border-top:1px solid var(--line);font-size:13px"><b>${esc(u.student_name||'Student')}</b> · ${u.status==='done'?u.score+' / '+u.max_marks:u.status}${u.error?` <span style="color:var(--coral)">${esc(u.error)}</span>`:''} <button class="btn ghost" data-sheet="${esc(u.file_path)}">Sheet ↗</button>${u.annotated_path?` <button class="btn ghost" data-ck="${esc(u.annotated_path)}">Checked paper ↗</button>`:''} ${['uploaded','error','checking'].includes(u.status)?`<button class="btn ghost" data-chk="${u.id}">Check now</button> `:''}<button class="btn ghost" data-rs="${u.id}">Reset</button>${u.result?`<div class="muted" style="margin-top:4px">${esc(u.result.overall_feedback||'')}</div>${(u.result.questions||[]).map(q=>`<div>Q${esc(q.q)}: ${esc(q.marks)}/${esc(q.max)} — ${esc(q.feedback||'')}</div>`).join('')}`:''}</div>`).join('')||'<p class="muted" style="font-size:13px">No submissions yet.</p>'}</details></div>`}).join('')||'<p class="muted">No tests yet.</p>'}</div>`;
   $('tF').onsubmit=async e=>{e.preventDefault();
     const qf=$('tQF').files[0],kf=$('tKF').files[0],qt=$('tQ').value.trim(),kt=$('tK').value.trim();
-    if(!qt&&!qf)return toast('Add the question paper as text or as a PDF');
-    for(const f of [qf,kf])if(f&&(f.size>10*MB||!/\.pdf$/i.test(f.name)))return toast('Attachments must be PDF files up to 10 MB');
-    const a=await paceCloud.from('pace_tests').insert({batch_id:$('tB').value,title:$('tT').value.trim(),subject:$('tS').value.trim(),max_marks:+$('tM').value||100,question_text:qt,reveal_key:$('tR').checked}).select('id').single();
-    if(a.error)return toast(a.error.message);
-    const id=a.data.id,up=async(f,n)=>{const r=await paceCloud.storage.from('test-files').upload(id+'/'+n,f,{contentType:'application/pdf',upsert:true});if(r.error)throw r.error;return id+'/'+n};
+    if(!qt&&!qf)return tip('Add the question paper as text or as a PDF');
+    for(const f of [qf,kf])if(f&&(f.size>10*MB||!/\.pdf$/i.test(f.name)))return tip('Attachments must be PDF files up to 10 MB');
+    const f0={batch_id:$('tB').value,title:$('tT').value.trim(),subject:$('tS').value.trim(),max_marks:+$('tM').value||100,question_text:qt,reveal_key:$('tR').checked};
+    let id;
+    if(TE){const a=await paceCloud.rpc('teacher_create_test',{p_batch:f0.batch_id,p_title:f0.title,p_subject:f0.subject,p_max:f0.max_marks,p_question:qt,p_reveal:f0.reveal_key});if(a.error)return tip(a.error.message);id=a.data}
+    else{const a=await paceCloud.from('pace_tests').insert(f0).select('id').single();if(a.error)return tip(a.error.message);id=a.data.id}
+    const up=async(f,n)=>{const r=await paceCloud.storage.from('test-files').upload(id+'/'+n,f,{contentType:'application/pdf',upsert:true});if(r.error)throw r.error;return id+'/'+n};
     try{
-      if(qf)await paceCloud.from('pace_tests').update({question_file:await up(qf,'question.pdf')}).eq('id',id);
-      const sp=kf?await up(kf,'scheme.pdf'):null;
-      if(kt||sp)await paceCloud.from('pace_test_keys').insert({test_id:id,scheme_text:kt||null,scheme_file:sp});
-    }catch(err){return toast('File upload failed: '+(err.message||err)+' (was tests-v2.sql run?)')}
-    toast('Test created ✓');paintT()};
-  v.onclick=async e=>{
+      const qp=qf?await up(qf,'question.pdf'):null,sp=kf?await up(kf,'scheme.pdf'):null;
+      if(TE){const r=await paceCloud.rpc('teacher_save_test_files',{p_test:id,p_question_file:qp||'',p_scheme_text:kt,p_scheme_file:sp||''});if(r.error)throw r.error}
+      else{if(qp)await paceCloud.from('pace_tests').update({question_file:qp}).eq('id',id);if(kt||sp)await paceCloud.from('pace_test_keys').insert({test_id:id,scheme_text:kt||null,scheme_file:sp})}
+    }catch(err){return tip('File upload failed: '+(err.message||err))}
+    tip('Test created ✓');paintTests(host,ctx)};
+  host.onclick=async e=>{
     const b=e.target.closest('button');if(!b)return;
     const dt=b.closest('details');if(dt)T.open=dt.dataset.tid;
-    if(b.dataset.tg){await paceCloud.from('pace_tests').update({is_open:b.dataset.o!=='1'}).eq('id',b.dataset.tg);paintT()}
-    else if(b.dataset.dt){if(confirm('Delete this test and all its submissions?')){await paceCloud.from('pace_tests').delete().eq('id',b.dataset.dt);paintT()}}
-    else if(b.dataset.chk){b.disabled=true;b.textContent='Checking…';const r=await paceCloud.functions.invoke('super-task',{body:{submission_id:b.dataset.chk}});if(r.error)alert('Could not check: '+await errMsg(r.error));paintT()}
-    else if(b.dataset.rs){if(confirm('Reset this submission so the student can submit again?')){await paceCloud.from('pace_test_submissions').delete().eq('id',b.dataset.rs);paintT()}}
+    const again=()=>paintTests(host,ctx);
+    if(b.id==='xBatch'){const bid=$('xB').value;saveSheet('Marks - '+bn(bid),batchRows(bid,t.data||[],s.data||[],TE?[]:(dir.data||[]).filter(d=>d.role==='student'&&d.batch_id===bid).map(d=>({name:d.name,email:d.email||'',uid:uidByDir[d.id]}))))}
+    else if(b.dataset.xl){const x=(t.data||[]).find(z=>z.id===b.dataset.xl);saveSheet('Marks - '+x.title,testRows(x,by[x.id]||[],emailOf))}
+    else if(b.dataset.tg){const open=b.dataset.o!=='1',r=TE?await paceCloud.rpc('teacher_set_test_open',{p_test:b.dataset.tg,p_open:open}):await paceCloud.from('pace_tests').update({is_open:open}).eq('id',b.dataset.tg);if(r.error)tip(r.error.message);again()}
+    else if(b.dataset.dt){if(confirm('Delete this test and all its submissions?')){const r=TE?await paceCloud.rpc('teacher_delete_test',{p_test:b.dataset.dt}):await paceCloud.from('pace_tests').delete().eq('id',b.dataset.dt);if(r.error)tip(r.error.message);again()}}
+    else if(b.dataset.chk){b.disabled=true;b.textContent='Checking…';const r=await paceCloud.functions.invoke('super-task',{body:{submission_id:b.dataset.chk}});if(r.error)alert('Could not check: '+await errMsg(r.error));again()}
+    else if(b.dataset.rs){if(confirm('Reset this submission so the student can submit again?')){const r=TE?await paceCloud.rpc('teacher_reset_submission',{p_id:b.dataset.rs}):await paceCloud.from('pace_test_submissions').delete().eq('id',b.dataset.rs);if(r.error)tip(r.error.message);again()}}
     else if(b.dataset.sheet||b.dataset.ck){openSigned('answer-sheets',b.dataset.sheet||b.dataset.ck)}
   };
 }
-const prev=render;
-render=function(){prev.apply(this,arguments);if(UI.tab==='tests'&&UI.accessRole==='admin')paintT()};
+window.peTeacherTests=(host,batches)=>paintTests(host,{teacher:true,batches});
+if(!TEACHER){
+  NAV_ITEMS.push({id:'tests',ic:'📝',label:'Tests (AI check)'});
+  const prev=render;
+  render=function(){prev.apply(this,arguments);if(UI.tab==='tests'&&UI.accessRole==='admin')paintTests($('view'),{teacher:false,batches:STATE.batches})};
+}
 })();
 </script>
 
