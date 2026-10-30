@@ -2959,6 +2959,17 @@ facultyMessage=function(teacherId,date){
 .pf-m .katex-display{margin:8px 0}
 .pf-m .katex{font-size:1.08em}
 .pf-tz{display:flex;align-items:center;gap:12px;width:100%;text-align:left;cursor:pointer;background:color-mix(in srgb,#2F6BEB 12%,var(--card));border:1px solid color-mix(in srgb,#2F6BEB 35%,transparent);border-radius:14px;padding:12px 14px;margin-bottom:12px;color:var(--text);font:inherit}
+.pf-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 12px}
+.pf-bar .btn{min-height:38px;padding:6px 12px;font-size:13.5px}.pf-bar .btn.act{border-color:#E8890C;color:#E8890C}
+.pf-fire{font:700 14px 'Space Grotesk',sans-serif;color:#E8590C;background:color-mix(in srgb,#E8590C 12%,var(--card));border-radius:999px;padding:7px 12px;margin-right:auto}
+.pf-fire.off{filter:grayscale(1);opacity:.7}
+.pf-st{margin-left:auto;background:none;border:0;font-size:20px;line-height:1;color:#E8A00C;cursor:pointer;padding:0 2px}
+.pf-qh{display:flex;justify-content:space-between;align-items:center;margin:0 0 10px}
+.pf-op{display:block;width:100%;text-align:left;border:1.5px solid var(--line);background:var(--card);border-radius:12px;padding:10px 12px;margin-bottom:8px;color:var(--text);font:inherit;font-size:14px;cursor:pointer;min-height:46px}
+.pf-op:disabled{cursor:default;opacity:1}
+.pf-op.ok{border-color:#1E9E5A;background:color-mix(in srgb,#1E9E5A 13%,var(--card))}
+.pf-op.no{border-color:#D14363;background:color-mix(in srgb,#D14363 13%,var(--card))}
+.pf-op .pf-m .katex-display{margin:2px 0}
 .pf-tz span{font-size:22px}.pf-tz div{flex:1}.pf-tz b{display:block;font-size:14px}.pf-tz small{color:var(--text-muted);font-size:12.5px}
 </style>
 <script>
@@ -3118,12 +3129,58 @@ async function member(user,role){
   if(tab==='fx'&&!isStu)tab='tt';
   function fxTeaser(){
     const d=window.paceDailyFormulas(todayStr()),tp=[...new Set(d.items.map(x=>x.topic))];
-    return `<button class="pf-tz" data-tab="fx"><span>🧮</span><div><b>Today's 10 Physics formulas</b><small>${esc(tp.join(' · '))}</small></div><span style="font-size:18px">›</span></button>`;
+    let st=0,dn=false;try{const o=JSON.parse(localStorage.getItem('pace-fx:'+user.id)||'{}')||{},D=o.done||{};dn=D[todayStr()]!=null;let x=todayStr();if(!dn)x=addD(x,-1);while(D[x]!=null){st++;x=addD(x,-1)}}catch(_){}
+    return `<button class="pf-tz" data-tab="fx"><span>🧮</span><div><b>Today's 10 Physics formulas</b><small>${esc(tp.join(' · '))}${st?' · 🔥 '+st+' day streak':''}${dn?' · quiz done ✓':' · take the quiz'}</small></div><span style="font-size:18px">›</span></button>`;
+  }
+  /* ---- formula streak, bookmarks and daily quiz (saved on this device, per student) ---- */
+  const FK='pace-fx:'+user.id,F=window.PACE_FORMULAS;
+  let FX={};try{FX=JSON.parse(localStorage.getItem(FK)||'{}')||{}}catch(_){}
+  FX.done=FX.done||{};FX.stars=FX.stars||[];
+  const fxSave=()=>{try{localStorage.setItem(FK,JSON.stringify(FX))}catch(_){}};
+  let fmode='day',Q=null;
+  function streak(){let n=0,d=todayStr();if(FX.done[d]==null)d=addD(d,-1);while(FX.done[d]!=null){n++;d=addD(d,-1)}return n}
+  function rng(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+  function shuffle(a,r){for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+  function buildQuiz(day){
+    const it=window.paceDailyFormulas(day).items,r=rng(Date.parse(day+'T00:00:00Z')/864e5);
+    const pick=shuffle([...Array(it.length).keys()],r).slice(0,5);
+    return {day,i:0,score:0,ans:null,qs:pick.map((a,n)=>{
+      const others=shuffle([...Array(it.length).keys()].filter(x=>x!==a&&it[x].name!==it[a].name),r).slice(0,3);
+      return {type:n%2?'tex':'name',a,opts:shuffle([a,...others],r)}})};
+  }
+  const star=k=>`<button class="pf-st${FX.stars.includes(k)?' on':''}" data-star="${k}" aria-label="Save formula">${FX.stars.includes(k)?'★':'☆'}</button>`;
+  const card=(x,i,k)=>`<div class="pf-c"><div class="pf-t"><span class="pf-n">${i}</span><b>${esc(x.name)}</b>${star(k)}</div><em>${esc(x.topic)}</em><div class="pf-m" data-tex="${esc(x.tex)}"><span class="muted" style="font-size:13px">Loading formula…</span></div></div>`;
+  function fxBar(){
+    const t0=todayStr(),st=streak(),sc=FX.done[t0];
+    return `<div class="pf-bar"><span class="pf-fire${st?'':' off'}">🔥 ${st} day${st===1?'':'s'}</span>`+
+      (fmode==='day'?`<button class="btn ${sc==null?'primary':'ghost'}" data-fm="quiz">${sc==null?'Take today\'s quiz':'Quiz done · '+sc+'/5'}</button>`:`<button class="btn ghost" data-fm="day">← Today's formulas</button>`)+
+      `<button class="btn ghost${fmode==='saved'?' act':''}" data-fm="saved">⭐ Saved (${FX.stars.length})</button></div>`;
+  }
+  function quizView(){
+    if(!Q||Q.day!==todayStr())Q=buildQuiz(todayStr());
+    const it=window.paceDailyFormulas(Q.day).items;
+    if(Q.i>=Q.qs.length){
+      const msg=Q.score===5?'Perfect! 🎉':Q.score>=3?'Well done 👍':'Keep revising — you\'ll get there 💪';
+      return `<div class="card" style="text-align:center"><div style="font-size:40px">${Q.score===5?'🏆':Q.score>=3?'⭐':'📘'}</div><h2 style="margin:6px 0">${Q.score} / 5</h2><p class="muted" style="margin:0 0 6px">${msg}</p><p style="margin:0 0 14px">🔥 Streak: <b>${streak()} day${streak()===1?'':'s'}</b></p><button class="btn primary" data-fm="day">Back to today's formulas</button> <button class="btn ghost" data-fm="retry">Try again</button></div>`;
+    }
+    const q=Q.qs[Q.i],A=it[q.a],done=Q.ans!=null;
+    const prompt=q.type==='name'?`<p class="muted" style="margin:0 0 4px;font-size:13px">Which formula is this?</p><div class="pf-c"><div class="pf-m" data-tex="${esc(A.tex)}"></div></div>`
+      :`<p class="muted" style="margin:0 0 4px;font-size:13px">Pick the correct formula for</p><div class="pf-c"><b style="font-size:15px">${esc(A.name)}</b></div>`;
+    const opts=q.opts.map((o,j)=>{const cls=done?(o===q.a?' ok':j===Q.ans?' no':''):'';
+      return `<button class="pf-op${cls}" data-qa="${j}"${done?' disabled':''}>${q.type==='name'?esc(it[o].name):`<div class="pf-m" data-tex="${esc(it[o].tex)}"></div>`}</button>`}).join('');
+    return `<div class="pf-qh"><b>Question ${Q.i+1} of ${Q.qs.length}</b><span class="muted">Score ${Q.score}</span></div>`+prompt+opts+
+      (done?`<p style="margin:4px 0 10px;font-weight:600;color:${q.opts[Q.ans]===q.a?'#1E9E5A':'#D14363'}">${q.opts[Q.ans]===q.a?'✓ Correct!':'✗ Not quite — the correct answer is highlighted.'}</p><button class="btn primary" data-qn="1">${Q.i+1<Q.qs.length?'Next question →':'See result'}</button>`:'');
+  }
+  function savedView(){
+    if(!FX.stars.length)return `<div class="card"><p class="muted" style="margin:0">No saved formulas yet. Tap ☆ on any formula to save it for revision.</p></div>`;
+    return FX.stars.map((k,i)=>{const r=F.list[k];return r?card({name:r[1],tex:r[2],topic:F.topics[r[0]]},i+1,k):''}).join('');
   }
   function formulas(){
+    if(fmode==='quiz')return fxBar()+quizView();
+    if(fmode==='saved')return fxBar()+`<h2 style="margin:4px 0 12px;font:700 18px 'Space Grotesk',sans-serif">⭐ My revision list</h2>`+savedView();
     const d=window.paceDailyFormulas(fday),tp=[...new Set(d.items.map(x=>x.topic))],t0=todayStr();
-    return `<div class="pf-head"><button class="pe-nav" data-fx="-1" aria-label="Previous day">‹</button><h2>${fday===t0?'Today':esc(dayName(fday))}, ${esc(fmtDateLong(fday))}<small>${esc(tp.join(' · '))} · Set ${d.set} of ${d.sets}</small></h2><button class="pe-nav" data-fx="1" aria-label="Next day"${fday>=t0?' disabled style="opacity:.35"':''}>›</button></div>`+
-      d.items.map((x,i)=>`<div class="pf-c"><div class="pf-t"><span class="pf-n">${i+1}</span><b>${esc(x.name)}</b></div><em>${esc(x.topic)}</em><div class="pf-m" data-tex="${esc(x.tex)}"><span class="muted" style="font-size:13px">Loading formula…</span></div></div>`).join('')+
+    return fxBar()+`<div class="pf-head"><button class="pe-nav" data-fx="-1" aria-label="Previous day">‹</button><h2>${fday===t0?'Today':esc(dayName(fday))}, ${esc(fmtDateLong(fday))}<small>${esc(tp.join(' · '))} · Set ${d.set} of ${d.sets}</small></h2><button class="pe-nav" data-fx="1" aria-label="Next day"${fday>=t0?' disabled style="opacity:.35"':''}>›</button></div>`+
+      d.items.map((x,i)=>card(x,i+1,x.no-1)).join('')+
       `<p class="muted" style="font-size:12px;text-align:center;margin:6px 0 0">From the PACE Physics Formula Booklet · a new set every day</p>`;
   }
   function typeset(){
@@ -3176,7 +3233,12 @@ async function member(user,role){
   V.onclick=e=>{
     const d=e.target.closest('[data-d]'),w=e.target.closest('[data-w]'),k=e.target.closest('[data-tab]'),s=e.target.closest('[data-sub]'),fx=e.target.closest('[data-fx]');
     if(fx){const nd=addD(fday,+fx.dataset.fx);if(nd<=todayStr()){fday=nd;paint()}return}
-    if(k){tab=k.dataset.tab;window.__pgTab=tab;if(tab==='fx')fday=todayStr();paint()}else if(s){sub=s.dataset.sub;paint()}
+    const fm=e.target.closest('[data-fm]'),qa=e.target.closest('[data-qa]'),qn=e.target.closest('[data-qn]'),sb=e.target.closest('[data-star]');
+    if(fm){const m=fm.dataset.fm;if(m==='retry'){Q=buildQuiz(todayStr());fmode='quiz'}else{fmode=m;if(m==='quiz'&&(!Q||Q.i>=Q.qs.length&&FX.done[todayStr()]==null))Q=buildQuiz(todayStr());if(m==='day')fday=todayStr()}paint();V.scrollTop=0;window.scrollTo(0,0);return}
+    if(qa&&Q&&Q.ans==null){Q.ans=+qa.dataset.qa;const q=Q.qs[Q.i];if(q.opts[Q.ans]===q.a)Q.score++;paint();return}
+    if(qn&&Q){Q.i++;Q.ans=null;if(Q.i>=Q.qs.length){const t=todayStr();FX.done[t]=Math.max(FX.done[t]??0,Q.score);fxSave()}paint();return}
+    if(sb){const k=+sb.dataset.star,i=FX.stars.indexOf(k);if(i>=0)FX.stars.splice(i,1);else FX.stars.push(k);fxSave();paint();return}
+    if(k){tab=k.dataset.tab;window.__pgTab=tab;if(tab==='fx'){fday=todayStr();fmode='day'}paint()}else if(s){sub=s.dataset.sub;paint()}
     else if(d){day=d.dataset.d;paint()}else if(w){day=addD(day,+w.dataset.w);paint()}
   };
   clearInterval(window.__pgT);window.__pgT=setInterval(()=>{const el=$('pgDoubt');if(el&&V.classList.contains('open'))el.innerHTML=doubtHTML()},60000);
