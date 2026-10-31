@@ -3057,11 +3057,23 @@ window.paceLoadKatex=function(){
   });
 };
 /* 10 formulas per day, same set for every student, cycling through the whole sheet in order */
-window.paceDailyFormulas=function(day){
-  const F=window.PACE_FORMULAS,N=F.list.length,sets=Math.ceil(N/10);
+/* which chapters each class sees: 11th = up to Circular Motion, 12th = everything, 9th/10th = none yet */
+window.PACE_FX_SCOPE={
+  xi:['Units and Dimensions','Rectilinear Motion','Projectile Motion','Relative Motion',"Newton's Laws of Motion",'Friction','Work, Power & Energy','Circular Motion'],
+  xii:null};
+window.paceFormulaGrade=function(batches){
+  const L=(batches||[]).map(b=>String((b&&b.label)||'')+' '+String((b&&b.short)||''));
+  if(L.some(x=>/\bXII\b|\b12(th)?\b/i.test(x)))return'xii';
+  if(L.some(x=>/\bXI\b|\b11(th)?\b/i.test(x)))return'xi';
+  return'';                                   /* 9th, 10th, foundation, or unknown: no formulas yet */
+};
+window.paceDailyFormulas=function(day,grade){
+  const F=window.PACE_FORMULAS,S=window.PACE_FX_SCOPE[grade||'xii'];
+  const pool=F.list.map((r,k)=>k).filter(k=>!S||S.includes(F.topics[F.list[k][0]]));
+  const N=pool.length,sets=Math.ceil(N/10);
   const idx=Math.round((Date.parse(day+'T00:00:00Z')-Date.parse('2026-11-01T00:00:00Z'))/864e5);
   const set=((idx%sets)+sets)%sets;
-  return {set:set+1,sets,items:[...Array(10)].map((_,i)=>{const k=(set*10+i)%N,r=F.list[k];return {no:k+1,topic:F.topics[r[0]],name:r[1],tex:r[2]}})};
+  return {set:set+1,sets,items:[...Array(Math.min(10,N))].map((_,i)=>{const k=pool[(set*10+i)%N],r=F.list[k];return {no:k+1,topic:F.topics[r[0]],name:r[1],tex:r[2]}})};
 };
 </script>
 <!-- ===== PACE chapters & lecture numbers ===== -->
@@ -3524,10 +3536,11 @@ async function member(user,role){
   const TC=Object.fromEntries((P.teachers||[]).map(t=>[t.id,String(t.code||'').toUpperCase()])),chap=(c,b)=>{const i=window.PCH&&PCH.info(c,P.classes,id=>TC[id],b||c.batchId);return i&&!i.none?i:null};
   const T=Object.fromEntries((P.teachers||[]).map(t=>[t.id,t.name])),B=Object.fromEntries((P.batches||[]).map(b=>[b.id,b.label])),many=(P.batches||[]).length>1;
   let day=todayStr(),tab=window.__pgTab||'tt',sub='',fday=todayStr();
-  const isStu=role==='student'&&!!window.PACE_FORMULAS;
+  const FG=window.paceFormulaGrade?paceFormulaGrade(P.batches):'xii';
+  const isStu=role==='student'&&!!window.PACE_FORMULAS&&!!FG;
   if(tab==='fx'&&!isStu)tab='tt';
   function fxTeaser(){
-    const d=window.paceDailyFormulas(todayStr()),tp=[...new Set(d.items.map(x=>x.topic))];
+    const d=window.paceDailyFormulas(todayStr(),FG),tp=[...new Set(d.items.map(x=>x.topic))];
     let st=0,dn=false;try{const o=JSON.parse(localStorage.getItem('pace-fx:'+user.id)||'{}')||{},D=o.done||{};dn=D[todayStr()]!=null;let x=todayStr();if(!dn)x=addD(x,-1);while(D[x]!=null){st++;x=addD(x,-1)}}catch(_){}
     return `<button class="pf-tz" data-tab="fx"><span>🧮</span><div><b>Today's 10 Physics formulas</b><small>${esc(tp.join(' · '))}${st?' · 🔥 '+st+' day streak':''}${dn?' · quiz done ✓':' · take the quiz'}</small></div><span style="font-size:18px">›</span></button>`;
   }
@@ -3541,7 +3554,7 @@ async function member(user,role){
   function rng(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
   function shuffle(a,r){for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
   function buildQuiz(day){
-    const it=window.paceDailyFormulas(day).items,r=rng(Date.parse(day+'T00:00:00Z')/864e5);
+    const it=window.paceDailyFormulas(day,FG).items,r=rng(Date.parse(day+'T00:00:00Z')/864e5);
     const pick=shuffle([...Array(it.length).keys()],r).slice(0,5);
     return {day,i:0,score:0,ans:null,qs:pick.map((a,n)=>{
       const others=shuffle([...Array(it.length).keys()].filter(x=>x!==a&&it[x].name!==it[a].name),r).slice(0,3);
@@ -3557,7 +3570,7 @@ async function member(user,role){
   }
   function quizView(){
     if(!Q||Q.day!==todayStr())Q=buildQuiz(todayStr());
-    const it=window.paceDailyFormulas(Q.day).items;
+    const it=window.paceDailyFormulas(Q.day,FG).items;
     if(Q.i>=Q.qs.length){
       const msg=Q.score===5?'Perfect! 🎉':Q.score>=3?'Well done 👍':'Keep revising — you\'ll get there 💪';
       return `<div class="card" style="text-align:center"><div style="font-size:40px">${Q.score===5?'🏆':Q.score>=3?'⭐':'📘'}</div><h2 style="margin:6px 0">${Q.score} / 5</h2><p class="muted" style="margin:0 0 6px">${msg}</p><p style="margin:0 0 14px">🔥 Streak: <b>${streak()} day${streak()===1?'':'s'}</b></p><button class="btn primary" data-fm="day">Back to today's formulas</button> <button class="btn ghost" data-fm="retry">Try again</button></div>`;
@@ -3577,7 +3590,7 @@ async function member(user,role){
   function formulas(){
     if(fmode==='quiz')return fxBar()+quizView();
     if(fmode==='saved')return fxBar()+`<h2 style="margin:4px 0 12px;font:700 18px 'Space Grotesk',sans-serif">⭐ My revision list</h2>`+savedView();
-    const d=window.paceDailyFormulas(fday),tp=[...new Set(d.items.map(x=>x.topic))],t0=todayStr();
+    const d=window.paceDailyFormulas(fday,FG),tp=[...new Set(d.items.map(x=>x.topic))],t0=todayStr();
     return fxBar()+`<div class="pf-head"><button class="pe-nav" data-fx="-1" aria-label="Previous day">‹</button><h2>${fday===t0?'Today':esc(dayName(fday))}, ${esc(fmtDateLong(fday))}<small>${esc(tp.join(' · '))} · Set ${d.set} of ${d.sets}</small></h2><button class="pe-nav" data-fx="1" aria-label="Next day"${fday>=t0?' disabled style="opacity:.35"':''}>›</button></div>`+
       d.items.map((x,i)=>card(x,i+1,x.no-1)).join('')+
       `<p class="muted" style="font-size:12px;text-align:center;margin:6px 0 0">From the PACE Physics Formula Booklet · a new set every day</p>`;
@@ -3601,7 +3614,7 @@ async function member(user,role){
     const line=LINES[Math.abs(Math.round(Date.parse(t+'T00:00:00Z')/864e5))%LINES.length];
     const bl=(P.batches||[]).map(b=>b.label).filter(Boolean).join(', ');
     return `<div class="pg-hero"><div class="pg-hero-t"><b>${greet}${first?', '+esc(first):''} 👋</b><span>${esc(dayName(t))}, ${esc(fmtDateLong(t))}${bl?' · '+esc(bl):''}</span></div>
-      <div class="pg-stats"><button data-tab="tt"><b>${nCls}</b>class${nCls===1?'':'es'} today</button><button data-tab="hw"><b>${up.length}</b>homework due</button>${role==='student'?`<button data-tab="fx"><b>🔥 ${st}</b>day streak</button>`:''}</div>
+      <div class="pg-stats"><button data-tab="tt"><b>${nCls}</b>class${nCls===1?'':'es'} today</button><button data-tab="hw"><b>${up.length}</b>homework due</button>${isStu?`<button data-tab="fx"><b>🔥 ${st}</b>day streak</button>`:''}</div>
       <p class="pg-line">💡 ${esc(line)}</p></div>`;
   }
   function installCard(){
