@@ -1994,7 +1994,9 @@ async function initPrivateTeacherView(){
       document.getElementById('teacherUpdated').textContent='Last published: '+(updatedAt?new Date(updatedAt).toLocaleString():'Not available');
       for(let w=0;w<100&&!window.PCH;w++)await new Promise(r=>setTimeout(r,50));
       if(window.PCH){await PCH.load();let cs=document.getElementById('peChap');if(!cs){cs=document.createElement('section');cs.className='card';cs.id='peChap';cs.style.marginTop='16px';scheduleCard.after(cs)}
-        PCH.panel(cs,{classes:payload.classes||[],teachers:[payload.teacher||{}],batches:payload.batches||[],codes:[String((payload.teacher||{}).code||'')],self:true,onChange:renderTeacherDay});}
+        PCH.panel(cs,{classes:payload.classes||[],teachers:[payload.teacher||{}],batches:payload.batches||[],weekly:payload.weeklyPattern||{},codes:[String((payload.teacher||{}).code||'')],self:true,onChange:renderTeacherDay});}
+      for(let w=0;w<100&&!window.PLV;w++)await new Promise(r=>setTimeout(r,50));
+      if(window.PLV){let ls=document.getElementById('peLeave');if(!ls){ls=document.createElement('section');ls.className='card';ls.id='peLeave';ls.style.marginTop='16px';(document.getElementById('peChap')||scheduleCard).after(ls)}PLV.teacher(ls,payload)}
       renderTeacherDay();
     }catch(e){status.textContent='Could not load your timetable: '+e.message;}
   }
@@ -3125,13 +3127,14 @@ const PCH=window.PCH={rows:[],loaded:false,
     const codeOf=id=>String((T.get(id)||{}).code||'').toUpperCase();
     const allowed=c=>!o.codes||o.codes.map(x=>String(x).toUpperCase()).includes(c);
     const pairs=new Map();
-    (o.classes||[]).filter(c=>regular(c)&&c.date>=lo).forEach(c=>{
-      [c.batchId,c.secondBatchId].filter(Boolean).forEach(b=>{
-        const code=codeOf(c.teacherId);if(!code||!allowed(code)||!B.has(b))return;
-        const k=b+'|'+c.teacherId;const p=pairs.get(k)||{k,b,tid:c.teacherId,code,subject:'',list:[]};
-        p.list.push(c);if(c.subject)p.subject=c.subject;pairs.set(k,p);
-      });
-    });
+    const add=(b,tid,subject,c)=>{const code=codeOf(tid);if(!b||!code||!allowed(code)||!B.has(b))return;
+      const k=b+'|'+tid;const p=pairs.get(k)||{k,b,tid,code,subject:'',list:[]};
+      if(c)p.list.push(c);if(subject&&(!p.subject||c))p.subject=subject;pairs.set(k,p)};
+    /* 1) scheduled classes, 2) the weekly plan, 3) every batch on the teacher's own list */
+    (o.classes||[]).filter(c=>regular(c)&&c.date>=lo).forEach(c=>[c.batchId,c.secondBatchId].filter(Boolean).forEach(b=>add(b,c.teacherId,c.subject,c)));
+    (o.classes||[]).filter(c=>regular(c)&&c.date<lo).forEach(c=>[c.batchId,c.secondBatchId].filter(Boolean).forEach(b=>add(b,c.teacherId,c.subject,null)));
+    Object.entries(o.weekly||{}).forEach(([b,days])=>Object.values(days||{}).forEach(sl=>(sl||[]).forEach(x=>x&&x.teacherId&&add(b,x.teacherId,x.subject,null))));
+    if(o.self&&o.teachers&&o.teachers[0])(o.batches||[]).forEach(b=>add(b.id,o.teachers[0].id,'',null));
     const P=[...pairs.values()].sort((a,b)=>String((B.get(a.b)||{}).label).localeCompare(String((B.get(b.b)||{}).label))||a.code.localeCompare(b.code));
     const nextOf=p=>p.list.filter(c=>c.date>t0||(c.date===t0&&c.end>hm)).sort((a,b)=>before(a,b)?-1:1)[0]||null;
     const draw=()=>{
@@ -3245,12 +3248,144 @@ if(typeof NAV_ITEMS!=='undefined'&&typeof render==='function'&&!/[?&](teacher|st
       if(UI.accessRole!=='admin'){v.innerHTML='<div class="card"><p class="muted">Admin only.</p></div>';return}
       if(!document.getElementById('chAdmin')){v.innerHTML='<div class="card" id="chAdmin"><p class="muted">Loading chapters…</p></div>';}
       const el=document.getElementById('chAdmin');
-      const go=()=>PCH.panel(el,{classes:STATE.classes,teachers:STATE.teachers,batches:STATE.batches,codes:null,self:false});
+      const go=()=>PCH.panel(el,{classes:STATE.classes,teachers:STATE.teachers,batches:STATE.batches,weekly:STATE.weeklyPattern||{},codes:null,self:false});
       if(PCH.loaded)go();else PCH.load().then(err=>{if(err&&err!=='offline')el.innerHTML=`<p class="muted">Could not load chapters: ${E(err)}. Run chapters.sql in Supabase.</p>`;else go()});
     }}
   };
   const refresh=async()=>{if(document.hidden)return;const err=await PCH.load();if(err)return;const s=JSON.stringify(PCH.rows);if(s!==sig){sig=s;if(['faculty','students'].includes(UI.tab))render()}};
   setTimeout(refresh,1500);setInterval(refresh,60000);
+}
+})();
+</script>
+<!-- ===== PACE leave / holiday requests ===== -->
+<style id="pace-leave-css">
+.lv-f{display:grid;gap:10px;margin-top:10px}
+.lv-f .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.lv-f input{box-sizing:border-box;width:100%}
+.lv-hint{font-size:12.5px;color:var(--text-muted)}
+.lv-row{border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-top:10px;background:var(--card)}
+.lv-row .top{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:baseline}
+.lv-row b{font-size:14.5px}
+.lv-st{font-size:12px;font-weight:700;border-radius:999px;padding:3px 10px;white-space:nowrap}
+.lv-st.pending{background:color-mix(in srgb,#E8890C 16%,var(--card));color:#B45309}
+.lv-st.approved{background:color-mix(in srgb,#1E9E5A 16%,var(--card));color:#15803D}
+.lv-st.declined{background:color-mix(in srgb,#D14363 14%,var(--card));color:#BE123C}
+.lv-meta{font-size:13px;color:var(--text-muted);margin-top:4px;line-height:1.45}
+.lv-cls{margin:8px 0 0;padding:8px 10px;border-radius:10px;background:color-mix(in srgb,#E8890C 9%,var(--card));font-size:12.5px;line-height:1.5}
+.lv-b{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.lv-b .btn{min-height:36px;padding:6px 12px;font-size:13px}
+.lv-b input{flex:1 1 180px;box-sizing:border-box}
+.lv-tabs{display:flex;gap:6px;margin:10px 0 2px}
+</style>
+<script>
+(function(){
+const P2=n=>String(n).padStart(2,'0');
+const iso=d=>d.getFullYear()+'-'+P2(d.getMonth()+1)+'-'+P2(d.getDate());
+const today=()=>iso(new Date());
+const addD=(s,n)=>{const d=new Date(s+'T00:00:00');d.setDate(d.getDate()+n);return iso(d)};
+const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const nice=d=>new Date(d+'T00:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
+const range=(a,b)=>{const r=[];for(let d=a;d<=b&&r.length<62;d=addD(d,1))r.push(d);return r};
+const span=(a,b)=>a===b?nice(a):nice(a)+' → '+nice(b);
+const days=(a,b)=>range(a,b).length;
+const t12=t=>{const[h,m]=String(t).split(':').map(Number);return((h%12)||12)+':'+P2(m)+(h<12?' AM':' PM')};
+const ST={pending:'⏳ Waiting for approval',approved:'✅ Approved',declined:'❌ Declined'};
+const ok=()=>typeof paceCloud!=='undefined'&&paceCloud;
+
+const PLV=window.PLV={
+  /* ---------- teacher page: "My Holidays" ---------- */
+  async teacher(el,payload){
+    const me=payload.teacher||{},code=String(me.code||'').toUpperCase(),cls=(payload.classes||[]).filter(c=>!c.isDoubt);
+    const B=new Map((payload.batches||[]).map(b=>[b.id,b]));
+    let list=[],err='';
+    const load=async()=>{const r=await paceCloud.from('pace_leave_requests').select('id,from_date,to_date,reason,status,admin_note,created_at').order('from_date',{ascending:false}).limit(30);
+      err=r.error?r.error.message:'';list=r.data||[]};
+    const affected=(a,b)=>cls.filter(c=>c.date>=a&&c.date<=b).sort((x,y)=>(x.date+x.start).localeCompare(y.date+y.start));
+    const draw=(msg,bad)=>{
+      const t0=today(),f=el.querySelector('form'),fa=f?f.a.value:addD(t0,1),fb=f?f.b.value:'',fr=f?f.r.value:'';
+      el.innerHTML=`<h2 style="margin:0 0 4px">🏖️ My Holidays</h2><p class="muted" style="margin:0;font-size:13px">Ask for a day off. The office approves it and plans your classes around it.</p>
+        <form class="lv-f"><div class="two"><div class="field"><label>From</label><input name="a" type="date" required min="${t0}" value="${E(fa)}"></div><div class="field"><label>To (optional)</label><input name="b" type="date" min="${t0}" value="${E(fb)}"></div></div>
+        <div class="field"><label>Reason (optional — only the office sees this)</label><input name="r" maxlength="300" placeholder="e.g. Family function" value="${E(fr)}"></div>
+        <div class="lv-hint" id="lvAff"></div><button class="btn primary" type="submit">Send holiday request</button><div class="lv-hint" id="lvMsg" style="color:${bad?'var(--coral)':'inherit'}">${E(msg||'')}</div></form>
+        ${err?`<p class="muted" style="margin-top:10px">Could not load your requests: ${E(err)}</p>`:''}
+        ${list.length?'<h3 style="margin:16px 0 0;font-size:14px">Your requests</h3>'+list.map(r=>`<div class="lv-row"><div class="top"><b>${E(span(r.from_date,r.to_date))}</b><span class="lv-st ${r.status}">${ST[r.status]||r.status}</span></div>
+          <div class="lv-meta">${days(r.from_date,r.to_date)} day${days(r.from_date,r.to_date)>1?'s':''}${r.reason?' · '+E(r.reason):''}${r.status==='declined'&&r.admin_note?'<br>Office: '+E(r.admin_note):''}</div>
+          ${r.status==='pending'?`<div class="lv-b"><button class="btn ghost" type="button" data-cancel="${E(r.id)}">Cancel request</button></div>`:''}</div>`).join(''):''}`;
+      const F=el.querySelector('form');
+      const prev=()=>{const a=F.a.value,b=F.b.value||a,x=el.querySelector('#lvAff');if(!a||b<a){x.textContent='';return}
+        const L=affected(a,b);x.innerHTML=L.length?`⚠ You have <b>${L.length} class${L.length>1?'es':''}</b> on ${a===b?'this day':'these days'} — the office will arrange them.`:'No classes scheduled on '+(a===b?'this day':'these days')+'.'};
+      F.a.onchange=F.b.onchange=prev;prev();
+      F.onsubmit=async e=>{e.preventDefault();const a=F.a.value,b=F.b.value||a;
+        if(b<a)return draw('“To” must be on or after “From”.',1);if(days(a,b)>31)return draw('Please request at most 31 days at a time.',1);
+        if(list.some(r=>r.status!=='declined'&&!(b<r.from_date||a>r.to_date)))return draw('You already have a request covering some of these dates.',1);
+        el.querySelector('#lvMsg').textContent='Sending…';
+        const r=await paceCloud.from('pace_leave_requests').insert({teacher_code:code,teacher_name:me.name||'',from_date:a,to_date:b,reason:F.r.value.trim()||null});
+        if(r.error)return draw('Could not send: '+r.error.message,1);
+        await load();el.querySelector('form')&&el.querySelector('form').reset();draw('✓ Request sent. You will see here when it is approved.');
+      };
+    };
+    el.onclick=async e=>{const c=e.target.closest('[data-cancel]');if(!c)return;if(!confirm('Cancel this holiday request?'))return;
+      const r=await paceCloud.from('pace_leave_requests').delete().eq('id',c.dataset.cancel);await load();draw(r.error?'Could not cancel: '+r.error.message:'Request cancelled.',!!r.error)};
+    el.innerHTML='<p class="muted">Loading holidays…</p>';await load();draw();
+  },
+  /* ---------- admin: "Leave Requests" ---------- */
+  pending:0,
+  async admin(el){
+    let list=[],err='',view='pending';
+    const tByCode=c=>(STATE.teachers||[]).find(t=>String(t.code||'').toUpperCase()===String(c||'').toUpperCase());
+    const bName=id=>{const b=(STATE.batches||[]).find(x=>x.id===id);return b?b.label+(b.short?' ('+b.short+')':''):'Batch'};
+    const load=async()=>{const r=await paceCloud.from('pace_leave_requests').select('*').order('created_at',{ascending:false}).limit(200);err=r.error?r.error.message:'';list=r.data||[];PLV.pending=list.filter(x=>x.status==='pending').length;PLV.badge()};
+    const draw=msg=>{
+      const L=list.filter(r=>view==='all'||r.status==='pending').sort((a,b)=>view==='pending'?a.from_date.localeCompare(b.from_date):0);
+      el.innerHTML=`<div class="card"><h2 style="margin:0 0 4px">🏖️ Leave Requests</h2><p class="muted" style="margin:0;font-size:13px">Teachers ask for holidays from their page. Approving adds the dates to the holiday list (Weekly Plan → Holidays), so the weekly plan skips that teacher.</p>
+        <div class="lv-tabs"><button class="pe-chip${view==='pending'?' act':''}" data-v="pending">Waiting (${PLV.pending})</button><button class="pe-chip${view==='all'?' act':''}" data-v="all">All requests</button></div>
+        ${msg?`<p style="margin:8px 0 0;font-size:13px">${msg}</p>`:''}${err?`<p class="muted">Could not load requests: ${E(err)}. Run leave.sql in Supabase.</p>`:''}
+        ${!err&&!L.length?`<p class="muted" style="margin-top:12px">${view==='pending'?'No requests waiting. 🎉':'No requests yet.'}</p>`:''}
+        ${L.map(r=>{const t=tByCode(r.teacher_code),n=days(r.from_date,r.to_date);
+          const C=t?(STATE.classes||[]).filter(c=>c.teacherId===t.id&&!c.isDoubt&&c.date>=r.from_date&&c.date<=r.to_date).sort((x,y)=>(x.date+x.start).localeCompare(y.date+y.start)):[];
+          return `<div class="lv-row" data-id="${E(r.id)}"><div class="top"><b>${E(t?t.name:(r.teacher_name||r.teacher_code))} (${E(r.teacher_code)})</b><span class="lv-st ${r.status}">${ST[r.status]||r.status}</span></div>
+            <div class="lv-meta">📅 <b>${E(span(r.from_date,r.to_date))}</b> · ${n} day${n>1?'s':''}${r.reason?'<br>📝 '+E(r.reason):''}<br>Requested ${E(new Date(r.created_at).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}))}${r.admin_note?'<br>Note: '+E(r.admin_note):''}</div>
+            ${C.length?`<div class="lv-cls">⚠ <b>${C.length} class${C.length>1?'es':''} already scheduled</b> — reassign or remove them in Schedule:<br>${C.map(c=>`${E(nice(c.date))} · ${E(t12(c.start))} · ${E(bName(c.batchId))}${c.subject?' · '+E(c.subject):''}`).join('<br>')}</div>`:(r.status==='pending'?'<div class="lv-meta">No classes scheduled on these days.</div>':'')}
+            ${!t&&r.status==='pending'?`<div class="lv-cls">⚠ No teacher with code ${E(r.teacher_code)} in Teachers &amp; Batches — add them before approving.</div>`:''}
+            ${r.status==='pending'?`<div class="lv-b"><button class="btn primary" data-act="ok"${t?'':' disabled'}>Approve</button><input placeholder="Note for teacher (optional, for decline)" maxlength="300" data-note><button class="btn ghost" data-act="no">Decline</button></div>`:''}</div>`}).join('')}</div>`;
+    };
+    el.onclick=async e=>{
+      const v=e.target.closest('[data-v]');if(v){view=v.dataset.v;draw();return}
+      const a=e.target.closest('[data-act]');if(!a)return;const row=a.closest('[data-id]'),r=list.find(x=>x.id===row.dataset.id);if(!r)return;
+      a.disabled=true;
+      if(a.dataset.act==='ok'){
+        const t=tByCode(r.teacher_code);if(!t){a.disabled=false;return}
+        const u=await paceCloud.from('pace_leave_requests').update({status:'approved',decided_at:new Date().toISOString()}).eq('id',r.id);
+        if(u.error){a.disabled=false;return draw('<span style="color:var(--coral)">Could not approve: '+E(u.error.message)+'</span>')}
+        const ns=structuredClone(STATE);ns.holidays=ns.holidays||[];let added=0;
+        range(r.from_date,r.to_date).forEach(d=>{if(!ns.holidays.some(h=>h.teacherId===t.id&&h.date===d)){ns.holidays.push({id:uid('hol'),teacherId:t.id,date:d,reason:'Leave'});added++}});
+        if(added)persist(ns);
+        await load();draw(`✅ Approved — ${E(t.name)} is on holiday ${E(span(r.from_date,r.to_date))}.`);
+      }else{
+        const note=(row.querySelector('[data-note]')||{}).value||'';
+        const u=await paceCloud.from('pace_leave_requests').update({status:'declined',admin_note:note.trim()||null,decided_at:new Date().toISOString()}).eq('id',r.id);
+        if(u.error){a.disabled=false;return draw('<span style="color:var(--coral)">Could not decline: '+E(u.error.message)+'</span>')}
+        await load();draw('Request declined.');
+      }
+    };
+    el.innerHTML='<div class="card"><p class="muted">Loading requests…</p></div>';await load();draw();
+  },
+  badge(){const it=(typeof NAV_ITEMS!=='undefined')&&NAV_ITEMS.find(x=>x.id==='leave');if(!it)return;const lbl='Leave Requests'+(PLV.pending?` (${PLV.pending})`:'');
+    if(it.label!==lbl){it.label=lbl;document.querySelectorAll('#nav button,#mobiletabs button').forEach(b=>{if(/Leave Requests/.test(b.textContent))b.innerHTML=b.querySelector('.ic')?`<span class="ic">🏖️</span> ${lbl}`:lbl})}}
+};
+
+/* admin menu item + screen */
+if(typeof NAV_ITEMS!=='undefined'&&typeof render==='function'&&!/[?&](teacher|student)=1/.test(location.search)){
+  if(!NAV_ITEMS.some(x=>x.id==='leave'))NAV_ITEMS.splice(Math.max(0,NAV_ITEMS.findIndex(x=>x.id==='predict')),0,{id:'leave',label:'Leave Requests',ic:'🏖️'});
+  const prevR=render;
+  render=function(){prevR.apply(this,arguments);
+    if(UI.tab==='leave'){const v=document.getElementById('view');if(!v)return;
+      if(UI.accessRole!=='admin'){v.innerHTML='<div class="card"><p class="muted">Admin only.</p></div>';return}
+      if(!ok()){v.innerHTML='<div class="card"><p class="muted">Connect to the internet to see leave requests.</p></div>';return}
+      if(!v.querySelector('#lvAdmin')){v.innerHTML='<div id="lvAdmin"></div>';PLV.admin(v.querySelector('#lvAdmin'))}}};
+  const tick=async()=>{if(!ok()||document.hidden||(typeof UI!=='undefined'&&UI.accessRole!=='admin'))return;
+    const r=await paceCloud.from('pace_leave_requests').select('id',{count:'exact',head:true}).eq('status','pending');if(!r.error){PLV.pending=r.count||0;PLV.badge()}};
+  setTimeout(tick,2500);setInterval(tick,60000);
 }
 })();
 </script>
