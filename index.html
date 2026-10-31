@@ -3092,6 +3092,10 @@ window.paceDailyFormulas=function(day,grade){
 .ch-f input{box-sizing:border-box;width:100%}
 .ch-f small{color:var(--text-muted);font-size:12px}
 .ch-msg{font-size:13px;margin-top:4px}
+.ch-f select{box-sizing:border-box;width:100%}
+.ch-plan{font-size:13px;padding:8px 10px;border-radius:10px;background:color-mix(in srgb,#2F6BEB 9%,var(--card))}.ch-plan:empty{display:none}
+.ch-step{display:flex;gap:8px;align-items:center}.ch-step input{max-width:90px;text-align:center}.ch-step .btn{min-width:42px;min-height:40px;font-size:18px;padding:0}
+.ch-f details small{display:block;margin-top:4px}
 /* old per-class chapter / lecture fields are replaced by the Chapters screen */
 .field:has(#f_chapter),.field:has(#f_lecture),.field:has(#f_chapterDone),#chapterHint{display:none!important}
 </style>
@@ -3105,6 +3109,26 @@ const regular=c=>c&&!c.isTest&&!c.isDoubt&&!c.isPractice;
 const inBatch=(c,b)=>c.batchId===b||c.secondBatchId===b;
 const before=(x,c)=>x.date<c.date||(x.date===c.date&&(x.start<c.start||(x.start===c.start&&String(x.id)<String(c.id))));
 const nice=d=>{const x=new Date(d+'T00:00:00');return x.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})};
+
+/* PACE planners 2026-28: [chapter, hours]. JEE = PLANNER 2026-2028, NEET = MEDICAL Track Sheet 2026-28 */
+window.PACE_PLANNER={
+ jee:{
+  Physics:[["Vectors",12],["Calculus for Physics",14],["Kinematics",28],["Unit & Dimension, Errors & Measurements",6],["Laws of Motion & Friction",28],["Circular Motion",10],["Work, Power & Energy",16],["Centre of Mass & Collisions",22],["Ray Optics",20],["Rotational Dynamics",24],["Heat & Thermodynamics",20],["Fluid Mechanics",10],["Simple Harmonic Motion",16],["Gravitation",12],["Mechanical Properties of Matter",10],["Electrostatics & Capacitors",26],["Current Electricity",12],["Sound Waves & Transverse Waves",20],["Wave Optics",12],["Magnetism",20],["Electromagnetic Induction",16],["Modern Physics",18],["Alternating Current",6],["JEE-Main Topics",16]],
+  Chemistry:[["Mole Concept",22],["Atomic Structure",20],["Periodic Table",10],["Chemical Bonding",20],["Gaseous State",20],["Thermochemistry",24],["Chemical Equilibrium",12],["IUPAC Naming",8],["GOC",26],["Ionic Equilibrium",20],["Volumetric Analysis",12],["Isomerism",18],["Chemical Kinetics",14],["Electrochemistry",20],["Reaction Mechanism",14],["Solutions",12],["Hydrocarbons",20],["Solid State & Surface Chemistry",14],["Co-ordination Compounds",16],["Aromatic Hydrocarbons",12],["Aryl & Alkyl Halides",12],["Alcohol, Ether & Phenol",14],["s-Block Elements & Hydrogen",12],["p-Block Elements",18],["d & f Block Elements",6],["Aldehydes & Ketones",18],["Carboxylic Acids & Amines",14],["Biomolecules, Polymers & POC",10],["Metallurgy & Salt Analysis",20],["Chemistry in Everyday Life",4]],
+  Maths:[["Basic Mathematics",18],["Quadratic Equations",22],["Inequations & Logarithms",18],["Trigonometric Ratios & Identities",22],["Trigonometric Equations",12],["Sequence & Series",18],["Binomial Theorem",16],["Permutation & Combination",20],["Functions & ITF",24],["Probability",16],["Straight Line & POSL",22],["Circle",18],["Limit, Continuity & Differentiability",20],["Method of Differentiation",8],["Parabola",12],["Application of Derivatives",24],["Indefinite Integration",12],["Ellipse",12],["Hyperbola",8],["Definite Integration",12],["Area Under Curve & Differential Equations",16],["Complex Numbers",24],["Vectors & 3D",24],["JEE-Main Topics (Statistics, Induction, Reasoning etc.)",12],["Determinants & Matrices",20]]
+ },
+ neet:{
+  Physics:[["Vectors",12],["Calculus for Physics",14],["Kinematics",28],["Unit & Dimension, Errors & Measurements",6],["Laws of Motion & Friction",28],["Circular Motion",10],["Work, Power & Energy",16],["Centre of Mass & Collisions",22],["Ray Optics",20],["Rotational Dynamics",26],["Heat & Thermodynamics",20],["Fluid Mechanics",10],["Simple Harmonic Motion",16],["Gravitation",12],["Mechanical Properties of Matter",10],["Electrostatics & Capacitors",26],["Current Electricity",12],["Sound Waves & Transverse Waves",20],["Wave Optics",12],["Magnetism",20],["Electromagnetic Induction",16],["Modern Physics",18],["Alternating Current",6]],
+  Chemistry:[["Mole Concept",22],["Atomic Structure",20],["Periodic Table",10],["Chemical Bonding",20],["Gaseous State",20],["Thermochemistry",24],["Chemical Equilibrium",12],["IUPAC Naming",8],["GOC",26],["Ionic Equilibrium",20],["Volumetric Analysis",12],["Isomerism",18],["Chemical Kinetics",14],["Electrochemistry",20],["Reaction Mechanism",14],["Solutions",12],["Hydrocarbons",20],["Solid State & Surface Chemistry",12],["Co-ordination Compounds",16],["Aromatic Hydrocarbons",12],["Aryl & Alkyl Halides",12],["Alcohol, Ether & Phenol",14],["s-Block Elements & Hydrogen",12],["p-Block Elements",18],["d & f Block Elements",6],["Aldehydes & Ketones",18],["Carboxylic Acids & Amines",14],["Biomolecules, Polymers & POC",10],["Metallurgy & Salt Analysis",20],["Chemistry in Everyday Life",4]],
+  Botany:[["The Living World",6],["Biological Classification",21],["Plant Kingdom",15],["Cell: The Unit of Life",15],["Cell Cycle & Cell Division",9],["Morphology of Flowering Plants",24],["Anatomy of Flowering Plants",16],["Plant Growth & Development",12],["Photosynthesis",12],["Respiration in Plants",12],["Sexual Reproduction in Flowering Plants",14],["Molecular Basis of Inheritance",24],["Principles of Inheritance & Variation",24],["Microbes in Human Welfare",6],["Organisms & Populations",8],["Ecosystem",6],["Biodiversity & Conservation",6]],
+  Zoology:[["Structural Organisation – Tissues",18],["Animal Kingdom",24],["Frog",6],["Biomolecules",18],["Breathing & Exchange of Gases",12],["Body Fluids & Circulation",12],["Excretory Products & Their Elimination",12],["Locomotion & Movement",12],["Neural Control & Coordination",15],["Chemical Coordination & Integration",18],["Human Reproduction",21],["Reproductive Health",9],["Evolution",18],["Human Health & Disease",21],["Biotechnology: Principles & Processes",12],["Biotechnology & Its Applications",6]]
+ }
+};
+window.paceTrack=b=>{const s=String((b&&b.label)||'')+' '+String((b&&b.short)||'');return /NEET|MED|BIO/i.test(s)?'neet':/JEE/i.test(s)?'jee':null};
+window.paceSubjects=(subject,track)=>{const P=window.PACE_PLANNER[track];if(!P)return[];const s=String(subject||'');
+  const m=/phys/i.test(s)?['Physics']:/chem/i.test(s)?['Chemistry']:/math/i.test(s)?['Maths']:/bot/i.test(s)?['Botany']:/zoo/i.test(s)?['Zoology']:/bio/i.test(s)?['Botany','Zoology']:[];
+  const ok=m.filter(x=>P[x]);return ok.length?ok:Object.keys(P)};
+window.paceClasses=h=>Math.max(1,Math.ceil(h/3));
 
 const PCH=window.PCH={rows:[],loaded:false,
   async load(){
@@ -3147,6 +3171,7 @@ const PCH=window.PCH={rows:[],loaded:false,
     (o.classes||[]).filter(c=>regular(c)&&c.date<lo).forEach(c=>[c.batchId,c.secondBatchId].filter(Boolean).forEach(b=>add(b,c.teacherId,c.subject,null)));
     Object.entries(o.weekly||{}).forEach(([b,days])=>Object.values(days||{}).forEach(sl=>(sl||[]).forEach(x=>x&&x.teacherId&&add(b,x.teacherId,x.subject,null))));
     if(o.self&&o.teachers&&o.teachers[0])(o.batches||[]).forEach(b=>add(b.id,o.teachers[0].id,'',null));
+    const tSub={};pairs.forEach(p=>{if(p.subject&&!tSub[p.tid])tSub[p.tid]=p.subject});pairs.forEach(p=>{if(!p.subject&&tSub[p.tid])p.subject=tSub[p.tid]});
     const P=[...pairs.values()].sort((a,b)=>String((B.get(a.b)||{}).label).localeCompare(String((B.get(b.b)||{}).label))||a.code.localeCompare(b.code));
     const nextOf=p=>p.list.filter(c=>c.date>t0||(c.date===t0&&c.end>hm)).sort((a,b)=>before(a,b)?-1:1)[0]||null;
     const draw=()=>{
@@ -3170,15 +3195,36 @@ const PCH=window.PCH={rows:[],loaded:false,
       if(mode==='cancel'){fx.innerHTML='';return}
       if(mode==='new'||mode==='edit'){
         const ed=mode==='edit'&&a;
-        fx.innerHTML=`<form class="ch-f"><div class="field"><label>Chapter name</label><input name="n" required maxlength="120" value="${ed?E(a.name):''}" placeholder="e.g. Thermodynamics"></div>
-          <div class="two"><div class="field"><label>Total lectures (planned)</label><input name="t" type="number" min="1" max="300" inputmode="numeric" value="${ed&&a.total?a.total:''}" placeholder="e.g. 8"></div>
-          <div class="field"><label>${ed?'First lecture number':'Next class is lecture'}</label><input name="s" type="number" min="1" max="300" inputmode="numeric" required value="${ed?a.start_no:1}"></div></div>
-          <div class="field"><label>Starts from class on</label><input name="d" type="date" required value="${ed?a.from_date:def}"><small>Classes from this date onwards count towards this chapter.${ed?'':' Use “Next class is lecture” if you are already part-way through it.'}</small></div>
+        const track=window.paceTrack?paceTrack(B.get(p.b)):null,subs=track?paceSubjects(p.subject,track):[],PL=track?PACE_PLANNER[track]:null;
+        const used=new Set(this.rows.filter(r=>r.batch_id===p.b&&String(r.teacher_code).toUpperCase()===p.code).map(r=>r.name));
+        const all=subs.flatMap(sj=>PL[sj].map(([n,h])=>({sj,n,h,c:paceClasses(h)})));
+        const inPlan=ed&&all.some(x=>x.n===a.name);
+        const last=this.rows.filter(r=>r.batch_id===p.b&&String(r.teacher_code).toUpperCase()===p.code).sort((x,y)=>x.from_date.localeCompare(y.from_date)||String(x.created_at).localeCompare(String(y.created_at))).pop();
+        const li=last?all.findIndex(x=>x.n===last.name):-1,after=li>=0?all.slice(li+1).find(x=>!used.has(x.n)):null;
+        const pick=ed?(inPlan?a.name:'__other'):((after||all.find(x=>!used.has(x.n))||all[0]||{}).n||'__other');
+        const opts=subs.map(sj=>`<optgroup label="${E(sj)}">${PL[sj].map(([n,h])=>`<option value="${E(n)}" data-c="${paceClasses(h)}" data-h="${h}"${n===pick?' selected':''}>${used.has(n)&&!(ed&&n===a.name)?'✓ ':''}${E(n)} — ${paceClasses(h)} classes</option>`).join('')}</optgroup>`).join('');
+        const tot0=ed?(a.total||''):'';
+        fx.innerHTML=`<form class="ch-f">
+          ${track?`<div class="field"><label>Chapter (${track==='neet'?'Medical track sheet':'JEE planner'})</label><select name="c">${opts}<option value="__other"${pick==='__other'?' selected':''}>Other chapter (type the name)</option></select></div>`:''}
+          <div class="field ch-oth"${track&&pick!=='__other'?' hidden':''}><label>Chapter name</label><input name="n" maxlength="120" value="${ed&&!inPlan?E(a.name):''}" placeholder="e.g. Thermodynamics"></div>
+          <div class="ch-plan"></div>
+          <div class="field ch-tot"><label>Planned classes</label><div class="ch-step"><button type="button" class="btn ghost" data-st="-1">−</button><input name="t" type="number" min="1" max="300" inputmode="numeric" value="${tot0}"><button type="button" class="btn ghost" data-st="1">+</button></div><small>Finished early or need 1–2 extra classes? Change it here any time with “Edit current”.</small></div>
+          <details${ed?' open':''}><summary class="lv-hint" style="cursor:pointer">More options</summary><div class="two" style="margin-top:8px"><div class="field"><label>${ed?'First lecture number':'Next class is lecture'}</label><input name="s" type="number" min="1" max="300" inputmode="numeric" required value="${ed?a.start_no:1}"></div>
+          <div class="field"><label>Starts from class on</label><input name="d" type="date" required value="${ed?a.from_date:def}"></div></div><small class="lv-hint">Use “Next class is lecture” only if this chapter was already started before.</small></details>
           <div class="ch-b"><button class="btn primary" type="submit">${ed?'Save changes':'Save chapter'}</button><button class="btn ghost" type="button" data-ch="cancel">Cancel</button></div><div class="ch-msg"></div></form>`;
-        const f=fx.querySelector('form');f.n.focus();
+        const f=fx.querySelector('form'),oth=f.querySelector('.ch-oth'),plan=f.querySelector('.ch-plan'),totF=f.querySelector('.ch-tot');
+        const sync=first=>{const o=f.c&&f.c.selectedOptions[0],custom=!f.c||f.c.value==='__other';
+          oth.hidden=!custom;f.n.required=custom;
+          if(!custom){const c=+o.dataset.c;if(!(ed&&first&&a.total))f.t.value=c;plan.innerHTML=`📋 Planner: <b>${o.dataset.h} hours</b> = <b>${c} classes</b> of 3 hours`;}
+          else plan.innerHTML='';
+          totF.hidden=!ed&&!custom;   /* new planner chapter: number comes from the planner, no need to ask */
+        };
+        if(f.c)f.c.onchange=()=>sync(false);sync(true);
+        f.querySelectorAll('[data-st]').forEach(b=>b.onclick=()=>{f.t.value=Math.max(1,Math.min(300,(+f.t.value||0)+(+b.dataset.st)))});
         f.onsubmit=async ev=>{ev.preventDefault();const m=f.querySelector('.ch-msg');
-          const rec={name:f.n.value.trim(),total:f.t.value?Math.max(1,Math.min(300,+f.t.value)):null,start_no:Math.max(1,Math.min(300,+f.s.value||1)),from_date:f.d.value,updated_at:new Date().toISOString()};
-          if(!rec.name||!rec.from_date){m.textContent='Enter the chapter name and date.';return}
+          const custom=!f.c||f.c.value==='__other',name=custom?f.n.value.trim():f.c.value;
+          const rec={name,total:f.t.value?Math.max(1,Math.min(300,+f.t.value)):null,start_no:Math.max(1,Math.min(300,+f.s.value||1)),from_date:f.d.value,updated_at:new Date().toISOString()};
+          if(!rec.name||!rec.from_date){m.textContent='Choose or type the chapter, and check the date.';return}
           m.style.color='';m.textContent='Saving…';
           const r=ed?await paceCloud.from('pace_chapters').update(rec).eq('id',a.id)
                     :await paceCloud.from('pace_chapters').insert({...rec,batch_id:p.b,teacher_code:p.code});
