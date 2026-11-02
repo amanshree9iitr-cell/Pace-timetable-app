@@ -1077,7 +1077,7 @@ function renderSchedule(view){
                   <td><span class="pill ${center==='Vasai'?'vasai':'virar'}">${esc(center)}</span></td>
                   <td>${esc(c.customBatchLabel || (b?b.label:'—'))}</td>
                   <td>${t?esc(t.name)+' ('+esc(t.code)+')':(c.isTest?'—':'—')}</td>
-                  <td>${c.isTest?'<span class="pill" style="background:color-mix(in srgb, var(--teal) 18%, transparent); color:var(--teal);">Test</span>'+((c.testTopics&&c.testTopics.length)?`<div class="muted" style="font-size:11.5px;">${esc(c.testTopics.map(tt=>tt.subject+': '+tt.topic).join(', '))}</div>`:''):(c.isDoubt?'<span class="pill doubt">Doubt</span>':esc(c.subject||'—')+ (chapterLabel(c)?`<div class="muted" style="font-size:11.5px;">${esc(chapterLabel(c))}</div>`:''))}</td>
+                  <td>${c.isCollege?'<span class="pill" style="background:color-mix(in srgb, #64748B 18%, transparent); color:#64748B;">College lecture</span>':c.isTest?'<span class="pill" style="background:color-mix(in srgb, var(--teal) 18%, transparent); color:var(--teal);">'+esc(window.paceClassTitle?paceClassTitle(c):'Test')+'</span>'+((c.testKind!=='topic'&&c.testTopics&&c.testTopics.length)?`<div class="muted" style="font-size:11.5px;">${esc(c.testTopics.map(tt=>tt.subject+': '+tt.topic).join(', '))}</div>`:''):(c.isDoubt?'<span class="pill doubt">Doubt</span>':esc(c.subject||'—')+ (chapterLabel(c)?`<div class="muted" style="font-size:11.5px;">${esc(chapterLabel(c))}</div>`:''))}</td>
                   <td style="text-align:right; white-space:nowrap;">
                     <button class="icon" data-edit="${c.id}" title="Edit">✏️</button>
                     <button class="icon" data-del="${c.id}" title="Delete">🗑️</button>
@@ -1995,6 +1995,8 @@ async function initPrivateTeacherView(){
       for(let w=0;w<100&&!window.PCH;w++)await new Promise(r=>setTimeout(r,50));
       if(window.PCH){await PCH.load();let cs=document.getElementById('peChap');if(!cs){cs=document.createElement('section');cs.className='card';cs.id='peChap';cs.style.marginTop='16px';scheduleCard.after(cs)}
         PCH.panel(cs,{classes:payload.classes||[],teachers:[payload.teacher||{}],batches:payload.batches||[],weekly:payload.weeklyPattern||{},codes:[String((payload.teacher||{}).code||'')],self:true,onChange:renderTeacherDay});}
+      for(let w=0;w<100&&!window.PNS;w++)await new Promise(r=>setTimeout(r,50));
+      if(window.PNS){let ns=document.getElementById('peNotif');if(!ns){ns=document.createElement('div');ns.id='peNotif';ns.style.marginTop='16px';scheduleCard.before(ns)}PNS.mount(ns,{role:'teacher',url:location.pathname+'?teacher=1'})}
       for(let w=0;w<100&&!window.PLV;w++)await new Promise(r=>setTimeout(r,50));
       if(window.PLV){let ls=document.getElementById('peLeave');if(!ls){ls=document.createElement('section');ls.className='card';ls.id='peLeave';ls.style.marginTop='16px';(document.getElementById('peChap')||scheduleCard).after(ls)}PLV.teacher(ls,payload)}
       renderTeacherDay();
@@ -2056,7 +2058,7 @@ async function initPublicStudentView(){
       // Some older timetable rows have no subject saved. Use the teacher's known subject as a display fallback.
       const subjectFallback={AP:'Physics',VP:'Physics',PB:'Physics',NC:'Chemistry',DC:'Chemistry',GM:'Mathematics',SM:'Mathematics',RB:'Biology',MB:'Biology'};
       const subject=String(c.subject||c.testSubject||'').trim() || subjectFallback[code] || '';
-      const name=c.isTest?'Test':subject||'Class';
+      const name=c.isCollege?'College lecture':c.isTest?(window.paceClassTitle?paceClassTitle(c):'Test'):subject||'Class';
       const detail=c.isTest?(Array.isArray(c.testTopics)?c.testTopics.map(x=>`${x.subject}: ${x.topic}`).join(' · '):''):String(c.chapter||c.topic||'');
       return `<article style="border:1px solid var(--line);border-radius:10px;padding:13px"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><strong>${esc(name)}${code?' ('+esc(code)+')':''}</strong><strong>${esc(fmt12(c.start))} – ${esc(fmt12(c.end))}</strong></div>${detail?`<div style="margin-top:5px;color:var(--text-muted);font-size:13px">${esc(detail)}</div>`:''}${c.online?'<div style="margin-top:5px;font-size:12px;color:var(--teal)">Online class</div>':''}</article>`;
     }).join('')}</div></div>`;
@@ -2804,7 +2806,10 @@ function parseText(txt){
     rest.split(/\s+and\s+/i).forEach((item,i)=>{
       const tm=item.match(TR),[s,e]=tm?span(tm):(i===0?[570,765]:[795,990]),pre=item.split(/\d/)[0];
       const row={date,center,batch,teacherCode:'',subject:'',chapter:'',lectureNo:'',start:f12(s),end:f12(e),_assumed:!tm};
-      if(/\b(test|exam|twt)\b/i.test(pre))row.chapter='Test';
+      if(/college/i.test(pre))row.chapter='College lecture';
+      else if(/\b(major\s*test|mt)\b/i.test(pre))row.chapter='Major Test';
+      else if(/\b(topic\s*[-\s]?wise\s*test|twt)\b/i.test(pre))row.chapter='TWT '+pre.replace(/\b(topic\s*[-\s]?wise\s*test|twt|test)\b/ig,'').replace(/[(\[{].*$/,'').replace(/[:\-–]+/g,' ').trim();
+      else if(/\b(test|exam)\b/i.test(pre))row.chapter='Test';
       else if(/pract(?:ice|ise)/i.test(pre))row.subject=((subjIn(pre)[0])||'')+' Practise';
       else{const c=(pre.match(/[A-Za-z]{2,3}/g)||[]).find(w=>STATE.teachers.some(t=>t.code.toLowerCase()===w.toLowerCase()));row.teacherCode=c||''}
       rows.push(row);
@@ -2824,7 +2829,10 @@ function process(rows){
     const label=`${r.batch||'?'} · ${r.teacherCode||r.chapter||r.subject||'?'} · ${r.start||'?'}–${r.end||'?'}`;
     if(!date||!start||!end){skipped.push([label,'time or date not readable']);continue}
     const txt=Object.entries(r).filter(([k,v])=>typeof v==='string'&&!['date','center','start','end','confidence','batch'].includes(k)).map(e=>e[1]).join(' ');
-    const isTest=/\b(exam|test|twt|mt)\b/i.test(txt),isPractice=!isTest&&/\bpract(?:ice|ise)s?\b/i.test(txt),noTeacher=isTest||isPractice;
+    const isCollege=/\bcollege\b/i.test(txt),isMajor=!isCollege&&/\b(major\s*test|mt)\b/i.test(txt),isTopic=!isCollege&&!isMajor&&/\b(topic\s*[-\s]?wise\s*test|twt)\b/i.test(txt);
+    const isTest=!isCollege&&(isMajor||isTopic||/\b(exam|test)\b/i.test(txt)),isPractice=!isTest&&!isCollege&&/\bpract(?:ice|ise)s?\b/i.test(txt),noTeacher=isTest||isPractice||isCollege;
+    const twtName=(()=>{if(!isTopic)return'';const clean=x=>String(x||'').replace(/\b(topic\s*[-\s]?wise\s*test|twt|test)\b/ig,'').replace(/[(\[{].*$/,'').replace(/^[\s:\-–,.]+|[\s:\-–,.]+$/g,'').trim();
+      return clean(r.chapter)||clean(String(txt).split(/\b(?:topic\s*[-\s]?wise\s*test|twt)\b/i)[1])})();
     let b=STATE.batches.find(x=>x.label.toLowerCase()===bl.toLowerCase()&&(!cl||x.center.toLowerCase()===cl))||STATE.batches.find(x=>x.label.toLowerCase()===bl.toLowerCase());
     if(!b&&cl){const cb=STATE.batches.filter(x=>x.center.toLowerCase()===cl);if(cb.length===1)b=cb[0]}
     const t=noTeacher?null:STATE.teachers.find(x=>x.code.toLowerCase()===code.toLowerCase());
@@ -2837,7 +2845,11 @@ function process(rows){
     const e={id:uid('ai'),date,batchId:b?b.id:'',customBatchLabel:b?null:bl,customCenter:b?null:(center||null),teacherId:noTeacher?null:(t?t.id:''),
       subject:isPractice?((subs[0]||'')+' Practice').trim():isTest?(subs.length===1?subs[0]:''):(r.subject||''),
       chapter:noTeacher?'':(r.chapter||''),lectureNo:noTeacher?null:(parseInt(r.lectureNo,10)||null),chapterCompleted:false,topic:'',start,end,isDoubt:false};
-    if(isTest){e.isTest=true;let tp=topicsOf(txt);if(!tp.length&&r.chapter&&!/^\s*(exam|test|twt|mt)\s*$/i.test(r.chapter))tp=[{subject:subs[0]||'Topics',topic:String(r.chapter).trim()}];e.testTopics=tp}
+    if(isCollege){e.isCollege=true;e.subject='College lecture'}
+    if(isTest){e.testKind=isMajor?'major':isTopic?'topic':''}
+    if(isTest&&isTopic){e.isTest=true;e.testTopics=twtName?[{subject:subs[0]||'',topic:twtName}]:[]}
+    else if(isTest&&isMajor){e.isTest=true;e.testTopics=topicsOf(txt).filter(x=>!/^\s*(major\s*test|mt|test)\s*$/i.test(x.topic))}
+    else if(isTest){e.isTest=true;let tp=topicsOf(txt);if(!tp.length&&r.chapter&&!/^\s*(exam|test|twt|mt)\s*$/i.test(r.chapter))tp=[{subject:subs[0]||'Topics',topic:String(r.chapter).trim()}];e.testTopics=tp}
     if(isPractice)e.isPractice=true;
     ns.classes.push(e);added++;
   }
@@ -3105,7 +3117,7 @@ const P2=n=>String(n).padStart(2,'0');
 const today=()=>{const d=new Date();return d.getFullYear()+'-'+P2(d.getMonth()+1)+'-'+P2(d.getDate())};
 const nowHM=()=>{const d=new Date();return P2(d.getHours())+':'+P2(d.getMinutes())};
 const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const regular=c=>c&&!c.isTest&&!c.isDoubt&&!c.isPractice;
+const regular=c=>c&&!c.isTest&&!c.isDoubt&&!c.isPractice&&!c.isCollege;
 const inBatch=(c,b)=>c.batchId===b||c.secondBatchId===b;
 const before=(x,c)=>x.date<c.date||(x.date===c.date&&(x.start<c.start||(x.start===c.start&&String(x.id)<String(c.id))));
 const nice=d=>{const x=new Date(d+'T00:00:00');return x.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})};
@@ -3130,6 +3142,16 @@ window.paceSubjects=(subject,track)=>{const P=window.PACE_PLANNER[track];if(!P)r
   const ok=m.filter(x=>P[x]);return ok.length?ok:Object.keys(P)};
 window.paceClasses=h=>Math.max(1,Math.ceil(h/3));
 
+/* special slots without a teacher: Major Test, Topic wise test, College lecture */
+window.paceClassTitle=c=>{
+  if(!c)return'';if(c.isCollege)return'College lecture';
+  if(!c.isTest)return c.subject||'Class';
+  const tp=(c.testTopics||[]).map(x=>String(x.topic||'').trim()).filter(Boolean);
+  const k=c.testKind||(/major|\bmt\b/i.test(c.subject||'')?'major':'');
+  if(k==='major')return'Major Test';
+  if(k==='topic')return'Topic wise test'+(tp.length?' – '+tp.join(', '):'');
+  return'Test'+(tp.length?' – '+(c.testTopics||[]).map(x=>(x.subject?x.subject+': ':'')+x.topic).join(', '):'');
+};
 const PCH=window.PCH={rows:[],loaded:false,
   async load(){
     if(typeof paceCloud==='undefined'||!paceCloud)return 'offline';
@@ -3255,12 +3277,13 @@ if(typeof facultyMessage==='function'&&typeof STATE!=='undefined'){
     out+='\n';let n=0;
     main.forEach(c=>{
       const t=teacherById(c.teacherId);
-      if(c.isTest){out+=`\n*Test*\nTime: ${fmt12(c.start)} - ${fmt12(c.end)}\n${topics(c)?'Syllabus: '+topics(c)+'\n':c.subject?'Subject: '+c.subject+'\n':''}`;return}
+      if(c.isCollege){out+=`\n*College lecture*\nTime: ${fmt12(c.start)} - ${fmt12(c.end)}\n`;return}
+      if(c.isTest){const k=c.testKind;out+=`\n*${paceClassTitle(c)}*\nTime: ${fmt12(c.start)} - ${fmt12(c.end)}\n${k==='topic'||!topics(c)?'':'Syllabus: '+topics(c)+'\n'}`;return}
       n++;const i=PCH.info(c,STATE.classes,codeOf,batchId);
       out+=`\n*Lecture ${n}*\nFaculty: ${who(t)}\n${c.isPractice?'Practice: '+(c.subject||'Practice session'):'Chapter: '+(i&&!i.none?`${i.name} (Lecture ${i.no})`:'—')}\n`;
     });
     d.forEach(c=>{out+=`\n*Doubt Session*\nTime: ${fmt12(c.start)} - ${fmt12(c.end)}\n`});
-    if(main.some(c=>c.end==='16:30')&&!d.some(c=>c.start==='16:30'))out+=DOUBT;
+    if(main.some(c=>c.end==='16:30'&&!c.isTest&&!c.isCollege)&&!d.some(c=>c.start==='16:30'))out+=DOUBT;
     return out+'\nThank You';
   };
   facultyMessage=function(teacherId,date){
@@ -3444,6 +3467,76 @@ if(typeof NAV_ITEMS!=='undefined'&&typeof render==='function'&&!/[?&](teacher|st
   const tick=async()=>{if(!ok()||document.hidden||(typeof UI!=='undefined'&&UI.accessRole!=='admin'))return;
     const r=await paceCloud.from('pace_leave_requests').select('id',{count:'exact',head:true}).eq('status','pending');if(!r.error){PLV.pending=r.count||0;PLV.badge()}};
   setTimeout(tick,2500);setInterval(tick,60000);
+}
+})();
+</script>
+<!-- ===== PACE phone notifications ===== -->
+<style id="pace-push-css">
+.pn-card{display:flex;align-items:center;gap:12px;background:var(--card);border:1.5px solid color-mix(in srgb,#E8890C 40%,transparent);border-radius:16px;padding:12px 14px;margin:0 0 12px}
+.pn-card>div{flex:1;min-width:0}.pn-card b{display:block;font-size:14.5px}.pn-card small{display:block;font-size:12.5px;color:var(--text-muted);line-height:1.35}
+.pn-ic{flex:0 0 42px;height:42px;border-radius:12px;display:grid;place-items:center;font-size:22px;background:color-mix(in srgb,#E8890C 14%,var(--card))}
+.pn-card .btn{flex:0 0 auto;min-height:38px;padding:6px 14px;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;text-align:center}
+.pn-card.ok{border-color:color-mix(in srgb,#1E9E5A 45%,transparent)}.pn-card.ok .pn-ic{background:color-mix(in srgb,#1E9E5A 14%,var(--card))}
+@media(max-width:420px){.pn-card{flex-wrap:wrap}.pn-card .btn{width:100%}}
+</style>
+<script>
+(function(){
+const VAPID='BPBsdJTS2kWUGze_2tA-TI7li0v23wn0ofQaY6c6E7T3KnDxm0M_Mg2f-REKZNCaYlBkFzLtdSEhI672bQtcSKY';
+const ios=()=>/iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const installed=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+const supported=()=>'serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window&&location.protocol==='https:';
+const key=s=>{const p='='.repeat((4-s.length%4)%4),b=atob((s+p).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(b,c=>c.charCodeAt(0))};
+const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function reg(){try{return await navigator.serviceWorker.getRegistration('./')||await navigator.serviceWorker.register('./sw.js')}catch(_){return null}}
+async function save(sub,o){const j=sub.toJSON();return paceCloud.rpc('save_push_sub',{p_endpoint:j.endpoint,p_p256dh:j.keys.p256dh,p_auth:j.keys.auth,p_role:o.role||'',p_url:o.url||'./'})}
+const PNS=window.PNS={
+  /* show the "turn on" card where it is useful; hides itself once notifications are on */
+  async mount(el,o){
+    if(!el||typeof paceCloud==='undefined'||!paceCloud)return;
+    const card=(cls,ic,t,s,btn)=>{el.innerHTML='<div class="pn-card '+cls+'"><span class="pn-ic">'+ic+'</span><div><b>'+t+'</b><small>'+s+'</small></div>'+(btn||'')+'</div>'};
+    if(!supported()){
+      if(ios()&&!installed()&&location.protocol==='https:')card('','🔔','Get schedule alerts on iPhone','First add PACE to your home screen (tap Install above), then open PACE from the home screen and turn alerts on there.');
+      else el.innerHTML='';return}
+    if(Notification.permission==='denied'){card('','🔕','Schedule alerts are blocked','Allow notifications for this site in your phone settings to get alerts when your schedule arrives or changes.');return}
+    const r=await reg(),sub=r&&await r.pushManager.getSubscription();
+    if(sub&&Notification.permission==='granted'){el.innerHTML='';try{await save(sub,o)}catch(_){}return}
+    card('','🔔','Turn on schedule alerts','Get a notification when your timetable arrives, and if it changes on the same day.','<button class="btn primary" type="button" data-pn>Turn on</button>');
+    el.querySelector('[data-pn]').onclick=async()=>{
+      const b=el.querySelector('[data-pn]');b.disabled=true;b.textContent='…';
+      try{
+        const p=await Notification.requestPermission();
+        if(p!=='granted'){PNS.mount(el,o);return}
+        const R=await reg();if(!R)throw new Error('Could not start the app service. Reload and try again.');
+        await navigator.serviceWorker.ready;
+        const s=await R.pushManager.getSubscription()||await R.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:key(VAPID)});
+        const x=await save(s,o);if(x&&x.error)throw new Error(x.error.message);
+        card('ok','✅','Schedule alerts are on','You will be notified when your timetable arrives or changes.');
+        setTimeout(()=>{el.innerHTML=''},6000);
+      }catch(e){card('','⚠️','Could not turn on alerts',E(e.message||e)+' — please try again.','<button class="btn ghost" type="button" data-pn>Try again</button>');el.querySelector('[data-pn]').onclick=()=>PNS.mount(el,o)}
+    };
+  }
+};
+
+/* admin: after the timetable is published, notify everyone whose schedule arrived / changed.
+   Waits 2 minutes after the last save, so a burst of edits sends one alert, not many. */
+if(typeof cloudWrite==='function'&&!/[?&](teacher|student)=1/.test(location.search)){
+  let timer=null,told=false;
+  const send=async()=>{timer=null;told=false;
+    if(typeof cloudUser==='undefined'||!cloudUser)return;
+    try{const r=await paceCloud.functions.invoke('notify-schedule',{body:{}});
+      const d=r&&r.data;if(r.error){console.warn('notify',r.error);return}
+      if(d&&d.sent&&typeof toast==='function')toast('🔔 Schedule alerts sent to '+d.people+' '+(d.people===1?'person':'people'));
+    }catch(e){console.warn('notify',e)}};
+  window.paceNotifyNow=send;
+  const prevCW=cloudWrite;
+  cloudWrite=async function(){
+    const r=await prevCW.apply(this,arguments);
+    if(typeof cloudUser!=='undefined'&&cloudUser&&typeof cloudEnabled!=='undefined'&&cloudEnabled){
+      clearTimeout(timer);timer=setTimeout(send,120000);
+      if(!told&&typeof toast==='function'){told=true;try{toast('🔔 Students & teachers will be alerted in 2 min')}catch(_){}}
+    }
+    return r;
+  };
 }
 })();
 </script>
@@ -3648,8 +3741,8 @@ async function member(user,role){
   }
   const SUBJ=[[/phys/i,'#2F6BEB','⚛️'],[/chem/i,'#1E9E5A','🧪'],[/math/i,'#7C5CE8','📐'],[/bio|zoo|bot/i,'#E8590C','🧬'],[/eng/i,'#D14363','📖']];
   const subj=c=>SUBJ.find(x=>x[0].test(c.subject||''))||[null,'#2F6BEB','📘'];
-  const col=c=>c.isTest?'#D9A400':c.isPractice?'#0EA5A4':c.isDoubt?'#7C5CE8':subj(c)[1];
-  const icon=c=>c.isTest?'📝':c.isPractice?'✍️':c.isDoubt?'💬':subj(c)[2];
+  const col=c=>c.isCollege?'#64748B':c.isTest?'#D9A400':c.isPractice?'#0EA5A4':c.isDoubt?'#7C5CE8':subj(c)[1];
+  const icon=c=>c.isCollege?'🏫':c.isTest?'📝':c.isPractice?'✍️':c.isDoubt?'💬':subj(c)[2];
   const nowMin=()=>{const n=new Date();return n.getHours()*60+n.getMinutes()};
   const LINES=['Small steps every day add up to big ranks.','Understand the concept once, and you never have to memorise it.','Today’s practice is tomorrow’s confidence.','Mistakes are just questions you haven’t solved yet.','Consistency beats intensity. Show up today.','One more problem than yesterday — that’s progress.','Revise before you forget, not after.','Doubts are good. Unasked doubts are not — ask today!','Focus on the next hour, not the whole syllabus.','Every formula you master is one less to worry about.','Read the question twice, solve it once.','Your future rank is built in today’s classes.','Hard chapters become easy chapters with practice.','Discipline is choosing what you want most over what you want now.','A tough test today makes the real exam feel easier.','Write it, solve it, check it — then move on.','Sleep well, study smart, stay curious.','Be proud of how far you’ve come, and keep going.','Learn from every test, don’t just look at the marks.','Ten focused minutes beat an hour of distraction.'];
   function hero(){
@@ -3673,7 +3766,7 @@ async function member(user,role){
     if(!L.length)return '';
     const mm=x=>{const[a,b]=String(x).split(':').map(Number);return a*60+b},dur=m=>m>=60?Math.floor(m/60)+'h'+(m%60?' '+m%60+'m':''):m+'m';
     const on=L.find(c=>mm(c.start)<=n&&n<mm(c.end)),nx=L.find(c=>mm(c.start)>n);
-    const nm=c=>c.isTest?'Test':c.isDoubt?'Doubt session':esc(c.subject||'Class')+((i=>i?' — '+esc(i.name)+' · Lecture '+i.no:'')(chap(c)));
+    const nm=c=>c.isCollege?'College lecture':c.isTest?esc(paceClassTitle(c)):c.isDoubt?'Doubt session':esc(c.subject||'Class')+((i=>i?' — '+esc(i.name)+' · Lecture '+i.no:'')(chap(c)));
     if(on){const pc=Math.round(100*(n-mm(on.start))/Math.max(1,mm(on.end)-mm(on.start)));
       return `<div class="pg-next on" style="--c:${col(on)}"><span class="pg-ic">${icon(on)}</span><div><em><i class="pg-live"></i>Happening now · ends ${fmt12(on.end)}</em><b>${nm(on)}</b><div class="pg-bar"><i style="width:${pc}%"></i></div></div></div>`}
     if(nx)return `<div class="pg-next" style="--c:${col(nx)}"><span class="pg-ic">${icon(nx)}</span><div><em>Up next · in ${dur(mm(nx.start)-n)}</em><b>${nm(nx)}</b><span>${fmt12(nx.start)} – ${fmt12(nx.end)}${T[nx.teacherId]?' · '+esc(T[nx.teacherId]):''}</span></div></div>`;
@@ -3697,8 +3790,8 @@ async function member(user,role){
     return `<div class="pe-strip"><button class="pe-nav" data-w="-7">‹</button><div class="pe-days">${days.map(d=>{const n=P.classes.filter(c=>c.date===d).length;return `<button class="pe-day${d===day?' act':''}${d===todayStr()?' today':''}" data-d="${d}">${n?`<em>${n}</em>`:''}${dayName(d).slice(0,3)}<b>${+d.slice(8)}</b></button>`}).join('')}</div><button class="pe-nav" data-w="7">›</button></div>
     <h2 style="margin:6px 0 12px;font:700 18px 'Space Grotesk',sans-serif">${dayName(day)}, ${fmtDateLong(day)}</h2>`+
     (list.length?list.map(c=>{
-      const title=c.isTest?'📝 Test':c.isPractice?'✍️ '+esc(c.subject||'Practice'):c.isDoubt?'Doubt session':esc(c.subject||'Class')+((i=>i?' — '+esc(i.name)+' · Lecture '+i.no:'')(chap(c)));
-      const tp=c.isTest&&(c.testTopics||[]).length?c.testTopics.map(x=>esc(x.subject)+': '+esc(x.topic)).join(' · '):'';
+      const title=c.isCollege?'College lecture':c.isTest?esc(paceClassTitle(c)):c.isPractice?'✍️ '+esc(c.subject||'Practice'):c.isDoubt?'Doubt session':esc(c.subject||'Class')+((i=>i?' — '+esc(i.name)+' · Lecture '+i.no:'')(chap(c)));
+      const tp=c.isTest&&c.testKind!=='topic'&&c.testKind!=='major'&&(c.testTopics||[]).length?c.testTopics.map(x=>esc(x.subject)+': '+esc(x.topic)).join(' · '):'';
       const s2=[many?B[c.batchId]:'',T[c.teacherId]].filter(Boolean).map(esc).join(' · ');
       const tn=day===todayStr()?nowMin():-1,cm=x=>{const[a,b]=String(x).split(':').map(Number);return a*60+b},isOn=tn>=cm(c.start)&&tn<cm(c.end),past=tn>=cm(c.end);
       return `<div class="pg-c pg-cls${past?' past':''}" style="--c:${col(c)}"><span class="pg-ci">${icon(c)}</span><em>${fmt12(c.start)} – ${fmt12(c.end)}${isOn?'<i class="pg-now">NOW</i>':''}</em><b>${title}</b>${tp?`<span>${tp}</span><br>`:''}${s2?`<span>${s2}</span>`:''}</div>`}).join(''):'<div class="card"><p class="muted" style="margin:0">No classes on this day 🎉</p></div>');
@@ -3718,8 +3811,8 @@ async function member(user,role){
   }
   function paint(){
     const chip=(k,t)=>`<button class="pe-chip${tab===k?' act':''}" data-tab="${k}">${t}</button>`,tt0=tab==='tt';
-    V.innerHTML=top+`<div class="pg-wrap">${tt0?hero():''}<div class="pe-filter pg-tabs">${chip('tt','📅 Timetable')}${chip('hw','📝 Homework'+(up.length?' <i class="pg-cnt">'+up.length+'</i>':''))}${chip('mat','📚 Materials')}${chip('tst','🧪 Tests')}${isStu?chip('fx','🧮 Formulas'):''}</div>${tt0?'<div id="pgNext">'+upNext()+'</div>'+installCard():''}<div id="pgDoubt">${doubtHTML()}</div>${tab==='hw'?homework():tab==='mat'?materials():tab==='tst'?'<div id="pgTests"></div>':tab==='fx'?formulas():(isStu?fxTeaser():'')+timetable()}</div>`;
-    $('pgOut').onclick=signOut;if(tab==='tst'&&window.peTests)window.peTests($('pgTests'),user,role);if(tab==='fx')typeset();
+    V.innerHTML=top+`<div class="pg-wrap">${tt0?hero():''}<div class="pe-filter pg-tabs">${chip('tt','📅 Timetable')}${chip('hw','📝 Homework'+(up.length?' <i class="pg-cnt">'+up.length+'</i>':''))}${chip('mat','📚 Materials')}${chip('tst','🧪 Tests')}${isStu?chip('fx','🧮 Formulas'):''}</div>${tt0?'<div id="pgNext">'+upNext()+'</div>'+installCard()+'<div id="pgNotif"></div>':''}<div id="pgDoubt">${doubtHTML()}</div>${tab==='hw'?homework():tab==='mat'?materials():tab==='tst'?'<div id="pgTests"></div>':tab==='fx'?formulas():(isStu?fxTeaser():'')+timetable()}</div>`;
+    $('pgOut').onclick=signOut;if(tab==='tst'&&window.peTests)window.peTests($('pgTests'),user,role);if(tab==='fx')typeset();if(window.PNS&&$('pgNotif'))PNS.mount($('pgNotif'),{role,url:location.pathname});
   }
   V.onclick=e=>{
     const d=e.target.closest('[data-d]'),w=e.target.closest('[data-w]'),k=e.target.closest('[data-tab]'),s=e.target.closest('[data-sub]'),fx=e.target.closest('[data-fx]');
@@ -3862,7 +3955,7 @@ async function publishMembers(){
   const bids=[...new Set(d.data.map(x=>x.batch_id))];
   const brows=bids.map(bid=>{
     const b=STATE.batches.find(x=>x.id===bid);if(!b)return null;
-    const cl=STATE.classes.filter(c=>c.batchId===bid||c.secondBatchId===bid).map(c=>({id:c.id,date:c.date,batchId:c.batchId,teacherId:c.teacherId,subject:c.subject,chapter:c.chapter,lectureNo:c.lectureNo,start:c.start,end:c.end,isDoubt:!!c.isDoubt,isTest:!!c.isTest,isPractice:!!c.isPractice,testTopics:c.testTopics||[]})),
+    const cl=STATE.classes.filter(c=>c.batchId===bid||c.secondBatchId===bid).map(c=>({id:c.id,date:c.date,batchId:c.batchId,teacherId:c.teacherId,subject:c.subject,chapter:c.chapter,lectureNo:c.lectureNo,start:c.start,end:c.end,isDoubt:!!c.isDoubt,isTest:!!c.isTest,isPractice:!!c.isPractice,isCollege:!!c.isCollege,testKind:c.testKind||'',testTopics:c.testTopics||[]})),
       tids=new Set(cl.map(c=>c.teacherId));
     return{batch_id:bid,updated_at:new Date().toISOString(),payload:{batches:[{id:b.id,label:b.label,center:b.center}],teachers:STATE.teachers.filter(t=>tids.has(t.id)).map(t=>({id:t.id,name:t.name,code:t.code||''})),classes:cl,
       materials:(STATE.materials||[]).filter(m=>!m.batchId||m.batchId===bid).map(m=>({id:m.id,title:m.title,url:m.url,kind:m.kind,subject:m.subject||''})),
@@ -3871,7 +3964,7 @@ async function publishMembers(){
   for(let i=0;i<brows.length;i+=20){const r=await paceCloud.from('pace_batch_timetables').upsert(brows.slice(i,i+20),{onConflict:'batch_id'});if(r.error){console.warn('batch publish',r.error.message);break}}
   const rows=Object.entries(by).map(([uid,list])=>{
     const ids=new Set(list.map(x=>x.batch_id)),
-      classes=STATE.classes.filter(c=>ids.has(c.batchId)||ids.has(c.secondBatchId)).map(c=>({id:c.id,date:c.date,batchId:c.batchId,teacherId:c.teacherId,subject:c.subject,chapter:c.chapter,lectureNo:c.lectureNo,start:c.start,end:c.end,isDoubt:!!c.isDoubt,isTest:!!c.isTest,isPractice:!!c.isPractice,testTopics:c.testTopics||[]})),
+      classes=STATE.classes.filter(c=>ids.has(c.batchId)||ids.has(c.secondBatchId)).map(c=>({id:c.id,date:c.date,batchId:c.batchId,teacherId:c.teacherId,subject:c.subject,chapter:c.chapter,lectureNo:c.lectureNo,start:c.start,end:c.end,isDoubt:!!c.isDoubt,isTest:!!c.isTest,isPractice:!!c.isPractice,isCollege:!!c.isCollege,testKind:c.testKind||'',testTopics:c.testTopics||[]})),
       tids=new Set(classes.map(c=>c.teacherId)),batches=STATE.batches.filter(b=>ids.has(b.id)),centers=new Set(batches.map(b=>String(b.center||'').toLowerCase()));
     return{user_id:uid,updated_at:new Date().toISOString(),payload:{name:list[0].name||'',role:list[0].role,batches:batches.map(b=>({id:b.id,label:b.label,center:b.center})),teachers:STATE.teachers.filter(t=>tids.has(t.id)).map(t=>({id:t.id,name:t.name,code:t.code||''})),classes,
       materials:(STATE.materials||[]).filter(m=>!m.batchId||ids.has(m.batchId)).map(m=>({id:m.id,title:m.title,url:m.url,kind:m.kind,subject:m.subject||''})),
@@ -4064,27 +4157,46 @@ window.peTests=async function(box,user,role){
     paceCloud.from('pace_test_keys').select('test_id,scheme_text,scheme_file')]);
   if(t.error){box.innerHTML=`<div class="card"><p class="muted" style="margin:0">${esc(t.error.message)}</p></div>`;return}
   const S=Object.fromEntries((s.data||[]).map(x=>[x.test_id,x])),K=Object.fromEntries((k.data||[]).map(x=>[x.test_id,x.scheme_text])),KF=Object.fromEntries((k.data||[]).map(x=>[x.test_id,x.scheme_file]));
+  window.__tp=window.__tp||{};
+  const tpLabel=id=>{const n=(window.__tp[id]||[]).length,pdf=n&&/pdf/i.test(window.__tp[id][0].type||window.__tp[id][0].name);return n?(pdf?'Submit answer sheet (PDF)':`Submit answer sheet (${n} page${n>1?'s':''})`):'Submit answer sheet'};
+  function tpPages(id){const L=window.__tp[id]||[];if(!L.length)return'<p class="muted" style="font-size:12.5px;margin:0">No pages added yet.</p>';
+    return L.map((f,i)=>{const pdf=/pdf/i.test(f.type||f.name);if(!f._u&&!pdf)f._u=URL.createObjectURL(f);
+      return `<div class="tp-pg">${pdf?'<div class="tp-pdf">📄 PDF</div>':`<img src="${f._u}" alt="Page ${i+1}">`}<span class="tp-no">${pdf?esc(f.name):'Page '+(i+1)}</span><div class="tp-act">${!pdf&&i>0?`<button type="button" data-mv="${id}|${i}|-1" aria-label="Move earlier">◀</button>`:''}${!pdf&&i<L.length-1?`<button type="button" data-mv="${id}|${i}|1" aria-label="Move later">▶</button>`:''}<button type="button" data-rm="${id}|${i}" aria-label="Remove">✕</button></div></div>`}).join('')}
+  const tpRedraw=id=>{const el=box.querySelector(`[data-pages="${id}"]`),g=box.querySelector(`[data-go="${id}"]`);if(el)el.innerHTML=tpPages(id);if(g){g.disabled=!(window.__tp[id]||[]).length;g.textContent=tpLabel(id)}};
   const card=x=>{
     const u=S[x.id];let st='';
     if(u&&u.status==='done'){const r=u.result||{};
       st=`<div style="margin-top:10px"><b style="font-size:18px">${u.score} / ${u.max_marks}</b> <span class="muted">· checked by AI, your teacher may review it</span>${u.annotated_path?`<div style="margin:8px 0"><button class="btn primary" data-ck="${esc(u.annotated_path)}">📄 Open my checked paper</button></div>`:''}${r.overall_feedback?`<p style="margin:6px 0">${esc(r.overall_feedback)}</p>`:''}${(r.questions||[]).map(q=>`<div style="font-size:13px;padding:5px 0;border-top:1px solid var(--line)"><b>Q${esc(q.q)}</b> · ${esc(q.marks)}/${esc(q.max)} — ${esc(q.feedback||'')}</div>`).join('')}${(r.unreadable||[]).length?`<p class="muted" style="font-size:12.5px">Could not read: Q${esc(r.unreadable.join(', Q'))}. Write clearly and scan in good light.</p>`:''}${K[x.id]?`<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--ink-2)">Marking scheme</summary><pre style="white-space:pre-wrap;font:13px/1.5 Inter,sans-serif;margin:8px 0 0">${esc(K[x.id])}</pre></details>`:''}${KF[x.id]?`<div><button class="btn ghost" data-sp="${esc(KF[x.id])}" style="margin-top:8px">📄 Marking scheme (PDF)</button></div>`:''}</div>`}
     else if(u&&u.status==='checking')st='<p class="muted" style="margin-top:10px">⏳ Your answers are being checked. Tap Tests again in a minute.</p>';
-    else st=`${u&&u.status==='error'?`<p style="color:var(--coral);font-size:13px">Last attempt failed: ${esc(u.error||'')}. You can upload again.</p>`:''}<div style="margin-top:10px;display:grid;gap:8px"><input type="file" multiple accept="application/pdf,image/*" data-f="${x.id}"><p class="muted" style="font-size:12px;margin:0">Choose one PDF, or several photos (one photo per page, in order).</p><button class="btn primary" data-go="${x.id}">Submit answer sheet</button><p class="muted" data-m="${x.id}" style="font-size:13px;margin:0"></p></div>`;
+    else st=`${u&&u.status==='error'?`<p style="color:var(--coral);font-size:13px">Last attempt failed: ${esc(u.error||'')}. You can upload again.</p>`:''}<div style="margin-top:10px;display:grid;gap:8px"><p class="muted" style="font-size:12.5px;margin:0">Add a photo of <b>each page</b> of your answers, in order. You can add pages one by one.</p>
+      <div class="tp-btns"><label class="btn primary tp-add">📷 Take photo<input type="file" accept="image/*" capture="environment" data-add="${x.id}" hidden></label><label class="btn ghost tp-add">🖼️ Gallery<input type="file" accept="image/*,application/pdf" multiple data-add="${x.id}" hidden></label></div>
+      <div class="tp-pages" data-pages="${x.id}">${tpPages(x.id)}</div>
+      <button class="btn primary" data-go="${x.id}"${(window.__tp[x.id]||[]).length?'':' disabled'}>${tpLabel(x.id)}</button><p class="muted" data-m="${x.id}" style="font-size:13px;margin:0"></p></div>`;
     return `<div class="card" style="margin-bottom:12px"><b>${esc(x.title)}</b><div class="muted" style="font-size:12.5px">${esc(x.subject||'')} · ${x.max_marks} marks</div>${x.question_text?`<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--ink-2)">Question paper</summary><pre style="white-space:pre-wrap;font:13px/1.5 Inter,sans-serif;margin:8px 0 0">${esc(x.question_text)}</pre></details>`:''}${x.question_file?`<div><button class="btn ghost" data-qp="${esc(x.question_file)}" style="margin-top:8px">📄 Question paper (PDF)</button></div>`:''}${st}</div>`;
   };
   box.innerHTML=(t.data||[]).map(card).join('')||'<div class="card"><p class="muted" style="margin:0">No tests right now.</p></div>';
+  box.onchange=e=>{const inp=e.target.closest('[data-add]');if(!inp)return;const id=inp.dataset.add,m=box.querySelector(`[data-m="${id}"]`);
+    const add=[...(inp.files||[])];inp.value='';if(!add.length)return;
+    const isPdf=x=>/\.pdf$/i.test(x.name)||x.type==='application/pdf';let L=window.__tp[id]||[];
+    if(add.some(isPdf)){if(add.length>1||L.length){m.style.color='var(--coral)';m.textContent='Upload either one PDF, or photos — not both. Remove the photos first to use a PDF.';return}window.__tp[id]=[add[0]];tpRedraw(id);m.textContent='';return}
+    if(L.length&&isPdf(L[0])){m.style.color='var(--coral)';m.textContent='Remove the PDF first to add photos instead.';return}
+    if(L.length+add.length>20){m.style.color='var(--coral)';m.textContent='At most 20 pages. Remove some pages first.';return}
+    window.__tp[id]=L.concat(add);m.style.color='var(--text-muted)';m.textContent=`✓ ${window.__tp[id].length} page${window.__tp[id].length>1?'s':''} ready — add more, or submit.`;tpRedraw(id)};
   box.onclick=async e=>{
+    const rm=e.target.closest('[data-rm]'),mv=e.target.closest('[data-mv]');
+    if(rm){const[id,i]=rm.dataset.rm.split('|');const L=window.__tp[id]||[];const f=L.splice(+i,1)[0];if(f&&f._u)URL.revokeObjectURL(f._u);tpRedraw(id);return}
+    if(mv){const[id,i,d]=mv.dataset.mv.split('|');const L=window.__tp[id]||[],a=+i,b=a+(+d);if(b>=0&&b<L.length){[L[a],L[b]]=[L[b],L[a]];tpRedraw(id)}return}
     const o=e.target.closest('[data-qp],[data-sp],[data-ck]');
     if(o)return openSigned(o.dataset.ck?'answer-sheets':'test-files',o.dataset.qp||o.dataset.sp||o.dataset.ck);
     const g=e.target.closest('[data-go]');if(!g)return;
-    const id=g.dataset.go,m=box.querySelector(`[data-m="${id}"]`),files=[...(box.querySelector(`[data-f="${id}"]`).files||[])];
+    const id=g.dataset.go,m=box.querySelector(`[data-m="${id}"]`),files=(window.__tp[id]||[]).slice();
     const say=(x,bad)=>{m.style.color=bad?'var(--coral)':'var(--text-muted)';m.textContent=x};
-    if(!files.length)return say('Choose your answer sheet (a PDF, or photos) first.',1);
+    if(!files.length)return say('Add a photo of each page (or one PDF) first.',1);
     g.disabled=true;let f;
     try{
       const isPdf=x=>/\.pdf$/i.test(x.name)||x.type==='application/pdf';
       if(files.length===1&&isPdf(files[0])){f=files[0];if(f.size>10*MB)throw new Error('The file is larger than 10 MB. Please scan at a lower quality.')}
-      else if(files.every(x=>!isPdf(x))){if(files.length>15)throw new Error('Please choose at most 15 photos.');say('Preparing '+files.length+' photo(s)…');f=new File([await makePdf(files)],'answer.pdf',{type:'application/pdf'})}
+      else if(files.every(x=>!isPdf(x))){if(files.length>20)throw new Error('Please add at most 20 pages.');say('Preparing '+files.length+' photo(s)…');f=new File([await makePdf(files)],'answer.pdf',{type:'application/pdf'})}
       else throw new Error('Choose either one PDF or several photos, not both.');
     }catch(err){g.disabled=false;return say(err.message||String(err),1)}
     say('Uploading…');
@@ -4092,6 +4204,7 @@ window.peTests=async function(box,user,role){
     const row=Array.isArray(b.data)?b.data[0]:b.data;
     const up=await paceCloud.storage.from('answer-sheets').upload(row.sub_path,f,{contentType:'application/pdf',upsert:true});
     if(up.error){g.disabled=false;return say('Upload failed: '+up.error.message,1)}
+    (window.__tp[id]||[]).forEach(f=>f._u&&URL.revokeObjectURL(f._u));delete window.__tp[id];
     say('Checking your answers… this can take up to a minute. Please keep this screen open.');
     const r=await paceCloud.functions.invoke('super-task',{body:{submission_id:row.sub_id}});
     if(r.error)say(await errMsg(r.error),1);
@@ -4126,6 +4239,7 @@ function batchRows(batchId,tests,subs,roster){
     const cells=ts.map(t=>{const s=p.uid&&by[t.id+'|'+p.uid];if(s&&s.status==='done'){tot+=Number(s.score)||0;out+=Number(t.max_marks)||0;return Number(s.score)}return s?s.status:''});
     return[p.name,p.email,...cells,out?tot:'',out||'',out?Math.round(tot/out*1000)/10:'']})];
 }
+(function(){if(document.getElementById('tb-css'))return;const st=document.createElement('style');st.id='tb-css';st.textContent=`.tb-pick{display:flex;flex-wrap:wrap;gap:8px}.tb-c{display:inline-flex!important;align-items:center;gap:6px;margin:0!important;line-height:1.25!important;min-height:0!important;width:auto!important;text-transform:none!important;letter-spacing:0!important;color:var(--text)!important;border:1.5px solid var(--line);border-radius:999px;padding:7px 12px;cursor:pointer;font-size:13.5px;background:var(--card);user-select:none}.tb-c input{width:16px!important;height:16px!important;min-height:0!important;padding:0!important;margin:0!important;box-shadow:none!important;flex:0 0 16px;accent-color:#2F6BEB}.tb-c span{font-weight:500}.tb-c.on span{font-weight:700}.tb-c.on{border-color:#2F6BEB;background:color-mix(in srgb,#2F6BEB 10%,var(--card));font-weight:600}.tp-btns{display:flex;gap:8px;flex-wrap:wrap}.tp-add{position:relative;display:inline-flex!important;align-items:center;justify-content:center;gap:6px;cursor:pointer;flex:1 1 140px;box-sizing:border-box;margin:0!important;min-height:44px!important;padding:8px 14px!important;border-radius:12px!important;font:600 14px Inter,sans-serif!important;text-transform:none!important;letter-spacing:0!important}.tp-add.btn.primary{background:#2F6BEB!important;color:#fff!important;border:1.5px solid #2F6BEB!important}.tp-add.btn.ghost{background:var(--card)!important;color:#2F6BEB!important;border:1.5px solid color-mix(in srgb,#2F6BEB 45%,transparent)!important}.tp-pages{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}.tp-pg{position:relative;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card)}.tp-pg img{display:block;width:100%;height:118px;object-fit:cover}.tp-pdf{height:118px;display:grid;place-items:center;font-size:15px;font-weight:700;color:#D14363}.tp-no{display:block;font-size:11.5px;font-weight:700;padding:4px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tp-act{position:absolute;top:4px;right:4px;display:flex;gap:4px}.tp-act button{width:26px;height:26px;border-radius:50%;border:0;background:rgba(15,20,40,.72);color:#fff;font-size:12px;cursor:pointer;padding:0;line-height:26px}`;document.head.append(st)})();
 function testRows(t,subs,emailOf){
   const qn=Math.max(0,...subs.map(s=>((s.result||{}).questions||[]).length));
   const head=['Name','Gmail','Status','Marks','Out of','Percentage',...Array.from({length:qn},(_,i)=>'Q'+(i+1)),'Overall feedback'];
@@ -4149,7 +4263,7 @@ async function paintTests0(host,ctx){
   const by={};(s.data||[]).forEach(x=>(by[x.test_id]=by[x.test_id]||[]).push(x));
   const opts=bl.map(b=>`<option value="${esc(b.id)}">${esc(b.label||b.name)}${b.center?' ('+esc(b.center)+')':''}</option>`).join('');
   host.innerHTML=`<div class="card" style="margin-bottom:16px"><div class="cardhead"><h2>${TE?'Assign an AI-checked test':'Create a test'}</h2></div>${note}${bl.length?'':`<p style="color:var(--coral);font-size:13px">${TE?'No batches yet — your timetable has not been published.':'No batches are loaded on this device yet. Tap “Restore cloud” in the top bar first, then come back here.'}</p>`}
-  <form id="tF" style="display:grid;gap:12px"><div class="row"><div class="field"><label>Batch</label><select id="tB">${opts}</select></div><div class="field"><label>Subject</label><input id="tS" placeholder="e.g. Physics"></div><div class="field"><label>Max marks</label><input id="tM" type="number" min="1" value="100"></div></div>
+  <form id="tF" style="display:grid;gap:12px"><div class="field"><label>Batches <span class="muted" style="font-weight:400">(tap to choose one or more)</span></label><div id="tB" class="tb-pick">${bl.map(b=>`<label class="tb-c"><input type="checkbox" value="${esc(b.id)}"><span>${esc(b.label||b.name)}${b.short?' '+esc(b.short):''}${b.center?' · '+esc(b.center):''}</span></label>`).join('')}</div>${bl.length>1?'<div style="display:flex;gap:12px;margin-top:6px;font-size:12.5px"><a href="#" id="tBall">Select all</a><a href="#" id="tBnone">Clear</a></div>':''}<small class="muted" style="font-size:12px">Each selected batch gets its own copy of the test, with its own submissions and marks.</small></div><div class="row"><div class="field"><label>Subject</label><input id="tS" placeholder="e.g. Physics"></div><div class="field"><label>Max marks</label><input id="tM" type="number" min="1" value="100"></div></div>
   <div class="field"><label>Title</label><input id="tT" required placeholder="e.g. Chemistry Unit Test 1"></div>
   <div class="field"><label>Question paper (paste from ChatGPT; students can read this)</label><textarea id="tQ" rows="7"></textarea><label style="margin-top:8px;font-size:12.5px">…or attach the question paper as a PDF</label><input type="file" id="tQF" accept="application/pdf"></div>
   <div class="field"><label>Marking scheme / model answers (students can NOT see this)</label><textarea id="tK" rows="7" placeholder="Paste the answer key with marks for each question"></textarea><label style="margin-top:8px;font-size:12.5px">…or attach the marking scheme as a PDF</label><input type="file" id="tKF" accept="application/pdf"></div>
@@ -4158,21 +4272,34 @@ async function paintTests0(host,ctx){
   <div class="card"><div class="cardhead"><h2>Tests &amp; results</h2></div>
   ${bl.length?`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 10px"><select id="xB" style="width:auto;flex:0 1 220px">${opts}</select><button class="btn ghost" id="xBatch" type="button">⬇ Download batch marks (Excel)</button></div>`:''}
   ${(t.data||[]).map(x=>{const L=by[x.id]||[];return `<div style="padding:10px 0;border-bottom:1px solid var(--line)"><b>${esc(x.title)}</b> <span class="muted" style="font-size:12.5px">${esc(bn(x.batch_id))} · ${x.max_marks} marks · ${L.length} submitted</span><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"><button class="btn ghost" data-tg="${x.id}" data-o="${x.is_open?1:0}">${x.is_open?'Close test':'Reopen test'}</button><button class="btn ghost" data-xl="${x.id}">⬇ Excel</button><button class="btn ghost" data-dt="${x.id}">Delete</button></div><details data-tid="${x.id}"${T.open===x.id?' open':''} style="margin-top:8px"><summary style="cursor:pointer;color:var(--ink-2);font-weight:600">Results (${L.length})</summary>${L.map(u=>`<div style="padding:8px 0;border-top:1px solid var(--line);font-size:13px"><b>${esc(u.student_name||'Student')}</b> · ${u.status==='done'?u.score+' / '+u.max_marks:u.status}${u.error?` <span style="color:var(--coral)">${esc(u.error)}</span>`:''} <button class="btn ghost" data-sheet="${esc(u.file_path)}">Sheet ↗</button>${u.annotated_path?` <button class="btn ghost" data-ck="${esc(u.annotated_path)}">Checked paper ↗</button>`:''} ${['uploaded','error','checking'].includes(u.status)?`<button class="btn ghost" data-chk="${u.id}">Check now</button> `:''}<button class="btn ghost" data-rs="${u.id}">Reset</button>${u.result?`<div class="muted" style="margin-top:4px">${esc(u.result.overall_feedback||'')}</div>${(u.result.questions||[]).map(q=>`<div>Q${esc(q.q)}: ${esc(q.marks)}/${esc(q.max)} — ${esc(q.feedback||'')}</div>`).join('')}`:''}</div>`).join('')||'<p class="muted" style="font-size:13px">No submissions yet.</p>'}</details></div>`}).join('')||'<p class="muted">No tests yet.</p>'}</div>`;
+  const pick=v=>host.querySelectorAll('#tB input').forEach(c=>{c.checked=v;c.closest('.tb-c').classList.toggle('on',v)});
+  if($('tBall'))$('tBall').onclick=e=>{e.preventDefault();pick(true)};if($('tBnone'))$('tBnone').onclick=e=>{e.preventDefault();pick(false)};
+  host.querySelectorAll('#tB input').forEach(c=>c.onchange=()=>c.closest('.tb-c').classList.toggle('on',c.checked));
+  if(bl.length===1)pick(true);
   $('tF').onsubmit=async e=>{e.preventDefault();
     const qf=$('tQF').files[0],kf=$('tKF').files[0],qt=$('tQ').value.trim(),kt=$('tK').value.trim();
+    const sel=[...host.querySelectorAll('#tB input:checked')].map(c=>c.value);
+    if(!sel.length)return tip('Choose at least one batch');
     if(!qt&&!qf)return tip('Add the question paper as text or as a PDF');
     for(const f of [qf,kf])if(f&&(f.size>10*MB||!/\.pdf$/i.test(f.name)))return tip('Attachments must be PDF files up to 10 MB');
-    const f0={batch_id:$('tB').value,title:$('tT').value.trim(),subject:$('tS').value.trim(),max_marks:+$('tM').value||100,question_text:qt,reveal_key:$('tR').checked};
+    const btn=$('tF').querySelector('button[type=submit]');btn.disabled=true;
+    const done=[];
+    for(let i=0;i<sel.length;i++){
+    if(sel.length>1)btn.textContent=`Creating ${i+1} of ${sel.length}…`;
+    const f0={batch_id:sel[i],title:$('tT').value.trim(),subject:$('tS').value.trim(),max_marks:+$('tM').value||100,question_text:qt,reveal_key:$('tR').checked};
+    const fail=m=>{btn.disabled=false;btn.textContent='Create test';tip((done.length?'Created for '+done.map(bn).join(', ')+'. ':'')+'Stopped at '+bn(sel[i])+': '+m)};
     let id;
-    if(TE){const a=await paceCloud.rpc('teacher_create_test',{p_batch:f0.batch_id,p_title:f0.title,p_subject:f0.subject,p_max:f0.max_marks,p_question:qt,p_reveal:f0.reveal_key});if(a.error)return tip(a.error.message);id=a.data}
-    else{const a=await paceCloud.from('pace_tests').insert(f0).select('id').single();if(a.error)return tip(a.error.message);id=a.data.id}
+    if(TE){const a=await paceCloud.rpc('teacher_create_test',{p_batch:f0.batch_id,p_title:f0.title,p_subject:f0.subject,p_max:f0.max_marks,p_question:qt,p_reveal:f0.reveal_key});if(a.error)return fail(a.error.message);id=a.data}
+    else{const a=await paceCloud.from('pace_tests').insert(f0).select('id').single();if(a.error)return fail(a.error.message);id=a.data.id}
     const up=async(f,n)=>{const r=await paceCloud.storage.from('test-files').upload(id+'/'+n,f,{contentType:'application/pdf',upsert:true});if(r.error)throw r.error;return id+'/'+n};
     try{
       const qp=qf?await up(qf,'question.pdf'):null,sp=kf?await up(kf,'scheme.pdf'):null;
       if(TE){const r=await paceCloud.rpc('teacher_save_test_files',{p_test:id,p_question_file:qp||'',p_scheme_text:kt,p_scheme_file:sp||''});if(r.error)throw r.error}
       else{if(qp)await paceCloud.from('pace_tests').update({question_file:qp}).eq('id',id);if(kt||sp)await paceCloud.from('pace_test_keys').insert({test_id:id,scheme_text:kt||null,scheme_file:sp})}
-    }catch(err){return tip('File upload failed: '+(err.message||err))}
-    tip('Test created ✓');paintTests(host,ctx)};
+    }catch(err){return fail('file upload failed: '+(err.message||err))}
+    done.push(sel[i]);
+    }
+    tip(done.length>1?`Test created for ${done.length} batches ✓`:'Test created ✓');paintTests(host,ctx)};
   host.onclick=async e=>{
     const b=e.target.closest('button');if(!b)return;
     const dt=b.closest('details');if(dt)T.open=dt.dataset.tid;
