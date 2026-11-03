@@ -3474,6 +3474,98 @@ if(typeof NAV_ITEMS!=='undefined'&&typeof render==='function'&&!/[?&](teacher|st
 }
 })();
 </script>
+<!-- ===== PACE exam notices (admin writes, students & parents read) ===== -->
+<style id="pace-notice-css">
+.xn-box{background:var(--card);border:1.5px solid color-mix(in srgb,#2F6BEB 35%,transparent);border-radius:16px;padding:10px 12px;margin:0 0 12px}
+.xn-h{display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px;margin:2px 2px 6px}
+.xn-h small{font-weight:600;color:var(--text-muted);font-size:12px}
+.xn-it{border-top:1px solid var(--line)}
+.xn-it:first-of-type{border-top:0}
+.xn-it>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:10px 2px;font-size:14.5px;font-weight:700;line-height:1.35}
+.xn-it>summary::-webkit-details-marker{display:none}
+.xn-it>summary .t{flex:1;min-width:0}
+.xn-it>summary .ar{color:var(--text-muted);transition:transform .15s;font-size:16px}
+.xn-it[open]>summary .ar{transform:rotate(90deg)}
+.xn-new{font-size:10.5px;font-weight:800;color:#fff;background:#D14363;border-radius:999px;padding:2px 7px;letter-spacing:.3px}
+.xn-d{font-size:13.5px;line-height:1.55;white-space:pre-wrap;word-wrap:break-word;padding:0 2px 12px;color:var(--text)}
+.xn-d a{color:#2F6BEB;word-break:break-all}
+.xn-dt{display:block;font-size:12px;color:var(--text-muted);margin-top:6px}
+.xn-f{display:grid;gap:10px;margin-top:10px}
+.xn-f input,.xn-f textarea{box-sizing:border-box;width:100%}
+.xn-f textarea{min-height:140px;resize:vertical;font:inherit}
+.xn-row{border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-top:10px;background:var(--card)}
+.xn-row b{font-size:14.5px}
+.xn-row .xn-d{padding:6px 0 0}
+.xn-b{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.xn-b .btn{min-height:36px;padding:6px 12px;font-size:13px}
+</style>
+<script>
+(function(){
+const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ok=()=>typeof paceCloud!=='undefined'&&paceCloud;
+const when=t=>{try{return new Date(t).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}catch(_){return''}};
+/* description: keep line breaks, make http(s) links clickable */
+const body=s=>E(s).replace(/(https?:\/\/[^\s<]+[^\s<.,;:!?)\]'"])/g,u=>`<a href="${u}" target="_blank" rel="noopener noreferrer">${u}</a>`);
+const SK=uid=>'pace-xn-seen:'+uid;
+const seen=uid=>{try{return new Set(JSON.parse(localStorage.getItem(SK(uid))||'[]'))}catch(_){return new Set()}};
+
+const PXN=window.PXN={
+  list:[],
+  async load(){if(!ok())return null;const r=await paceCloud.from('pace_notices').select('id,title,body,created_at').order('created_at',{ascending:false}).limit(30);
+    if(!r.error)PXN.list=r.data||[];return r.error},
+  /* students & parents: headings on top, tap to open */
+  html(uid){const L=PXN.list;if(!L.length)return'';const S=seen(uid),n=L.filter(x=>!S.has(x.id)).length;
+    return `<div class="xn-box"><div class="xn-h">📢 Exam Notices${n?` <small>· ${n} new</small>`:''}</div>`+
+      L.map(x=>`<details class="xn-it" data-xn="${E(x.id)}"><summary><span class="t">${E(x.title)}</span>${S.has(x.id)?'':'<span class="xn-new">NEW</span>'}<span class="ar">›</span></summary><div class="xn-d">${body(x.body)}<span class="xn-dt">Posted ${E(when(x.created_at))}</span></div></details>`).join('')+'</div>'},
+  bind(el,uid){if(!el)return;el.querySelectorAll('details[data-xn]').forEach(d=>d.addEventListener('toggle',()=>{if(!d.open)return;
+    const S=seen(uid);S.add(d.dataset.xn);try{localStorage.setItem(SK(uid),JSON.stringify([...S].slice(-200)))}catch(_){}
+    const b=d.querySelector('.xn-new');if(b)b.remove();const n=PXN.list.filter(x=>!S.has(x.id)).length,h=el.querySelector('.xn-h small');
+    if(h){if(n)h.textContent='· '+n+' new';else h.remove()}}))},
+  /* admin screen */
+  async admin(el){
+    let editing=null,err='';
+    const draw=(msg,bad)=>{
+      const e=editing&&PXN.list.find(x=>x.id===editing);
+      el.innerHTML=`<div class="card"><h2 style="margin:0 0 4px">📢 Exam Notices</h2><p class="muted" style="margin:0;font-size:13px">Students and parents see these headings at the top of their screen. Tapping a heading opens the description.</p>
+        <form class="xn-f"><div class="field"><label>Heading</label><input name="t" required maxlength="150" placeholder="e.g. JEE Main 2027 – Session 1 form is out" value="${E(e?e.title:'')}"></div>
+        <div class="field"><label>Description</label><textarea name="b" required maxlength="5000" placeholder="Last date, fees, documents needed, link to apply…">${E(e?e.body:'')}</textarea></div>
+        <div class="xn-b"><button class="btn primary" type="submit">${e?'Save changes':'Publish notice'}</button>${e?'<button class="btn ghost" type="button" data-cx>Cancel edit</button>':''}</div>
+        <div style="font-size:12.5px;color:${bad?'var(--coral)':'var(--text-muted)'}">${E(msg||'')}</div></form></div>
+        ${err?`<p class="muted">Could not load notices: ${E(err)}</p>`:''}
+        <h3 style="margin:16px 0 0;font-size:14px">Published (${PXN.list.length})</h3>
+        ${PXN.list.length?PXN.list.map(x=>`<div class="xn-row"><b>${E(x.title)}</b><div class="xn-d">${body(x.body)}<span class="xn-dt">Posted ${E(when(x.created_at))}</span></div>
+          <div class="xn-b"><button class="btn ghost" type="button" data-ed="${E(x.id)}">✏️ Edit</button><button class="btn ghost" type="button" data-del="${E(x.id)}">🗑 Delete</button></div></div>`).join(''):'<p class="muted">No notices yet.</p>'}`;
+      const F=el.querySelector('form');
+      F.onsubmit=async ev=>{ev.preventDefault();const t=F.t.value.trim(),b=F.b.value.trim();if(!t||!b)return draw('Please fill the heading and the description.',true);
+        const btn=F.querySelector('[type=submit]');btn.disabled=true;btn.textContent='Saving…';
+        const r=editing?await paceCloud.from('pace_notices').update({title:t,body:b,updated_at:new Date().toISOString()}).eq('id',editing)
+                       :await paceCloud.from('pace_notices').insert({title:t,body:b});
+        if(r.error){btn.disabled=false;btn.textContent=editing?'Save changes':'Publish notice';const m=el.querySelector('form>div:last-child');if(m){m.style.color='var(--coral)';m.textContent='Could not save: '+r.error.message}return}
+        const was=editing;editing=null;err=(await PXN.load())?.message||'';draw(was?'Saved ✓':'Published ✓ Students and parents will see it next time they open the app.')};
+      el.querySelectorAll('[data-ed]').forEach(b=>b.onclick=()=>{editing=b.dataset.ed;draw();el.querySelector('form').scrollIntoView({behavior:'smooth',block:'start'})});
+      const cx=el.querySelector('[data-cx]');if(cx)cx.onclick=()=>{editing=null;draw()};
+      el.querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{
+        if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Tap again to delete';setTimeout(()=>{if(b.isConnected){b.dataset.sure='';b.textContent='🗑 Delete'}},4000);return}
+        const r=await paceCloud.from('pace_notices').delete().eq('id',b.dataset.del);
+        if(r.error)return draw('Could not delete: '+r.error.message,true);
+        if(editing===b.dataset.del)editing=null;err=(await PXN.load())?.message||'';draw('Deleted.')});
+    };
+    el.innerHTML='<div class="card"><p class="muted">Loading notices…</p></div>';err=(await PXN.load())?.message||'';draw();
+  }
+};
+
+/* admin menu item + screen */
+if(typeof NAV_ITEMS!=='undefined'&&typeof render==='function'&&!/[?&](teacher|student)=1/.test(location.search)){
+  if(!NAV_ITEMS.some(x=>x.id==='notices'))NAV_ITEMS.splice(Math.max(0,NAV_ITEMS.findIndex(x=>x.id==='leave')),0,{id:'notices',label:'Exam Notices',ic:'📢'});
+  const prevR=render;
+  render=function(){prevR.apply(this,arguments);
+    if(UI.tab==='notices'){const v=document.getElementById('view');if(!v)return;
+      if(UI.accessRole!=='admin'){v.innerHTML='<div class="card"><p class="muted">Admin only.</p></div>';return}
+      if(!ok()){v.innerHTML='<div class="card"><p class="muted">Connect to the internet to manage notices.</p></div>';return}
+      if(!v.querySelector('#xnAdmin')){v.innerHTML='<div id="xnAdmin"></div>';PXN.admin(v.querySelector('#xnAdmin'))}}};
+}
+})();
+</script>
 <!-- ===== PACE phone notifications ===== -->
 <style id="pace-push-css">
 .pn-card{display:flex;align-items:center;gap:12px;background:var(--card);border:1.5px solid color-mix(in srgb,#E8890C 40%,transparent);border-radius:16px;padding:12px 14px;margin:0 0 12px}
@@ -3668,7 +3760,7 @@ function mergeBatches(rows,acc,role){
 }
 async function member(user,role){
   cur={user,role};V.classList.add('open');
-  const [,tt,hw,bt,ac]=await Promise.all([window.PCH?PCH.load():null,
+  const [,,tt,hw,bt,ac]=await Promise.all([window.PCH?PCH.load():null,window.PXN?PXN.load().catch(()=>null):null,
     paceCloud.from('pace_member_timetables').select('payload').eq('user_id',user.id).maybeSingle(),
     paceCloud.from('pace_homework').select('id,batch_id,teacher_name,subject,title,details,due_date,link').order('due_date',{ascending:true}),
     paceCloud.from('pace_batch_timetables').select('batch_id,payload'),
@@ -3815,8 +3907,8 @@ async function member(user,role){
   }
   function paint(){
     const chip=(k,t)=>`<button class="pe-chip${tab===k?' act':''}" data-tab="${k}">${t}</button>`,tt0=tab==='tt';
-    V.innerHTML=top+`<div class="pg-wrap">${tt0?hero():''}<div class="pe-filter pg-tabs">${chip('tt','📅 Timetable')}${chip('hw','📝 Homework'+(up.length?' <i class="pg-cnt">'+up.length+'</i>':''))}${chip('mat','📚 Materials')}${chip('tst','🧪 Tests')}${isStu?chip('fx','🧮 Formulas'):''}</div>${tt0?'<div id="pgNext">'+upNext()+'</div>'+installCard()+'<div id="pgNotif"></div>':''}<div id="pgDoubt">${doubtHTML()}</div>${tab==='hw'?homework():tab==='mat'?materials():tab==='tst'?'<div id="pgTests"></div>':tab==='fx'?formulas():(isStu?fxTeaser():'')+timetable()}</div>`;
-    $('pgOut').onclick=signOut;if(tab==='tst'&&window.peTests)window.peTests($('pgTests'),user,role);if(tab==='fx')typeset();if(window.PNS&&$('pgNotif'))PNS.mount($('pgNotif'),{role,url:location.pathname});
+    V.innerHTML=top+`<div class="pg-wrap">${tt0&&window.PXN?'<div id="pgXN">'+PXN.html(user.id)+'</div>':''}${tt0?hero():''}<div class="pe-filter pg-tabs">${chip('tt','📅 Timetable')}${chip('hw','📝 Homework'+(up.length?' <i class="pg-cnt">'+up.length+'</i>':''))}${chip('mat','📚 Materials')}${chip('tst','🧪 Tests')}${isStu?chip('fx','🧮 Formulas'):''}</div>${tt0?'<div id="pgNext">'+upNext()+'</div>'+installCard()+'<div id="pgNotif"></div>':''}<div id="pgDoubt">${doubtHTML()}</div>${tab==='hw'?homework():tab==='mat'?materials():tab==='tst'?'<div id="pgTests"></div>':tab==='fx'?formulas():(isStu?fxTeaser():'')+timetable()}</div>`;
+    $('pgOut').onclick=signOut;if(tab==='tst'&&window.peTests)window.peTests($('pgTests'),user,role);if(tab==='fx')typeset();if(window.PXN&&$('pgXN'))PXN.bind($('pgXN'),user.id);if(window.PNS&&$('pgNotif'))PNS.mount($('pgNotif'),{role,url:location.pathname});
   }
   V.onclick=e=>{
     const d=e.target.closest('[data-d]'),w=e.target.closest('[data-w]'),k=e.target.closest('[data-tab]'),s=e.target.closest('[data-sub]'),fx=e.target.closest('[data-fx]');
