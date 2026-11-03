@@ -3476,6 +3476,8 @@ if(typeof NAV_ITEMS!=='undefined'&&typeof render==='function'&&!/[?&](teacher|st
 </script>
 <!-- ===== PACE exam notices (admin writes, students & parents read) ===== -->
 <style id="pace-notice-css">
+.sx-b{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.sx-b .btn{min-height:38px}
+.ma-bh{margin:18px 0 6px;font-size:14px;padding:6px 10px;border-radius:10px;background:color-mix(in srgb,#2F6BEB 10%,var(--card))}.ma-bh span,.ma-bh small{font-weight:600;color:var(--text-muted)}
 .xn-box{background:var(--card);border:1.5px solid color-mix(in srgb,#2F6BEB 35%,transparent);border-radius:16px;padding:10px 12px;margin:0 0 12px}
 .xn-h{display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px;margin:2px 2px 6px}
 .xn-h small{font-weight:600;color:var(--text-muted);font-size:12px}
@@ -3495,6 +3497,8 @@ if(typeof NAV_ITEMS!=='undefined'&&typeof render==='function'&&!/[?&](teacher|st
 .xn-f textarea{min-height:140px;resize:vertical;font:inherit}
 .xn-row{border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-top:10px;background:var(--card)}
 .xn-row b{font-size:14.5px}
+.xn-aud{float:right;font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 9px;background:color-mix(in srgb,#2F6BEB 12%,var(--card));color:#2F6BEB;margin-left:8px}
+.xn-f select{box-sizing:border-box;width:100%}
 .xn-row .xn-d{padding:6px 0 0}
 .xn-b{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 .xn-b .btn{min-height:36px;padding:6px 12px;font-size:13px}
@@ -3507,39 +3511,41 @@ const when=t=>{try{return new Date(t).toLocaleDateString('en-IN',{day:'numeric',
 /* description: keep line breaks, make http(s) links clickable */
 const body=s=>E(s).replace(/(https?:\/\/[^\s<]+[^\s<.,;:!?)\]'"])/g,u=>`<a href="${u}" target="_blank" rel="noopener noreferrer">${u}</a>`);
 const SK=uid=>'pace-xn-seen:'+uid;
+const AUD={xii:'Class 12th only',xi:'Class 11th only',all:'All classes'};
 const seen=uid=>{try{return new Set(JSON.parse(localStorage.getItem(SK(uid))||'[]'))}catch(_){return new Set()}};
 
 const PXN=window.PXN={
   list:[],
-  async load(){if(!ok())return null;const r=await paceCloud.from('pace_notices').select('id,title,body,created_at').order('created_at',{ascending:false}).limit(30);
+  async load(){if(!ok())return null;const r=await paceCloud.from('pace_notices').select('id,title,body,audience,created_at').order('created_at',{ascending:false}).limit(30);
     if(!r.error)PXN.list=r.data||[];return r.error},
   /* students & parents: headings on top, tap to open */
-  html(uid){const L=PXN.list;if(!L.length)return'';const S=seen(uid),n=L.filter(x=>!S.has(x.id)).length;
+  html(uid,grade){const L=PXN.list.filter(x=>(x.audience||'xii')==='all'||(x.audience||'xii')===grade);if(!L.length)return'';const S=seen(uid),n=L.filter(x=>!S.has(x.id)).length;
     return `<div class="xn-box"><div class="xn-h">📢 Exam Notices${n?` <small>· ${n} new</small>`:''}</div>`+
       L.map(x=>`<details class="xn-it" data-xn="${E(x.id)}"><summary><span class="t">${E(x.title)}</span>${S.has(x.id)?'':'<span class="xn-new">NEW</span>'}<span class="ar">›</span></summary><div class="xn-d">${body(x.body)}<span class="xn-dt">Posted ${E(when(x.created_at))}</span></div></details>`).join('')+'</div>'},
   bind(el,uid){if(!el)return;el.querySelectorAll('details[data-xn]').forEach(d=>d.addEventListener('toggle',()=>{if(!d.open)return;
     const S=seen(uid);S.add(d.dataset.xn);try{localStorage.setItem(SK(uid),JSON.stringify([...S].slice(-200)))}catch(_){}
-    const b=d.querySelector('.xn-new');if(b)b.remove();const n=PXN.list.filter(x=>!S.has(x.id)).length,h=el.querySelector('.xn-h small');
+    const b=d.querySelector('.xn-new');if(b)b.remove();const n=el.querySelectorAll('.xn-new').length,h=el.querySelector('.xn-h small');
     if(h){if(n)h.textContent='· '+n+' new';else h.remove()}}))},
   /* admin screen */
   async admin(el){
     let editing=null,err='';
     const draw=(msg,bad)=>{
       const e=editing&&PXN.list.find(x=>x.id===editing);
-      el.innerHTML=`<div class="card"><h2 style="margin:0 0 4px">📢 Exam Notices</h2><p class="muted" style="margin:0;font-size:13px">Students and parents see these headings at the top of their screen. Tapping a heading opens the description.</p>
+      el.innerHTML=`<div class="card"><h2 style="margin:0 0 4px">📢 Exam Notices</h2><p class="muted" style="margin:0;font-size:13px">Students and parents of the chosen class see these headings at the top of their screen. Tapping a heading opens the description.</p>
         <form class="xn-f"><div class="field"><label>Heading</label><input name="t" required maxlength="150" placeholder="e.g. JEE Main 2027 – Session 1 form is out" value="${E(e?e.title:'')}"></div>
+        <div class="field"><label>Show to</label><select name="a">${Object.entries(AUD).map(([k,v])=>`<option value="${k}"${(e?e.audience||'xii':'xii')===k?' selected':''}>${v}</option>`).join('')}</select></div>
         <div class="field"><label>Description</label><textarea name="b" required maxlength="5000" placeholder="Last date, fees, documents needed, link to apply…">${E(e?e.body:'')}</textarea></div>
         <div class="xn-b"><button class="btn primary" type="submit">${e?'Save changes':'Publish notice'}</button>${e?'<button class="btn ghost" type="button" data-cx>Cancel edit</button>':''}</div>
         <div style="font-size:12.5px;color:${bad?'var(--coral)':'var(--text-muted)'}">${E(msg||'')}</div></form></div>
         ${err?`<p class="muted">Could not load notices: ${E(err)}</p>`:''}
         <h3 style="margin:16px 0 0;font-size:14px">Published (${PXN.list.length})</h3>
-        ${PXN.list.length?PXN.list.map(x=>`<div class="xn-row"><b>${E(x.title)}</b><div class="xn-d">${body(x.body)}<span class="xn-dt">Posted ${E(when(x.created_at))}</span></div>
+        ${PXN.list.length?PXN.list.map(x=>`<div class="xn-row"><span class="xn-aud">${E(AUD[x.audience||'xii']||'')}</span><b>${E(x.title)}</b><div class="xn-d">${body(x.body)}<span class="xn-dt">Posted ${E(when(x.created_at))}</span></div>
           <div class="xn-b"><button class="btn ghost" type="button" data-ed="${E(x.id)}">✏️ Edit</button><button class="btn ghost" type="button" data-del="${E(x.id)}">🗑 Delete</button></div></div>`).join(''):'<p class="muted">No notices yet.</p>'}`;
       const F=el.querySelector('form');
-      F.onsubmit=async ev=>{ev.preventDefault();const t=F.t.value.trim(),b=F.b.value.trim();if(!t||!b)return draw('Please fill the heading and the description.',true);
+      F.onsubmit=async ev=>{ev.preventDefault();const t=F.t.value.trim(),b=F.b.value.trim(),au=F.a.value||'xii';if(!t||!b)return draw('Please fill the heading and the description.',true);
         const btn=F.querySelector('[type=submit]');btn.disabled=true;btn.textContent='Saving…';
-        const r=editing?await paceCloud.from('pace_notices').update({title:t,body:b,updated_at:new Date().toISOString()}).eq('id',editing)
-                       :await paceCloud.from('pace_notices').insert({title:t,body:b});
+        const r=editing?await paceCloud.from('pace_notices').update({title:t,body:b,audience:au,updated_at:new Date().toISOString()}).eq('id',editing)
+                       :await paceCloud.from('pace_notices').insert({title:t,body:b,audience:au});
         if(r.error){btn.disabled=false;btn.textContent=editing?'Save changes':'Publish notice';const m=el.querySelector('form>div:last-child');if(m){m.style.color='var(--coral)';m.textContent='Could not save: '+r.error.message}return}
         const was=editing;editing=null;err=(await PXN.load())?.message||'';draw(was?'Saved ✓':'Published ✓ Students and parents will see it next time they open the app.')};
       el.querySelectorAll('[data-ed]').forEach(b=>b.onclick=()=>{editing=b.dataset.ed;draw();el.querySelector('form').scrollIntoView({behavior:'smooth',block:'start'})});
@@ -3907,7 +3913,7 @@ async function member(user,role){
   }
   function paint(){
     const chip=(k,t)=>`<button class="pe-chip${tab===k?' act':''}" data-tab="${k}">${t}</button>`,tt0=tab==='tt';
-    V.innerHTML=top+`<div class="pg-wrap">${tt0&&window.PXN?'<div id="pgXN">'+PXN.html(user.id)+'</div>':''}${tt0?hero():''}<div class="pe-filter pg-tabs">${chip('tt','📅 Timetable')}${chip('hw','📝 Homework'+(up.length?' <i class="pg-cnt">'+up.length+'</i>':''))}${chip('mat','📚 Materials')}${chip('tst','🧪 Tests')}${isStu?chip('fx','🧮 Formulas'):''}</div>${tt0?'<div id="pgNext">'+upNext()+'</div>'+installCard()+'<div id="pgNotif"></div>':''}<div id="pgDoubt">${doubtHTML()}</div>${tab==='hw'?homework():tab==='mat'?materials():tab==='tst'?'<div id="pgTests"></div>':tab==='fx'?formulas():(isStu?fxTeaser():'')+timetable()}</div>`;
+    V.innerHTML=top+`<div class="pg-wrap">${tt0&&window.PXN?'<div id="pgXN">'+PXN.html(user.id,FG)+'</div>':''}${tt0?hero():''}<div class="pe-filter pg-tabs">${chip('tt','📅 Timetable')}${chip('hw','📝 Homework'+(up.length?' <i class="pg-cnt">'+up.length+'</i>':''))}${chip('mat','📚 Materials')}${chip('tst','🧪 Tests')}${isStu?chip('fx','🧮 Formulas'):''}</div>${tt0?'<div id="pgNext">'+upNext()+'</div>'+installCard()+'<div id="pgNotif"></div>':''}<div id="pgDoubt">${doubtHTML()}</div>${tab==='hw'?homework():tab==='mat'?materials():tab==='tst'?'<div id="pgTests"></div>':tab==='fx'?formulas():(isStu?fxTeaser():'')+timetable()}</div>`;
     $('pgOut').onclick=signOut;if(tab==='tst'&&window.peTests)window.peTests($('pgTests'),user,role);if(tab==='fx')typeset();if(window.PXN&&$('pgXN'))PXN.bind($('pgXN'),user.id);if(window.PNS&&$('pgNotif'))PNS.mount($('pgNotif'),{role,url:location.pathname});
   }
   V.onclick=e=>{
@@ -3969,14 +3975,17 @@ async function mLoad(){
 }
 function paintM(){
   const v=$('view');if(!v||UI.tab!=='members')return;
-  const stu=MR.role==='student',rows=MR.all.filter(r=>r.role===MR.role&&(stu||!r.child_id)).sort(byMail),
+  const stu=MR.role==='student',BI=Object.fromEntries(STATE.batches.map((b,i)=>[b.id,i])),bix=r=>BI[r.batch_id]??9999,
+    nm=r=>r.saved?String(r.name||r.email||'').trim().toLowerCase()||'\uffff':'\uffff',
+    rows=MR.all.filter(r=>r.role===MR.role&&(stu||!r.child_id)).sort((a,b)=>bix(a)-bix(b)||nm(a).localeCompare(nm(b))||byMail(a,b)),
+    bh=(r,i)=>{if(i&&rows[i-1].batch_id===r.batch_id)return'';const b=STATE.batches.find(x=>x.id===r.batch_id),n=rows.filter(x=>x.batch_id===r.batch_id).length;return `<h3 class="ma-bh">${b?esc(b.label)+' <span>('+esc(b.center||'')+')</span>':'No batch'} <small>· ${n}</small></h3>`},
     bo=r=>STATE.batches.map(b=>`<option value="${b.id}"${b.id===r.batch_id?' selected':''}>${esc(b.label)} (${esc(b.center)})</option>`).join(''),
     kid=(sid,i)=>MR.all.find(x=>x.role==='parent'&&x.child_id===sid&&x.slot===i)||{};
   v.innerHTML=`<div class="card"><div class="cardhead"><h2>Student &amp; parent login mapping</h2></div>
   <div class="pe-filter"><button class="pe-chip${stu?' act':''}" data-role="student">Students</button><button class="pe-chip${stu?'':' act'}" data-role="parent">Parents (not linked)</button></div>
-  <p class="muted" style="font-size:13px;margin-top:0">${stu?'Add each student’s Gmail and pick their batch. Under each student, add the <b>parent’s Gmail</b> (up to 2): parents then see that student’s timetable <b>and test marks</b>. The list is sorted by Gmail.':'Parents added here are not tied to a student, so they see only the batch timetable, homework and materials — no marks. Add parents <b>under their child in the Students tab</b> to show marks.'} To change a Gmail, edit it and tap Save. Tap ✕ to remove someone; the old Gmail loses access straight away.</p>
+  <p class="muted" style="font-size:13px;margin-top:0">${stu?'Add each student’s Gmail and pick their batch. Under each student, add the <b>parent’s Gmail</b> (up to 2): parents then see that student’s timetable <b>and test marks</b>. The list is grouped by batch and sorted A–Z by name.':'Parents added here are not tied to a student, so they see only the batch timetable, homework and materials — no marks. Add parents <b>under their child in the Students tab</b> to show marks.'} To change a Gmail, edit it and tap Save. Tap ✕ to remove someone; the old Gmail loses access straight away.</p>
   ${MR.note?`<p style="color:var(--coral);font-size:13px">${esc(MR.note)}</p>`:''}
-  ${rows.map(r=>`<div class="ma-row" data-id="${r.id}"><input data-f="name" placeholder="Name" value="${esc(r.name||'')}"><input data-f="email" type="email" placeholder="email@gmail.com" value="${esc(r.email||'')}"><select data-f="batch_id">${bo(r)}</select><span>${MR.linked.has(r.id)?'<b class="fa-ok" title="Has signed in">✓</b> ':''}<button class="icon" data-del="${r.id}" title="Remove">✕</button></span></div>${stu?`<div class="ma-par" data-sid="${r.id}"><span class="muted" style="font-size:12px">Parent Gmail</span><input data-pf="0" type="email" placeholder="parent@gmail.com" value="${esc(kid(r.id,0).email||'')}"><input data-pf="1" type="email" placeholder="2nd parent (optional)" value="${esc(kid(r.id,1).email||'')}"><span>${(MR.linked.has(kid(r.id,0).id)||MR.linked.has(kid(r.id,1).id))?'<b class="fa-ok" title="Has signed in">✓</b>':''}</span></div>`:''}`).join('')||'<p class="muted">No entries yet.</p>'}
+  ${rows.map((r,i)=>bh(r,i)+`<div class="ma-row" data-id="${r.id}"><input data-f="name" placeholder="Name" value="${esc(r.name||'')}"><input data-f="email" type="email" placeholder="email@gmail.com" value="${esc(r.email||'')}"><select data-f="batch_id">${bo(r)}</select><span>${MR.linked.has(r.id)?'<b class="fa-ok" title="Has signed in">✓</b> ':''}<button class="icon" data-del="${r.id}" title="Remove">✕</button></span></div>${stu?`<div class="ma-par" data-sid="${r.id}"><span class="muted" style="font-size:12px">Parent Gmail</span><input data-pf="0" type="email" placeholder="parent@gmail.com" value="${esc(kid(r.id,0).email||'')}"><input data-pf="1" type="email" placeholder="2nd parent (optional)" value="${esc(kid(r.id,1).email||'')}"><span>${(MR.linked.has(kid(r.id,0).id)||MR.linked.has(kid(r.id,1).id))?'<b class="fa-ok" title="Has signed in">✓</b>':''}</span></div>`:''}`).join('')||'<p class="muted">No entries yet.</p>'}
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0"><button class="btn ghost" id="maAdd">＋ Add row</button><button class="btn primary" id="maSave">Save</button><button class="btn ghost" id="maPub">Publish now</button></div>
   <details><summary class="muted" style="cursor:pointer">Bulk add from a list</summary><div class="field" style="margin-top:8px"><label>One per line: Name, Gmail, Batch${stu?', Parent Gmail, 2nd Parent Gmail (optional)':''} — e.g. Student Name, student@gmail.com, XII JEE 1${stu?', parent@gmail.com':''}</label><textarea id="maBulk" rows="5"></textarea></div><button class="btn ghost" id="maBulkGo">Add these rows</button></details></div>`;
   v.oninput=e=>{
@@ -4249,7 +4258,7 @@ window.peTests=async function(box,user,role){
   if(role!=='student'){box.innerHTML='<div class="card"><p class="muted" style="margin:0">Tests are submitted by students from their own login.</p></div>';return}
   box.innerHTML='<p class="muted">Loading tests…</p>';
   const [t,s,k]=await Promise.all([paceCloud.from('pace_tests').select('id,title,subject,max_marks,question_text,question_file').order('created_at',{ascending:false}),
-    paceCloud.from('pace_test_submissions').select('test_id,status,score,max_marks,result,error,annotated_path').eq('user_id',user.id),
+    paceCloud.from('pace_test_submissions').select('id,test_id,status,score,max_marks,result,error,annotated_path').eq('user_id',user.id),
     paceCloud.from('pace_test_keys').select('test_id,scheme_text,scheme_file')]);
   if(t.error){box.innerHTML=`<div class="card"><p class="muted" style="margin:0">${esc(t.error.message)}</p></div>`;return}
   const S=Object.fromEntries((s.data||[]).map(x=>[x.test_id,x])),K=Object.fromEntries((k.data||[]).map(x=>[x.test_id,x.scheme_text])),KF=Object.fromEntries((k.data||[]).map(x=>[x.test_id,x.scheme_file]));
@@ -4262,7 +4271,7 @@ window.peTests=async function(box,user,role){
   const card=x=>{
     const u=S[x.id];let st='';
     if(u&&u.status==='done'){const r=u.result||{};
-      st=`<div style="margin-top:10px"><b style="font-size:18px">${u.score} / ${u.max_marks}</b> <span class="muted">· checked by AI, your teacher may review it</span>${u.annotated_path?`<div style="margin:8px 0"><button class="btn primary" data-ck="${esc(u.annotated_path)}">📄 Open my checked paper</button></div>`:''}${r.overall_feedback?`<p style="margin:6px 0">${esc(r.overall_feedback)}</p>`:''}${(r.questions||[]).map(q=>`<div style="font-size:13px;padding:6px 0;border-top:1px solid var(--line)"><b>Q${esc(q.q)}</b> · <b style="color:${q.status==='correct'?'#15803D':q.status==='blank'?'var(--text-muted)':'#BE123C'}">${esc(q.marks)}/${esc(q.max)}</b> — ${esc(q.feedback||'')}${(q.errors||[]).length?`<div style="color:#BE123C;margin-top:3px">${q.errors.map((e,i)=>'⭕ '+esc(e.note||'')).join('<br>')}</div>`:''}${q.missing?`<div style="color:#BE123C;margin-top:3px">Missing: ${esc(q.missing)}</div>`:''}${q.correct_answer?`<details style="margin-top:4px"><summary style="cursor:pointer;color:#15803D;font-weight:600">Correct answer</summary><div style="white-space:pre-wrap;margin-top:4px;color:#15803D">${esc(q.correct_answer)}</div></details>`:''}</div>`).join('')}${(r.unreadable||[]).length?`<p class="muted" style="font-size:12.5px">Could not read: Q${esc(r.unreadable.join(', Q'))}. Write clearly and scan in good light.</p>`:''}${K[x.id]?`<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--ink-2)">Marking scheme</summary><pre style="white-space:pre-wrap;font:13px/1.5 Inter,sans-serif;margin:8px 0 0">${esc(K[x.id])}</pre></details>`:''}${KF[x.id]?`<div><button class="btn ghost" data-sp="${esc(KF[x.id])}" style="margin-top:8px">📄 Marking scheme (PDF)</button></div>`:''}</div>`}
+      st=`<div style="margin-top:10px"><b style="font-size:18px">${u.score} / ${u.max_marks}</b> <span class="muted">· checked by AI, your teacher may review it</span><div class="sx-b">${u.annotated_path?`<button class="btn primary" data-ck="${esc(u.annotated_path)}">📄 Open my checked paper</button>`:''}${(r.student_rechecks||0)<1?`<button class="btn ghost" data-src="${esc(u.id)}">↻ Re-check my paper</button>`:''}<button class="btn ghost" data-rsub="${esc(x.id)}">📤 Submit a new answer sheet</button></div><p class="muted" data-m="${x.id}" style="font-size:13px;margin:0"></p>${r.overall_feedback?`<p style="margin:6px 0">${esc(r.overall_feedback)}</p>`:''}${(r.questions||[]).map(q=>`<div style="font-size:13px;padding:6px 0;border-top:1px solid var(--line)"><b>Q${esc(q.q)}</b> · <b style="color:${q.status==='correct'?'#15803D':q.status==='blank'?'var(--text-muted)':'#BE123C'}">${esc(q.marks)}/${esc(q.max)}</b> — ${esc(q.feedback||'')}${(q.errors||[]).length?`<div style="color:#BE123C;margin-top:3px">${q.errors.map((e,i)=>'⭕ '+esc(e.note||'')).join('<br>')}</div>`:''}${q.missing?`<div style="color:#BE123C;margin-top:3px">Missing: ${esc(q.missing)}</div>`:''}${q.correct_answer?`<details style="margin-top:4px"><summary style="cursor:pointer;color:#15803D;font-weight:600">Correct answer</summary><div style="white-space:pre-wrap;margin-top:4px;color:#15803D">${esc(q.correct_answer)}</div></details>`:''}</div>`).join('')}${(r.unreadable||[]).length?`<p class="muted" style="font-size:12.5px">Could not read: Q${esc(r.unreadable.join(', Q'))}. Write clearly and scan in good light.</p>`:''}${K[x.id]?`<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--ink-2)">Marking scheme</summary><pre style="white-space:pre-wrap;font:13px/1.5 Inter,sans-serif;margin:8px 0 0">${esc(K[x.id])}</pre></details>`:''}${KF[x.id]?`<div><button class="btn ghost" data-sp="${esc(KF[x.id])}" style="margin-top:8px">📄 Marking scheme (PDF)</button></div>`:''}</div>`}
     else if(u&&u.status==='checking')st='<p class="muted" style="margin-top:10px">⏳ Your answers are being checked. Tap Tests again in a minute.</p>';
     else st=`${u&&u.status==='error'?`<p style="color:var(--coral);font-size:13px">Last attempt failed: ${esc(u.error||'')}. You can upload again.</p>`:''}<div style="margin-top:10px;display:grid;gap:8px"><p class="muted" style="font-size:12.5px;margin:0">Add a photo of <b>each page</b> of your answers, in order. You can add pages one by one.</p>
       <div class="tp-btns"><label class="btn primary tp-add">📷 Take photo<input type="file" accept="image/*" capture="environment" data-add="${x.id}" hidden></label><label class="btn ghost tp-add">🖼️ Gallery<input type="file" accept="image/*,application/pdf" multiple data-add="${x.id}" hidden></label></div>
@@ -4284,6 +4293,16 @@ window.peTests=async function(box,user,role){
     if(mv){const[id,i,d]=mv.dataset.mv.split('|');const L=window.__tp[id]||[],a=+i,b=a+(+d);if(b>=0&&b<L.length){[L[a],L[b]]=[L[b],L[a]];tpRedraw(id)}return}
     const o=e.target.closest('[data-qp],[data-sp],[data-ck]');
     if(o)return openSigned(o.dataset.ck?'answer-sheets':'test-files',o.dataset.qp||o.dataset.sp||o.dataset.ck);
+    const rc=e.target.closest('[data-src]'),rs=e.target.closest('[data-rsub]');
+    if(rc||rs){const btn=rc||rs,card=btn.closest('.card'),m=card&&card.querySelector('[data-m]'),say=(x,bad)=>{if(m){m.style.color=bad?'var(--coral)':'var(--text-muted)';m.textContent=x}};
+      if(rc){if(!confirm('Check your paper again?\n\nThe AI marks it once more and your marks may go up or down. You can do this only once for this test.'))return;
+        btn.disabled=true;btn.textContent='Checking…';say('Checking your paper again… this can take up to a minute. Please keep this screen open.');
+        const r=await paceCloud.functions.invoke('super-task',{body:{submission_id:rc.dataset.src}});if(r.error){btn.disabled=false;btn.textContent='↻ Re-check my paper';return say(await errMsg(r.error),1)}
+        return window.peTests(box,user,role)}
+      if(!confirm('Submit a new answer sheet?\n\nYour current marks and checked paper will be removed, and the new sheet will be checked instead. You can do this at most 2 times for this test.'))return;
+      btn.disabled=true;const r=await paceCloud.rpc('student_resubmit',{p_test:rs.dataset.rsub});
+      if(r.error){btn.disabled=false;return say(r.error.message,1)}
+      return window.peTests(box,user,role)}
     const g=e.target.closest('[data-go]');if(!g)return;
     const id=g.dataset.go,m=box.querySelector(`[data-m="${id}"]`),files=(window.__tp[id]||[]).slice();
     const say=(x,bad)=>{m.style.color=bad?'var(--coral)':'var(--text-muted)';m.textContent=x};
