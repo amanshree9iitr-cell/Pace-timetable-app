@@ -3491,6 +3491,12 @@ if(typeof NAV_ITEMS!=='undefined'&&typeof render==='function'&&!/[?&](teacher|st
 .xn-new{font-size:10.5px;font-weight:800;color:#fff;background:#D14363;border-radius:999px;padding:2px 7px;letter-spacing:.3px}
 .xn-d{font-size:13.5px;line-height:1.55;white-space:pre-wrap;word-wrap:break-word;padding:0 2px 12px;color:var(--text)}
 .xn-d a{color:#2F6BEB;word-break:break-all}
+.xn-d a.xn-link{display:flex;align-items:center;gap:10px;margin:8px 0;padding:10px 14px;border-radius:14px;text-decoration:none;color:#fff;word-break:normal;
+  background:linear-gradient(135deg,#2F6BEB,#7C3AED);box-shadow:0 6px 16px color-mix(in srgb,#2F6BEB 35%,transparent);white-space:normal}
+.xn-link .xi{font-size:20px}.xn-link .xt{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25}.xn-link .xt b{font-size:14px}
+.xn-link .xt small{font-size:12px;opacity:.85;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.xn-link .xa{font-size:18px;font-weight:800}
+.xn-link:active{transform:scale(.98)}
+.xn-date{display:inline-block;font-weight:700;color:#BE123C;background:color-mix(in srgb,#D14363 12%,var(--card));border-radius:8px;padding:2px 8px}
 .xn-dt{display:block;font-size:12px;color:var(--text-muted);margin-top:6px}
 .xn-f{display:grid;gap:10px;margin-top:10px}
 .xn-f input,.xn-f textarea{box-sizing:border-box;width:100%}
@@ -3509,7 +3515,11 @@ const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','
 const ok=()=>typeof paceCloud!=='undefined'&&paceCloud;
 const when=t=>{try{return new Date(t).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}catch(_){return''}};
 /* description: keep line breaks, make http(s) links clickable */
-const body=s=>E(s).replace(/(https?:\/\/[^\s<]+[^\s<.,;:!?)\]'"])/g,u=>`<a href="${u}" target="_blank" rel="noopener noreferrer">${u}</a>`);
+const host=u=>{try{return new URL(u.replace(/&amp;/g,'&')).hostname.replace(/^www\./,'')}catch(_){return'website'}};
+const body=s=>E(s).split('\n').map(line=>{
+    let l=line.replace(/(https?:\/\/[^\s<]+[^\s<.,;:!?)\]'"])/g,u=>`<a class="xn-link" href="${u}" target="_blank" rel="noopener noreferrer"><span class="xi">🚀</span><span class="xt"><b>Open official website</b><small>${host(u)}</small></span><span class="xa">↗</span></a>`);
+    if(/^\s*(last|closing|final)\s+date|^\s*deadline|^\s*exam\s+date|^\s*date\s+of\s+exam/i.test(line))l=`<span class="xn-date">⏰ ${l}</span>`;
+    return l}).reduce((o,l,i,A)=>o+l+(i<A.length-1&&!/<\/a>\s*$/.test(l)?'\n':''),'');
 const SK=uid=>'pace-xn-seen:'+uid;
 const AUD={xii:'Class 12th only',xi:'Class 11th only',all:'All classes'};
 const seen=uid=>{try{return new Set(JSON.parse(localStorage.getItem(SK(uid))||'[]'))}catch(_){return new Set()}};
@@ -3847,14 +3857,20 @@ async function member(user,role){
   const icon=c=>c.isCollege?'🏫':c.isTest?'📝':c.isPractice?'✍️':c.isDoubt?'💬':subj(c)[2];
   const nowMin=()=>{const n=new Date();return n.getHours()*60+n.getMinutes()};
   const LINES=['Small steps every day add up to big ranks.','Understand the concept once, and you never have to memorise it.','Today’s practice is tomorrow’s confidence.','Mistakes are just questions you haven’t solved yet.','Consistency beats intensity. Show up today.','One more problem than yesterday — that’s progress.','Revise before you forget, not after.','Doubts are good. Unasked doubts are not — ask today!','Focus on the next hour, not the whole syllabus.','Every formula you master is one less to worry about.','Read the question twice, solve it once.','Your future rank is built in today’s classes.','Hard chapters become easy chapters with practice.','Discipline is choosing what you want most over what you want now.','A tough test today makes the real exam feel easier.','Write it, solve it, check it — then move on.','Sleep well, study smart, stay curious.','Be proud of how far you’ve come, and keep going.','Learn from every test, don’t just look at the marks.','Ten focused minutes beat an hour of distraction.'];
+  if(!window.paceGreet){
+    window.paceGreet=(h,day)=>{const G=h>=5&&h<12?[['Good morning','☀️'],['Rise and shine','🌅'],['Morning','☕']]:h>=12&&h<17?[['Good afternoon','🌤️'],['Hey there','👋'],['Keep going','💪']]:h>=17&&h<21?[['Good evening','🌆'],['Evening','📚'],['Almost there today','✨']]:[['Hello, night owl','🦉'],['Studying late','🌙'],['Burning the midnight oil','🕯️']];
+      const n=Math.abs(Math.round(Date.parse((day||'2026-01-01')+'T00:00:00Z')/864e5));return G[n%G.length]};
+    document.addEventListener('visibilitychange',()=>{if(document.hidden)return;const b=document.querySelector('.pg-hero-t b[data-greet]');if(!b)return;
+      const d=new Date(),day=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'),g=window.paceGreet(d.getHours(),day),f=b.dataset.greet;b.textContent=g[0]+(f?', '+f:'')+' '+g[1]});
+  }
   function hero(){
     const t=todayStr(),h=new Date().getHours(),first=String((P&&P.name)||'').trim().split(/\s+/)[0];
-    const greet=h<12?'Good morning':h<17?'Good afternoon':'Good evening';
+    const greet=window.paceGreet(h,t);
     const nCls=P.classes.filter(c=>c.date===t).length;
     let st=0;try{const D=(JSON.parse(localStorage.getItem('pace-fx:'+user.id)||'{}')||{}).done||{};let x=t;if(D[x]==null)x=addD(x,-1);while(D[x]!=null){st++;x=addD(x,-1)}}catch(_){}
     const line=LINES[Math.abs(Math.round(Date.parse(t+'T00:00:00Z')/864e5))%LINES.length];
     const bl=(P.batches||[]).map(b=>b.label).filter(Boolean).join(', ');
-    return `<div class="pg-hero"><div class="pg-hero-t"><b>${greet}${first?', '+esc(first):''} 👋</b><span>${esc(dayName(t))}, ${esc(fmtDateLong(t))}${bl?' · '+esc(bl):''}</span></div>
+    return `<div class="pg-hero"><div class="pg-hero-t"><b data-greet="${esc(first)}">${greet[0]}${first?', '+esc(first):''} ${greet[1]}</b><span>${esc(dayName(t))}, ${esc(fmtDateLong(t))}${bl?' · '+esc(bl):''}</span></div>
       <div class="pg-stats"><button data-tab="tt"><b>${nCls}</b>class${nCls===1?'':'es'} today</button><button data-tab="hw"><b>${up.length}</b>homework due</button>${isStu?`<button data-tab="fx"><b>🔥 ${st}</b>day streak</button>`:''}</div>
       <p class="pg-line">💡 ${esc(line)}</p></div>`;
   }
@@ -3913,7 +3929,7 @@ async function member(user,role){
   }
   function paint(){
     const chip=(k,t)=>`<button class="pe-chip${tab===k?' act':''}" data-tab="${k}">${t}</button>`,tt0=tab==='tt';
-    V.innerHTML=top+`<div class="pg-wrap">${tt0&&window.PXN?'<div id="pgXN">'+PXN.html(user.id,FG)+'</div>':''}${tt0?hero():''}<div class="pe-filter pg-tabs">${chip('tt','📅 Timetable')}${chip('hw','📝 Homework'+(up.length?' <i class="pg-cnt">'+up.length+'</i>':''))}${chip('mat','📚 Materials')}${chip('tst','🧪 Tests')}${isStu?chip('fx','🧮 Formulas'):''}</div>${tt0?'<div id="pgNext">'+upNext()+'</div>'+installCard()+'<div id="pgNotif"></div>':''}<div id="pgDoubt">${doubtHTML()}</div>${tab==='hw'?homework():tab==='mat'?materials():tab==='tst'?'<div id="pgTests"></div>':tab==='fx'?formulas():(isStu?fxTeaser():'')+timetable()}</div>`;
+    V.innerHTML=top+`<div class="pg-wrap">${tt0?hero():''}${tt0&&window.PXN?'<div id="pgXN">'+PXN.html(user.id,FG)+'</div>':''}<div class="pe-filter pg-tabs">${chip('tt','📅 Timetable')}${chip('hw','📝 Homework'+(up.length?' <i class="pg-cnt">'+up.length+'</i>':''))}${chip('mat','📚 Materials')}${chip('tst','🧪 Tests')}${isStu?chip('fx','🧮 Formulas'):''}</div>${tt0?'<div id="pgNext">'+upNext()+'</div>'+installCard()+'<div id="pgNotif"></div>':''}<div id="pgDoubt">${doubtHTML()}</div>${tab==='hw'?homework():tab==='mat'?materials():tab==='tst'?'<div id="pgTests"></div>':tab==='fx'?formulas():(isStu?fxTeaser():'')+timetable()}</div>`;
     $('pgOut').onclick=signOut;if(tab==='tst'&&window.peTests)window.peTests($('pgTests'),user,role);if(tab==='fx')typeset();if(window.PXN&&$('pgXN'))PXN.bind($('pgXN'),user.id);if(window.PNS&&$('pgNotif'))PNS.mount($('pgNotif'),{role,url:location.pathname});
   }
   V.onclick=e=>{
