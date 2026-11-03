@@ -3110,6 +3110,10 @@ window.paceDailyFormulas=function(day,grade){
 .ch-f details small{display:block;margin-top:4px}
 /* old per-class chapter / lecture fields are replaced by the Chapters screen */
 .field:has(#f_chapter),.field:has(#f_lecture),.field:has(#f_chapterDone),#chapterHint{display:none!important}
+.checkfield:has(#f_chapterDone){display:none!important}
+/* sidebar: scroll when the menu is taller than the screen (iPad / small laptops) */
+#sidebar{overflow-y:auto!important;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;max-height:100vh;max-height:100dvh}
+#sidebar>*{flex-shrink:0}
 </style>
 <script>
 (function(){
