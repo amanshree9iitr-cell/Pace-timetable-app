@@ -3476,6 +3476,23 @@ if(typeof NAV_ITEMS!=='undefined'&&typeof render==='function'&&!/[?&](teacher|st
 </script>
 <!-- ===== PACE exam notices (admin writes, students & parents read) ===== -->
 <style id="pace-notice-css">
+.ma-tools{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.ma-tools input{flex:1 1 220px;min-height:40px;box-sizing:border-box}.ma-tools .btn{min-height:40px}
+.ma-sec{border:1px solid var(--line);border-radius:14px;margin:10px 0;background:var(--card);overflow:hidden}
+.ma-sec>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:12px 14px;background:color-mix(in srgb,#2F6BEB 8%,var(--card))}
+.ma-sec>summary::-webkit-details-marker{display:none}
+.ma-st{font-weight:800;font-size:15px;flex:1;min-width:0}.ma-st span{font-weight:600;color:var(--text-muted);font-size:13px}
+.ma-cnt{font-size:12.5px;color:var(--text-muted);white-space:nowrap}.ma-ar{font-size:18px;color:var(--text-muted);transition:transform .15s}.ma-sec[open] .ma-ar{transform:rotate(90deg)}
+.ma-body{padding:4px 14px 14px}
+.ma-card{position:relative!important;display:grid;grid-template-columns:1fr 1.3fr 1fr;gap:10px 12px;padding:12px 40px 12px 0;border-bottom:1px solid var(--line)}
+.ma-card:last-of-type{border-bottom:0}
+.ma-l{display:flex;flex-direction:column;gap:4px;min-width:0}.ma-l label{font-size:11.5px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.3px}
+.ma-l label .fa-ok{text-transform:none;letter-spacing:0;font-weight:700}
+.ma-l input,.ma-l select{box-sizing:border-box;width:100%;min-height:40px}
+.ma-pp{grid-column:1/-1}.ma-p2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ma-card>.ma-x{position:absolute!important;right:0!important;top:14px!important;margin:0!important;grid-column:auto!important}
+.ma-card .ma-l input,.ma-card .ma-l select{width:100%!important;max-width:none!important}
+.ma-addb{margin-top:10px}
+@media(max-width:780px){.ma-card{grid-template-columns:1fr;padding-right:36px}.ma-p2{grid-template-columns:1fr}.ma-cnt{display:none}}
 .sx-b{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.sx-b .btn{min-height:38px}
 .ma-bh{margin:18px 0 6px;font-size:14px;padding:6px 10px;border-radius:10px;background:color-mix(in srgb,#2F6BEB 10%,var(--card))}.ma-bh span,.ma-bh small{font-weight:600;color:var(--text-muted)}
 .xn-box{background:var(--card);border:1.5px solid color-mix(in srgb,#2F6BEB 35%,transparent);border-radius:16px;padding:10px 12px;margin:0 0 12px}
@@ -3973,7 +3990,7 @@ if(/type=recovery/.test(location.hash))pwBox(false,()=>location.replace(base));
 
 /* ---------- admin: Student & Parent Access tab ---------- */
 NAV_ITEMS.push({id:'members',ic:'🎓',label:'Student & Parent Access'});
-const MR={role:'student',all:[],gone:[],linked:new Set(),note:''};
+const MR={role:'student',all:[],gone:[],linked:new Set(),note:'',open:new Set()};
 const mailKey=x=>(x||'\uffff').toLowerCase();
 const byMail=(a,b)=>mailKey(a.email).localeCompare(mailKey(b.email))||String(a.name||'').localeCompare(String(b.name||''));
 function slotKids(){   /* each linked parent gets a fixed slot (0 or 1) under its student */
@@ -3994,14 +4011,27 @@ function paintM(){
   const stu=MR.role==='student',BI=Object.fromEntries(STATE.batches.map((b,i)=>[b.id,i])),bix=r=>BI[r.batch_id]??9999,
     nm=r=>r.saved?String(r.name||r.email||'').trim().toLowerCase()||'\uffff':'\uffff',
     rows=MR.all.filter(r=>r.role===MR.role&&(stu||!r.child_id)).sort((a,b)=>bix(a)-bix(b)||nm(a).localeCompare(nm(b))||byMail(a,b)),
-    bh=(r,i)=>{if(i&&rows[i-1].batch_id===r.batch_id)return'';const b=STATE.batches.find(x=>x.id===r.batch_id),n=rows.filter(x=>x.batch_id===r.batch_id).length;return `<h3 class="ma-bh">${b?esc(b.label)+' <span>('+esc(b.center||'')+')</span>':'No batch'} <small>· ${n}</small></h3>`},
+    card=r=>{const k0=kid(r.id,0),k1=kid(r.id,1),inS=MR.linked.has(r.id),inP=MR.linked.has(k0.id)||MR.linked.has(k1.id);
+      return `<div class="ma-card" data-id="${r.id}" data-q="${esc((String(r.name||'')+' '+(r.email||'')+' '+(k0.email||'')+' '+(k1.email||'')).toLowerCase())}">
+        <div class="ma-l"><label>${stu?'Student name':'Parent name'}</label><input data-f="name" placeholder="Full name" value="${esc(r.name||'')}"></div>
+        <div class="ma-l"><label>${stu?'Student Gmail (login ID)':'Parent Gmail (login ID)'} ${inS?'<b class="fa-ok" title="Has signed in">✓ signed in</b>':''}</label><input data-f="email" type="email" placeholder="name@gmail.com" value="${esc(r.email||'')}"></div>
+        <div class="ma-l"><label>Batch</label><select data-f="batch_id">${bo(r)}</select></div>
+        <button class="icon ma-x" data-del="${r.id}" title="Remove">✕</button>
+        ${stu?`<div class="ma-l ma-pp" data-sid="${r.id}"><label>Parent Gmail ${inP?'<b class="fa-ok" title="Has signed in">✓ signed in</b>':''}</label><div class="ma-p2"><input data-pf="0" type="email" placeholder="parent@gmail.com" value="${esc(k0.email||'')}"><input data-pf="1" type="email" placeholder="2nd parent (optional)" value="${esc(k1.email||'')}"></div></div>`:''}
+      </div>`},
+    sections=()=>{const ids=[...STATE.batches.map(b=>b.id),...new Set(rows.filter(r=>!(r.batch_id in BI)).map(r=>r.batch_id))];
+      return ids.map(id=>{const b=STATE.batches.find(x=>x.id===id),L=rows.filter(r=>r.batch_id===id);if(!b&&!L.length)return'';
+        const on=L.filter(r=>MR.linked.has(r.id)).length,open=MR.open.has(id);
+        return `<details class="ma-sec" data-bid="${esc(id)}"${open?' open':''}><summary><span class="ma-st">${b?esc(b.label):'No batch'}${b&&b.center?` <span>· ${esc(b.center)}</span>`:''}</span><span class="ma-cnt">${L.length} ${stu?'student':'parent'}${L.length===1?'':'s'}${L.length?` · ${on} signed in`:''}</span><span class="ma-ar">›</span></summary>
+          <div class="ma-body">${L.map(card).join('')||`<p class="muted" style="margin:6px 0">No ${stu?'students':'parents'} in this batch yet.</p>`}
+          ${b?`<button class="btn ghost ma-addb" data-addb="${esc(id)}">＋ Add ${stu?'student':'parent'} to ${esc(b.label)}</button>`:''}</div></details>`}).join('')},
     bo=r=>STATE.batches.map(b=>`<option value="${b.id}"${b.id===r.batch_id?' selected':''}>${esc(b.label)} (${esc(b.center)})</option>`).join(''),
     kid=(sid,i)=>MR.all.find(x=>x.role==='parent'&&x.child_id===sid&&x.slot===i)||{};
   v.innerHTML=`<div class="card"><div class="cardhead"><h2>Student &amp; parent login mapping</h2></div>
   <div class="pe-filter"><button class="pe-chip${stu?' act':''}" data-role="student">Students</button><button class="pe-chip${stu?'':' act'}" data-role="parent">Parents (not linked)</button></div>
-  <p class="muted" style="font-size:13px;margin-top:0">${stu?'Add each student’s Gmail and pick their batch. Under each student, add the <b>parent’s Gmail</b> (up to 2): parents then see that student’s timetable <b>and test marks</b>. The list is grouped by batch and sorted A–Z by name.':'Parents added here are not tied to a student, so they see only the batch timetable, homework and materials — no marks. Add parents <b>under their child in the Students tab</b> to show marks.'} To change a Gmail, edit it and tap Save. Tap ✕ to remove someone; the old Gmail loses access straight away.</p>
+  <p class="muted" style="font-size:13px;margin-top:0">${stu?'Add each student’s Gmail and pick their batch. Under each student, add the <b>parent’s Gmail</b> (up to 2): parents then see that student’s timetable <b>and test marks</b>. Each batch has its own section (tap to open), students are sorted A–Z by name.':'Parents added here are not tied to a student, so they see only the batch timetable, homework and materials — no marks. Add parents <b>under their child in the Students tab</b> to show marks.'} To change a Gmail, edit it and tap Save. Tap ✕ to remove someone; the old Gmail loses access straight away.</p>
   ${MR.note?`<p style="color:var(--coral);font-size:13px">${esc(MR.note)}</p>`:''}
-  ${rows.map((r,i)=>bh(r,i)+`<div class="ma-row" data-id="${r.id}"><input data-f="name" placeholder="Name" value="${esc(r.name||'')}"><input data-f="email" type="email" placeholder="email@gmail.com" value="${esc(r.email||'')}"><select data-f="batch_id">${bo(r)}</select><span>${MR.linked.has(r.id)?'<b class="fa-ok" title="Has signed in">✓</b> ':''}<button class="icon" data-del="${r.id}" title="Remove">✕</button></span></div>${stu?`<div class="ma-par" data-sid="${r.id}"><span class="muted" style="font-size:12px">Parent Gmail</span><input data-pf="0" type="email" placeholder="parent@gmail.com" value="${esc(kid(r.id,0).email||'')}"><input data-pf="1" type="email" placeholder="2nd parent (optional)" value="${esc(kid(r.id,1).email||'')}"><span>${(MR.linked.has(kid(r.id,0).id)||MR.linked.has(kid(r.id,1).id))?'<b class="fa-ok" title="Has signed in">✓</b>':''}</span></div>`:''}`).join('')||'<p class="muted">No entries yet.</p>'}
+  <div class="ma-tools"><input id="maQ" type="search" placeholder="🔍 Search name or Gmail…"><button class="btn ghost" id="maOpenAll">Open all</button><button class="btn ghost" id="maCloseAll">Close all</button></div>${MR.all.length||rows.length?sections():'<p class="muted">No entries yet.</p>'}
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0"><button class="btn ghost" id="maAdd">＋ Add row</button><button class="btn primary" id="maSave">Save</button><button class="btn ghost" id="maPub">Publish now</button></div>
   <details><summary class="muted" style="cursor:pointer">Bulk add from a list</summary><div class="field" style="margin-top:8px"><label>One per line: Name, Gmail, Batch${stu?', Parent Gmail, 2nd Parent Gmail (optional)':''} — e.g. Student Name, student@gmail.com, XII JEE 1${stu?', parent@gmail.com':''}</label><textarea id="maBulk" rows="5"></textarea></div><button class="btn ghost" id="maBulkGo">Add these rows</button></details></div>`;
   v.oninput=e=>{
@@ -4011,6 +4041,9 @@ function paintM(){
       if(p)p.email=val;else if(val)MR.all.push({id:crypto.randomUUID(),role:'parent',name:'',email:val,phone:'',batch_id:'',child_id:sid,slot:i})}
   };
   v.onchange=v.oninput;
+  v.querySelectorAll('details.ma-sec').forEach(d=>d.addEventListener('toggle',()=>{if(d.open)MR.open.add(d.dataset.bid);else MR.open.delete(d.dataset.bid)}));
+  const q=$('maQ');if(q){q.value=MR.q||'';const filt=()=>{const t=(MR.q=q.value.trim().toLowerCase());v.querySelectorAll('details.ma-sec').forEach(d=>{let n=0;d.querySelectorAll('.ma-card').forEach(c=>{const ok=!t||c.dataset.q.includes(t);c.style.display=ok?'':'none';if(ok)n++});
+      d.style.display=t&&!n?'none':'';if(t&&n)d.open=true})};q.oninput=filt;if(MR.q)filt()}
   v.onclick=e=>{
     const c=e.target.closest('[data-role]'),d=e.target.closest('[data-del]');
     if(c){MR.role=c.dataset.role;paintM()}
@@ -4020,7 +4053,9 @@ function paintM(){
       if(!saved.length){MR.all=MR.all.filter(x=>!ids.includes(x.id));paintM();return}
       if(!confirm('Remove '+(o.name||o.email)+(ids.length>1?' and the linked parent login(s)':'')+'? They will lose access immediately.'))return;
       paceCloud.rpc('admin_revoke_member',{p_ids:saved}).then(async r=>{if(r.error)return toast(r.error.message);await paceCloud.from('pace_member_directory').delete().in('id',saved);toast('Removed ✓');mLoad()})}
-    else if(e.target.id==='maAdd'){MR.all.push({id:crypto.randomUUID(),role:MR.role,name:'',email:'',phone:'',batch_id:(STATE.batches[0]||{}).id||''});paintM()}
+    else if(e.target.id==='maAdd'||e.target.closest('[data-addb]')){const bid=(e.target.closest('[data-addb]')||{}).dataset?.addb||(STATE.batches[0]||{}).id||'',nid=crypto.randomUUID();
+      MR.all.push({id:nid,role:MR.role,name:'',email:'',phone:'',batch_id:bid});MR.open.add(bid);MR.q='';paintM();const c=document.querySelector(`.ma-card[data-id="${nid}"] input`);if(c){c.scrollIntoView({block:'center'});c.focus()}}
+    else if(e.target.id==='maOpenAll'||e.target.id==='maCloseAll'){const o=e.target.id==='maOpenAll';v.querySelectorAll('details.ma-sec').forEach(d=>d.open=o)}
     else if(e.target.id==='maSave')mSave();
     else if(e.target.id==='maPub'){if(typeof cloudUser==='undefined'||!cloudUser)return toast('Connect Google first');publishMembers().then(()=>toast('Published ✓'))}
     else if(e.target.id==='maBulkGo'){
