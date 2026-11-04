@@ -4251,7 +4251,11 @@ if(window.__peTests||/[?&]student=1/.test(location.search)||typeof paceCloud==='
 const TEACHER=/[?&]teacher=1/.test(location.search);
 const $=id=>document.getElementById(id);
 const esc=x=>window.esc(String(x==null?'':x)); // marks and numbers must be turned into text first
-const errMsg=async e=>{try{const j=await e.context.json();return j.error||e.message}catch(_){return e.message||String(e)}};
+const errMsg=async e=>{const c=e&&e.context,st=c&&c.status;let t='';try{t=await c.clone().text()}catch(_){try{t=await c.text()}catch(__){}}
+  try{const j=JSON.parse(t);if(j&&(j.error||j.msg||j.message))return String(j.error||j.msg||j.message)}catch(_){}
+  if(st===546||st===504||/WORKER_LIMIT|wall ?clock|timed? ?out|timeout/i.test(t))return 'Checking took too long (the paper may have too many pages). Tap Check now on this paper again.';
+  if(st===502||st===503)return 'The checking service was busy ('+st+'). Please try again in a minute.';
+  return (st?'Error '+st+': ':'')+(t?t.slice(0,160):(e&&e.message)||String(e))};
 
 const MB=1024*1024;
 /* several photos -> one PDF (each photo = one page), built in the browser */
@@ -4478,8 +4482,11 @@ async function paintTests0(host,ctx){
     else if(b.dataset.rca){const L=(by[b.dataset.rca]||[]).filter(x=>x.file_path);if(!L.length)return;
       if(!confirm(`Re-check all ${L.length} answer sheet(s) for this test?\n\nThe answer key is read again from the marking scheme first, then every paper is marked again. This takes about 20–40 seconds per paper — keep this screen open.`))return;
       b.disabled=true;let ok=0,fail=[];
+      b.textContent='Reading the answer key…';
+      const k=await paceCloud.functions.invoke('super-task',{body:{submission_id:L[0].id,rebuild_key:true,key_only:true}});
+      if(k.error){const m=await errMsg(k.error);if(!confirm('Could not re-read the answer key:\n'+m+'\n\nRe-check the papers with the saved answer key anyway?')){b.disabled=false;b.textContent=`↻ Re-check all (${L.length})`;return}}
       for(let i=0;i<L.length;i++){b.textContent=`Re-checking ${i+1} of ${L.length}…`;
-        const r=await paceCloud.functions.invoke('super-task',{body:{submission_id:L[i].id,rebuild_key:i===0}});
+        const r=await paceCloud.functions.invoke('super-task',{body:{submission_id:L[i].id}});
         if(r.error)fail.push((L[i].student_name||'Student')+': '+await errMsg(r.error));else ok++}
       alert(`Re-checked ${ok} of ${L.length} paper(s).`+(fail.length?'\n\nCould not check:\n'+fail.join('\n'):''));again()}
     else if(b.dataset.rs){if(confirm('Reset this submission so the student can submit again?')){const r=TE?await paceCloud.rpc('teacher_reset_submission',{p_id:b.dataset.rs}):await paceCloud.from('pace_test_submissions').delete().eq('id',b.dataset.rs);if(r.error)tip(r.error.message);again()}}
