@@ -3476,6 +3476,12 @@ if(typeof NAV_ITEMS!=='undefined'&&typeof render==='function'&&!/[?&](teacher|st
 </script>
 <!-- ===== PACE exam notices (admin writes, students & parents read) ===== -->
 <style id="pace-notice-css">
+.xn-auto{display:inline-block;font-size:10.5px;font-weight:700;color:#7C3AED;background:color-mix(in srgb,#7C3AED 12%,var(--card));border-radius:999px;padding:1px 7px;vertical-align:middle;margin-left:4px}
+.xn-pend{border-color:color-mix(in srgb,#E8890C 55%,transparent)!important}.xn-wait{background:color-mix(in srgb,#E8890C 16%,var(--card))!important;color:#B45309!important}
+.xw-top{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.xw-top .xn-aud{float:none;margin:0}
+.xw-chk{display:flex!important;gap:8px;align-items:center;font-size:13px;margin-top:8px;cursor:pointer}.xw-chk input{width:auto!important;min-height:0!important}
+.xw-f .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:620px){.xw-f .two{grid-template-columns:1fr}}
+.xw-sug{display:flex;gap:6px;flex-wrap:wrap}.xw-sug .pe-chip{font-size:12px;padding:4px 10px}
 .ma-tools{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.ma-tools input{flex:1 1 220px;min-height:40px;box-sizing:border-box}.ma-tools .btn{min-height:40px}
 .ma-sec{border:1px solid var(--line);border-radius:14px;margin:10px 0;background:var(--card);overflow:hidden}
 .ma-sec>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:12px 14px;background:color-mix(in srgb,#2F6BEB 8%,var(--card))}
@@ -3543,18 +3549,19 @@ const seen=uid=>{try{return new Set(JSON.parse(localStorage.getItem(SK(uid))||'[
 
 const PXN=window.PXN={
   list:[],
-  async load(){if(!ok())return null;const r=await paceCloud.from('pace_notices').select('id,title,body,audience,created_at').order('created_at',{ascending:false}).limit(30);
+  async load(){if(!ok())return null;const r=await paceCloud.from('pace_notices').select('*').order('created_at',{ascending:false}).limit(30);
     if(!r.error)PXN.list=r.data||[];return r.error},
   /* students & parents: headings on top, tap to open */
-  html(uid,grade){const L=PXN.list.filter(x=>(x.audience||'xii')==='all'||(x.audience||'xii')===grade);if(!L.length)return'';const S=seen(uid),n=L.filter(x=>!S.has(x.id)).length;
+  html(uid,grade){const L=PXN.list.filter(x=>(x.status||'published')==='published'&&((x.audience||'xii')==='all'||(x.audience||'xii')===grade));if(!L.length)return'';const S=seen(uid),n=L.filter(x=>!S.has(x.id)).length;
     return `<div class="xn-box"><div class="xn-h">📢 Exam Notices${n?` <small>· ${n} new</small>`:''}</div>`+
-      L.map(x=>`<details class="xn-it" data-xn="${E(x.id)}"><summary><span class="t">${E(x.title)}</span>${S.has(x.id)?'':'<span class="xn-new">NEW</span>'}<span class="ar">›</span></summary><div class="xn-d">${body(x.body)}<span class="xn-dt">Posted ${E(when(x.created_at))}</span></div></details>`).join('')+'</div>'},
+      L.map(x=>`<details class="xn-it" data-xn="${E(x.id)}"><summary><span class="t">${E(x.title)}${x.source==='auto'?' <span class="xn-auto" title="Found on the official website">🤖 Official update</span>':''}</span>${S.has(x.id)?'':'<span class="xn-new">NEW</span>'}<span class="ar">›</span></summary><div class="xn-d">${body(x.body)}<span class="xn-dt">Posted ${E(when(x.created_at))}</span></div></details>`).join('')+'</div>'},
   bind(el,uid){if(!el)return;el.querySelectorAll('details[data-xn]').forEach(d=>d.addEventListener('toggle',()=>{if(!d.open)return;
     const S=seen(uid);S.add(d.dataset.xn);try{localStorage.setItem(SK(uid),JSON.stringify([...S].slice(-200)))}catch(_){}
     const b=d.querySelector('.xn-new');if(b)b.remove();const n=el.querySelectorAll('.xn-new').length,h=el.querySelector('.xn-h small');
     if(h){if(n)h.textContent='· '+n+' new';else h.remove()}}))},
   /* admin screen */
   async admin(el){
+    el.innerHTML='<div class="xn-m"></div><div class="xn-w"></div>';PXN.watch(el.querySelector('.xn-w'));el=el.querySelector('.xn-m');PXN._redraw=async()=>{err=(await PXN.load())?.message||'';draw()};
     let editing=null,err='';
     const draw=(msg,bad)=>{
       const e=editing&&PXN.list.find(x=>x.id===editing);
@@ -3566,8 +3573,8 @@ const PXN=window.PXN={
         <div style="font-size:12.5px;color:${bad?'var(--coral)':'var(--text-muted)'}">${E(msg||'')}</div></form></div>
         ${err?`<p class="muted">Could not load notices: ${E(err)}</p>`:''}
         <h3 style="margin:16px 0 0;font-size:14px">Published (${PXN.list.length})</h3>
-        ${PXN.list.length?PXN.list.map(x=>`<div class="xn-row"><span class="xn-aud">${E(AUD[x.audience||'xii']||'')}</span><b>${E(x.title)}</b><div class="xn-d">${body(x.body)}<span class="xn-dt">Posted ${E(when(x.created_at))}</span></div>
-          <div class="xn-b"><button class="btn ghost" type="button" data-ed="${E(x.id)}">✏️ Edit</button><button class="btn ghost" type="button" data-del="${E(x.id)}">🗑 Delete</button></div></div>`).join(''):'<p class="muted">No notices yet.</p>'}`;
+        ${PXN.list.length?PXN.list.map(x=>`<div class="xn-row${x.status==='pending'?' xn-pend':''}"><span class="xn-aud">${E(AUD[x.audience||'xii']||'')}</span>${x.status==='pending'?'<span class="xn-aud xn-wait">⏳ Waiting for your approval</span>':''}${x.source==='auto'?'<span class="xn-aud">🤖 Auto</span>':''}<b>${E(x.title)}</b><div class="xn-d">${body(x.body)}<span class="xn-dt">Posted ${E(when(x.created_at))}</span></div>
+          <div class="xn-b">${x.status==='pending'?`<button class="btn primary" type="button" data-pub="${E(x.id)}">✅ Publish</button>`:''}<button class="btn ghost" type="button" data-ed="${E(x.id)}">✏️ Edit</button><button class="btn ghost" type="button" data-del="${E(x.id)}">🗑 Delete</button></div></div>`).join(''):'<p class="muted">No notices yet.</p>'}`;
       const F=el.querySelector('form');
       F.onsubmit=async ev=>{ev.preventDefault();const t=F.t.value.trim(),b=F.b.value.trim(),au=F.a.value||'xii';if(!t||!b)return draw('Please fill the heading and the description.',true);
         const btn=F.querySelector('[type=submit]');btn.disabled=true;btn.textContent='Saving…';
@@ -3577,6 +3584,8 @@ const PXN=window.PXN={
         const was=editing;editing=null;err=(await PXN.load())?.message||'';draw(was?'Saved ✓':'Published ✓ Students and parents will see it next time they open the app.')};
       el.querySelectorAll('[data-ed]').forEach(b=>b.onclick=()=>{editing=b.dataset.ed;draw();el.querySelector('form').scrollIntoView({behavior:'smooth',block:'start'})});
       const cx=el.querySelector('[data-cx]');if(cx)cx.onclick=()=>{editing=null;draw()};
+      el.querySelectorAll('[data-pub]').forEach(b=>b.onclick=async()=>{b.disabled=true;const r=await paceCloud.from('pace_notices').update({status:'published',updated_at:new Date().toISOString()}).eq('id',b.dataset.pub);
+        if(r.error)return draw('Could not publish: '+r.error.message,true);err=(await PXN.load())?.message||'';draw('Published ✓')});
       el.querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{
         if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Tap again to delete';setTimeout(()=>{if(b.isConnected){b.dataset.sure='';b.textContent='🗑 Delete'}},4000);return}
         const r=await paceCloud.from('pace_notices').delete().eq('id',b.dataset.del);
@@ -3585,6 +3594,53 @@ const PXN=window.PXN={
     };
     el.innerHTML='<div class="card"><p class="muted">Loading notices…</p></div>';err=(await PXN.load())?.message||'';draw();
   }
+};
+
+/* admin: exams whose official website is checked every morning */
+const SUGG={'JEE Main':'https://jeemain.nta.nic.in/','JEE Advanced':'https://jeeadv.ac.in/','NEET UG':'https://neet.nta.nic.in/','MHT-CET':'https://cetcell.mahacet.org/','BITSAT':'https://www.bitsadmission.com/','CUET UG':'https://cuet.nta.nic.in/','VITEEE':'https://viteee.vit.ac.in/','COMEDK UGET':'https://www.comedk.org/'};
+const ago=t=>{if(!t)return'never';const m=Math.round((Date.now()-Date.parse(t))/6e4);return m<2?'just now':m<60?m+' min ago':m<1440?Math.round(m/60)+' h ago':Math.round(m/1440)+' day(s) ago'};
+const eMsg=async e=>{try{const j=await e.context.clone().json();if(j&&j.error)return String(j.error)}catch(_){}const st=e&&e.context&&e.context.status;return (st?'Error '+st+': ':'')+((e&&e.message)||String(e))};
+PXN.watch=async function(el){
+  let L=[],err='';
+  const load=async()=>{const r=await paceCloud.from('pace_exam_watch').select('id,name,url,audience,auto_publish,active,last_checked_at,last_status,last_error,created_at').order('created_at');err=r.error?r.error.message:'';L=r.data||[]};
+  const draw=(msg,bad)=>{
+    el.innerHTML=`<div class="card" style="margin-top:14px"><h2 style="margin:0 0 4px">🤖 Auto updates from official websites</h2>
+      <p class="muted" style="margin:0;font-size:13px">Every morning at 8 AM the official website of each exam below is checked. When a <b>new</b> announcement appears there (form, admit card, answer key, result…), a notice is written from it and added above, with the official link. The first check only saves what is already on the page.</p>
+      ${err?`<p style="color:var(--coral);font-size:13px">${E(/pace_exam_watch/.test(err)?'Run exam-watch.sql in Supabase first. ('+err+')':err)}</p>`:''}
+      ${L.map(w=>`<div class="xn-row xw-row" data-w="${E(w.id)}"><div class="xw-top"><b>${E(w.name)}</b><span class="xn-aud">${E(AUD[w.audience]||'')}</span>${w.active?'':'<span class="xn-aud xn-wait">Paused</span>'}</div>
+        <div class="xn-dt">${w.url?`<a href="${E(w.url)}" target="_blank" rel="noopener noreferrer">${E(w.url)}</a>`:'Official website: will be found automatically'}</div>
+        <div class="xn-dt">Last checked: ${E(ago(w.last_checked_at))}${w.last_status?' · '+E(w.last_status):''}${w.last_error?`<br><span style="color:var(--coral)">${E(w.last_error)}</span>`:''}</div>
+        <label class="xw-chk"><input type="checkbox" data-ap="${E(w.id)}"${w.auto_publish?' checked':''}> Publish to students automatically <span class="muted">(off = waits for your approval)</span></label>
+        <div class="xn-b"><button class="btn ghost" type="button" data-now="${E(w.id)}">🔄 Check now</button><button class="btn ghost" type="button" data-act="${E(w.id)}">${w.active?'⏸ Pause':'▶️ Resume'}</button><button class="btn ghost" type="button" data-wdel="${E(w.id)}">🗑 Remove</button></div></div>`).join('')||'<p class="muted" style="font-size:13px">No exams added yet.</p>'}
+      <form class="xn-f xw-f"><div class="two"><div class="field"><label>Exam name</label><input name="n" required maxlength="80" list="xwSugg" placeholder="e.g. JEE Main"></div>
+        <div class="field"><label>Official website (optional, found automatically if empty)</label><input name="u" type="url" placeholder="https://…"></div></div>
+        <datalist id="xwSugg">${Object.keys(SUGG).map(k=>`<option value="${E(k)}">`).join('')}</datalist>
+        <div class="xw-sug">${Object.keys(SUGG).map(k=>`<button type="button" class="pe-chip" data-sg="${E(k)}">＋ ${E(k)}</button>`).join('')}</div>
+        <div class="two"><div class="field"><label>Show to</label><select name="a">${Object.entries(AUD).map(([k,v])=>`<option value="${k}"${k==='xii'?' selected':''}>${v}</option>`).join('')}</select></div>
+        <div class="field"><label>New updates</label><select name="p"><option value="1">Publish automatically</option><option value="0">Ask me before publishing</option></select></div></div>
+        <div class="xn-b"><button class="btn primary" type="submit">Start watching</button></div>
+        <div style="font-size:12.5px;color:${bad?'var(--coral)':'var(--text-muted)'}">${E(msg||'')}</div></form></div>`;
+    const F=el.querySelector('form');
+    el.querySelectorAll('[data-sg]').forEach(b=>b.onclick=()=>{F.n.value=b.dataset.sg;F.u.value=SUGG[b.dataset.sg]||'';F.n.focus()});
+    F.n.oninput=()=>{if(SUGG[F.n.value]&&!F.u.value)F.u.value=SUGG[F.n.value]};
+    F.onsubmit=async ev=>{ev.preventDefault();const n=F.n.value.trim(),u=F.u.value.trim();if(!n)return;
+      if(L.some(w=>w.name.toLowerCase()===n.toLowerCase()))return draw(n+' is already being watched.',true);
+      const r=await paceCloud.from('pace_exam_watch').insert({name:n,url:u||null,audience:F.a.value,auto_publish:F.p.value==='1'}).select('id').single();
+      if(r.error)return draw('Could not add: '+r.error.message,true);
+      await load();draw('Added ✓ Doing the first check now…');run(r.data.id)};
+    el.querySelectorAll('[data-ap]').forEach(c=>c.onchange=async()=>{const r=await paceCloud.from('pace_exam_watch').update({auto_publish:c.checked}).eq('id',c.dataset.ap);if(r.error)draw(r.error.message,true)});
+    el.querySelectorAll('[data-act]').forEach(b=>b.onclick=async()=>{const w=L.find(x=>x.id===b.dataset.act);await paceCloud.from('pace_exam_watch').update({active:!w.active}).eq('id',w.id);await load();draw()});
+    el.querySelectorAll('[data-wdel]').forEach(b=>b.onclick=async()=>{if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Tap again to remove';return}
+      await paceCloud.from('pace_exam_watch').delete().eq('id',b.dataset.wdel);await load();draw('Removed.')});
+    el.querySelectorAll('[data-now]').forEach(b=>b.onclick=()=>run(b.dataset.now,b));
+  };
+  const run=async(id,btn)=>{if(btn){btn.disabled=true;btn.textContent='Checking…'}
+    const r=await paceCloud.functions.invoke('exam-watch',{body:{only:id}});
+    let msg='',bad=false;
+    if(r.error){bad=true;msg=await eMsg(r.error);if(/404|not found|Failed to send/i.test(msg))msg='The exam-watch function is not set up in Supabase yet ('+msg+').'}
+    else{const x=((r.data||{}).results||[])[0]||{};bad=!!x.error;msg=x.error?('Check failed: '+x.error):x.started?`✓ Watching started: ${x.links} links saved. New ones will be posted from now on.`:x.posted?`✓ ${x.posted} new notice(s) added.`:'✓ Checked: no new updates.'}
+    await load();draw(msg,bad);if(PXN._redraw)PXN._redraw()};
+  el.innerHTML='<div class="card" style="margin-top:14px"><p class="muted">Loading watched exams…</p></div>';await load();draw();
 };
 
 /* admin menu item + screen */
