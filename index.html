@@ -3474,6 +3474,90 @@ if(typeof NAV_ITEMS!=='undefined'&&typeof render==='function'&&!/[?&](teacher|st
 }
 })();
 </script>
+<!-- ===== PACE festival greeting: Diwali 2026 (shows 7–8 Nov, India time) ===== -->
+<style id="pace-diwali-css">
+#pdw{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;flex-direction:column;
+  background:radial-gradient(ellipse at 50% 120%,#3b1407 0%,#12061f 55%,#05030c 100%);opacity:0;transition:opacity .6s;cursor:pointer;overflow:hidden;
+  -webkit-user-select:none;user-select:none}
+#pdw.on{opacity:1}
+#pdw canvas{position:absolute;inset:0;width:100%;height:100%}
+#pdw .msg{position:relative;text-align:center;padding:0 20px;animation:pdwIn 1.4s cubic-bezier(.2,.9,.2,1.2) .5s both}
+#pdw .lamp{font-size:clamp(46px,11vw,84px);filter:drop-shadow(0 0 18px #ffb347);animation:pdwGlow 1.6s ease-in-out infinite alternate}
+#pdw h1{margin:.15em 0 .1em;font-size:clamp(34px,8.5vw,76px);line-height:1.08;font-weight:900;letter-spacing:.5px;
+  background:linear-gradient(90deg,#ffd76a,#ff9f43,#ff6b9a,#ffd76a);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:pdwShine 4s linear infinite;text-shadow:0 0 40px rgba(255,170,60,.35)}
+#pdw h1 span{display:block}
+#pdw p{margin:.4em 0 0;color:#ffe8c2;font-size:clamp(15px,3.6vw,20px);opacity:.92}
+#pdw .tap{position:absolute;bottom:max(26px,env(safe-area-inset-bottom));left:0;right:0;text-align:center;color:#ffdca8;font-size:14px;opacity:0;animation:pdwFade 1s ease 3s forwards}
+#pdw .diyas{position:absolute;bottom:max(64px,calc(env(safe-area-inset-bottom) + 50px));left:0;right:0;display:flex;justify-content:center;gap:clamp(10px,4vw,34px);font-size:clamp(26px,6vw,40px)}
+#pdw .diyas span{animation:pdwGlow 1.2s ease-in-out infinite alternate;filter:drop-shadow(0 0 12px #ffa531)}
+#pdw .diyas span:nth-child(2n){animation-delay:.4s}#pdw .diyas span:nth-child(3n){animation-delay:.8s}
+@keyframes pdwIn{from{opacity:0;transform:scale(.6) translateY(30px)}to{opacity:1;transform:none}}
+@keyframes pdwGlow{from{filter:drop-shadow(0 0 6px #ff8c1a);transform:translateY(0)}to{filter:drop-shadow(0 0 22px #ffd36b);transform:translateY(-3px)}}
+@keyframes pdwShine{to{background-position:300% 0}}
+@keyframes pdwFade{to{opacity:.85}}
+</style>
+<script>
+(function(){
+/* India date, so it switches on and off at Indian midnight */
+const istDay=()=>{const d=new Date(Date.now()+5.5*3600e3);return d.getUTCFullYear()+'-'+String(d.getUTCMonth()+1).padStart(2,'0')+'-'+String(d.getUTCDate()).padStart(2,'0')};
+const ON=['2026-11-06','2026-11-07','2026-11-08'];               // 6th from tonight, 7th, and Diwali (8th)
+window.paceFestival=()=>ON.includes(istDay())?'diwali':null;
+
+window.paceDiwali=function(name){
+  if(window.paceFestival()!=='diwali'||document.getElementById('pdw')||window.__pdwDone)return;
+  window.__pdwDone=true;            // once per app open / refresh (not on every screen change)
+  const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const el=document.createElement('div');el.id='pdw';el.setAttribute('role','dialog');el.setAttribute('aria-label','Happy Diwali');
+  el.innerHTML=`<canvas></canvas><div class="msg"><div class="lamp">🪔</div><h1><span>Happy Diwali${name?',':''}</span>${name?`<span>${esc(name)}!</span>`:''}</h1>
+    <p>May this festival of lights brighten your path to success ✨</p><p style="font-size:.85em;opacity:.75">— Team PACE IIT &amp; Medical</p></div>
+    <div class="diyas"><span>🪔</span><span>✨</span><span>🪔</span><span>🎆</span><span>🪔</span><span>✨</span><span>🪔</span></div><div class="tap">Tap anywhere to continue</div>`;
+  document.body.appendChild(el);requestAnimationFrame(()=>el.classList.add('on'));
+
+  const cv=el.querySelector('canvas'),cx=cv.getContext('2d'),DPR=Math.min(2,window.devicePixelRatio||1);let W=0,H=0;
+  const size=()=>{W=cv.clientWidth;H=cv.clientHeight;cv.width=W*DPR;cv.height=H*DPR;cx.setTransform(DPR,0,0,DPR,0,0)};size();addEventListener('resize',size);
+  const calm=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const COLS=['#ffd76a','#ff9f43','#ff6b6b','#ff6b9a','#c084fc','#7dd3fc','#86efac','#fff3c4','#ffb3e6'];
+  const rockets=[],sparks=[],R=Math.random;
+  const launch=()=>rockets.push({x:W*(.1+R()*.8),y:H+10,vx:(R()-.5)*1.2,vy:-(H*.0105+R()*H*.004),tx:H*(.12+R()*.33),c:COLS[R()*COLS.length|0],t:0});
+  const burst=(x,y,c)=>{const n=calm?40:70+(R()*50|0),kind=R();const c2=COLS[R()*COLS.length|0];
+    for(let i=0;i<n;i++){const a=Math.PI*2*i/n+R()*.1,sp=(kind<.33?2.2:1.2)+R()*(kind<.33?1.6:3.2);
+      sparks.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,dec:.008+R()*.012,c:i%3?c:c2,s:1.4+R()*1.8,tw:kind>.66})}
+    if(R()<.5)for(let i=0;i<24;i++)sparks.push({x,y,vx:(R()-.5)*1.4,vy:(R()-.5)*1.4,life:1,dec:.02,c:'#fff',s:1.2,tw:true})};
+  let t=0,raf=0,stop=false;const t0=performance.now();
+  const loop=now=>{if(stop)return;t++;
+    cx.globalCompositeOperation='destination-out';cx.fillStyle='rgba(0,0,0,0.22)';cx.fillRect(0,0,W,H);cx.globalCompositeOperation='lighter';
+    const el_=now-t0,rate=el_<1500?0.10:0.06;if(R()<rate*(calm?.4:1)||(t%40===0))launch();
+    for(let i=rockets.length-1;i>=0;i--){const r=rockets[i];r.x+=r.vx;r.y+=r.vy;r.vy*=.985;r.t++;
+      cx.fillStyle=r.c;cx.beginPath();cx.arc(r.x,r.y,2.2,0,7);cx.fill();
+      cx.fillStyle='rgba(255,200,120,.5)';cx.beginPath();cx.arc(r.x-r.vx*2,r.y-r.vy*2,1.5,0,7);cx.fill();
+      if(r.y<=r.tx||r.vy>-1){burst(r.x,r.y,r.c);rockets.splice(i,1)}}
+    for(let i=sparks.length-1;i>=0;i--){const p=sparks[i];p.vx*=.982;p.vy=p.vy*.982+.035;p.x+=p.vx;p.y+=p.vy;p.life-=p.dec;
+      if(p.life<=0){sparks.splice(i,1);continue}
+      const a=p.tw?(p.life*(.5+.5*Math.sin(t*.6+i))):p.life;cx.globalAlpha=Math.max(0,a);cx.fillStyle=p.c;cx.beginPath();cx.arc(p.x,p.y,p.s*(.6+p.life*.6),0,7);cx.fill()}
+    cx.globalAlpha=1;
+    if(sparks.length>2200)sparks.splice(0,sparks.length-2200);
+    raf=requestAnimationFrame(loop)};
+  for(let i=0;i<3;i++)setTimeout(launch,i*220);raf=requestAnimationFrame(loop);
+  const close=()=>{if(stop)return;stop=true;cancelAnimationFrame(raf);el.style.opacity='0';removeEventListener('resize',size);setTimeout(()=>el.remove(),650)};
+  el.addEventListener('click',close);setTimeout(close,12000);
+  document.addEventListener('keydown',function k(e){if(e.key==='Escape'){close();document.removeEventListener('keydown',k)}});
+};
+/* admin & teachers (and anyone signed in whose screen does not call it itself): greet with their Google name */
+if(window.paceFestival()==='diwali'){
+  let tries=0;
+  const tick=async()=>{if(window.__pdwDone||++tries>40)return;
+    if(document.getElementById('pgOut')){if(tries<6)return setTimeout(tick,1000)}           // student/parent screen greets itself
+    let u=null;try{if(typeof paceCloud!=='undefined'&&paceCloud){const r=await paceCloud.auth.getSession();u=r&&r.data&&r.data.session&&r.data.session.user}}catch(_){}
+    if(!u)return setTimeout(tick,1500);                                                         // wait until signed in
+    const m=u.user_metadata||{};let n=String(m.full_name||m.name||'').trim().split(/\s+/)[0];
+    if(!n||/^iitian/i.test(n))n=/iitianspacetimetable/i.test(u.email||'')?'Team PACE':String(u.email||'').split('@')[0].replace(/[._\d]+/g,' ').trim().split(' ')[0];
+    n=n?n.charAt(0).toUpperCase()+n.slice(1):'';
+    window.paceDiwali(n)};
+  setTimeout(tick,1800);
+}
+})();
+</script>
 <!-- ===== PACE exam notices (admin writes, students & parents read) ===== -->
 <style id="pace-notice-css">
 .xn-auto{display:inline-block;font-size:10.5px;font-weight:700;color:#7C3AED;background:color-mix(in srgb,#7C3AED 12%,var(--card));border-radius:999px;padding:1px 7px;vertical-align:middle;margin-left:4px}
@@ -3931,7 +4015,7 @@ async function member(user,role){
   const nowMin=()=>{const n=new Date();return n.getHours()*60+n.getMinutes()};
   const LINES=['Small steps every day add up to big ranks.','Understand the concept once, and you never have to memorise it.','Today’s practice is tomorrow’s confidence.','Mistakes are just questions you haven’t solved yet.','Consistency beats intensity. Show up today.','One more problem than yesterday — that’s progress.','Revise before you forget, not after.','Doubts are good. Unasked doubts are not — ask today!','Focus on the next hour, not the whole syllabus.','Every formula you master is one less to worry about.','Read the question twice, solve it once.','Your future rank is built in today’s classes.','Hard chapters become easy chapters with practice.','Discipline is choosing what you want most over what you want now.','A tough test today makes the real exam feel easier.','Write it, solve it, check it — then move on.','Sleep well, study smart, stay curious.','Be proud of how far you’ve come, and keep going.','Learn from every test, don’t just look at the marks.','Ten focused minutes beat an hour of distraction.'];
   if(!window.paceGreet){
-    window.paceGreet=(h,day)=>{const G=h>=5&&h<12?[['Good morning','☀️'],['Rise and shine','🌅'],['Morning','☕']]:h>=12&&h<17?[['Good afternoon','🌤️'],['Hey there','👋'],['Keep going','💪']]:h>=17&&h<21?[['Good evening','🌆'],['Evening','📚'],['Almost there today','✨']]:[['Hello, night owl','🦉'],['Studying late','🌙'],['Burning the midnight oil','🕯️']];
+    window.paceGreet=(h,day)=>{if(window.paceFestival&&window.paceFestival()==='diwali')return['Happy Diwali','🪔'];const G=h>=5&&h<12?[['Good morning','☀️'],['Rise and shine','🌅'],['Morning','☕']]:h>=12&&h<17?[['Good afternoon','🌤️'],['Hey there','👋'],['Keep going','💪']]:h>=17&&h<21?[['Good evening','🌆'],['Evening','📚'],['Almost there today','✨']]:[['Hello, night owl','🦉'],['Studying late','🌙'],['Burning the midnight oil','🕯️']];
       const n=Math.abs(Math.round(Date.parse((day||'2026-01-01')+'T00:00:00Z')/864e5));return G[n%G.length]};
     document.addEventListener('visibilitychange',()=>{if(document.hidden)return;const b=document.querySelector('.pg-hero-t b[data-greet]');if(!b)return;
       const d=new Date(),day=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'),g=window.paceGreet(d.getHours(),day),f=b.dataset.greet;b.textContent=g[0]+(f?', '+f:'')+' '+g[1]});
@@ -4003,7 +4087,7 @@ async function member(user,role){
   function paint(){
     const chip=(k,t)=>`<button class="pe-chip${tab===k?' act':''}" data-tab="${k}">${t}</button>`,tt0=tab==='tt';
     V.innerHTML=top+`<div class="pg-wrap">${tt0?hero():''}${tt0&&window.PXN?'<div id="pgXN">'+PXN.html(user.id,FG)+'</div>':''}<div class="pe-filter pg-tabs">${chip('tt','📅 Timetable')}${chip('hw','📝 Homework'+(up.length?' <i class="pg-cnt">'+up.length+'</i>':''))}${chip('mat','📚 Materials')}${chip('tst','🧪 Tests')}${isStu?chip('fx','🧮 Formulas'):''}</div>${tt0?'<div id="pgNext">'+upNext()+'</div>'+installCard()+'<div id="pgNotif"></div>':''}<div id="pgDoubt">${doubtHTML()}</div>${tab==='hw'?homework():tab==='mat'?materials():tab==='tst'?'<div id="pgTests"></div>':tab==='fx'?formulas():(isStu?fxTeaser():'')+timetable()}</div>`;
-    $('pgOut').onclick=signOut;if(tab==='tst'&&window.peTests)window.peTests($('pgTests'),user,role);if(tab==='fx')typeset();if(window.PXN&&$('pgXN'))PXN.bind($('pgXN'),user.id);if(window.PNS&&$('pgNotif'))PNS.mount($('pgNotif'),{role,url:location.pathname});
+    $('pgOut').onclick=signOut;if(tab==='tst'&&window.peTests)window.peTests($('pgTests'),user,role);if(tab==='fx')typeset();if(window.PXN&&$('pgXN'))PXN.bind($('pgXN'),user.id);if(window.paceDiwali)setTimeout(()=>paceDiwali(String((P&&P.name)||'').trim().split(/\s+/)[0]),400);if(window.PNS&&$('pgNotif'))PNS.mount($('pgNotif'),{role,url:location.pathname});
   }
   V.onclick=e=>{
     const d=e.target.closest('[data-d]'),w=e.target.closest('[data-w]'),k=e.target.closest('[data-tab]'),s=e.target.closest('[data-sub]'),fx=e.target.closest('[data-fx]');
