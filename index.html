@@ -4453,6 +4453,10 @@ async function parentTests(box){
 }
 
 /* ---------- student: Tests tab ---------- */
+/* answer-sheet pages are kept on the device until submitted, so an iPad page reload (camera, low memory) does not lose them */
+const TPDB=(()=>{let p;const open=()=>p||(p=new Promise((ok,no)=>{try{const r=indexedDB.open('pace-pages',1);r.onupgradeneeded=()=>r.result.createObjectStore('p');r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)}catch(e){no(e)}}));
+  const tx=async(mode,fn)=>{const db=await open();return new Promise((ok,no)=>{const t=db.transaction('p',mode),q=fn(t.objectStore('p'));t.oncomplete=()=>ok(q&&q.result);t.onerror=()=>no(t.error)})};
+  return{get:k=>tx('readonly',s=>s.get(k)).catch(()=>null),set:(k,v)=>tx('readwrite',s=>s.put(v,k)).catch(()=>{}),del:k=>tx('readwrite',s=>s.delete(k)).catch(()=>{})}})();
 window.peTests=async function(box,user,role){
   if(!box)return;
   if(role==='parent')return parentTests(box);
@@ -4468,12 +4472,14 @@ window.peTests=async function(box,user,role){
   function tpPages(id){const L=window.__tp[id]||[];if(!L.length)return'<p class="muted" style="font-size:12.5px;margin:0">No pages added yet.</p>';
     return L.map((f,i)=>{const pdf=/pdf/i.test(f.type||f.name);if(!f._u&&!pdf)f._u=URL.createObjectURL(f);
       return `<div class="tp-pg">${pdf?'<div class="tp-pdf">📄 PDF</div>':`<img src="${f._u}" alt="Page ${i+1}">`}<span class="tp-no">${pdf?esc(f.name):'Page '+(i+1)}</span><div class="tp-act">${!pdf&&i>0?`<button type="button" data-mv="${id}|${i}|-1" aria-label="Move earlier">◀</button>`:''}${!pdf&&i<L.length-1?`<button type="button" data-mv="${id}|${i}|1" aria-label="Move later">▶</button>`:''}<button type="button" data-rm="${id}|${i}" aria-label="Remove">✕</button></div></div>`}).join('')}
-  const tpRedraw=id=>{const el=box.querySelector(`[data-pages="${id}"]`),g=box.querySelector(`[data-go="${id}"]`);if(el)el.innerHTML=tpPages(id);if(g){g.disabled=!(window.__tp[id]||[]).length;g.textContent=tpLabel(id)}};
+  const tpRedraw=id=>{const el=box.querySelector(`[data-pages="${id}"]`),g=box.querySelector(`[data-go="${id}"]`);if(el)el.innerHTML=tpPages(id);if(g){g.disabled=!(window.__tp[id]||[]).length;g.textContent=tpLabel(id)}
+    const L=window.__tp[id]||[],k=user.id+'|'+id;if(L.length)TPDB.set(k,L.map(f=>({b:f,name:f.name,type:f.type})));else TPDB.del(k)};
   const card=x=>{
     const u=S[x.id];let st='';
     if(u&&u.status==='done'){const r=u.result||{};
-      st=`<div style="margin-top:10px"><b style="font-size:18px">${u.score} / ${u.max_marks}</b> <span class="muted">· checked by AI, your teacher may review it</span><div class="sx-b">${u.annotated_path?`<button class="btn primary" data-ck="${esc(u.annotated_path)}">📄 Open my checked paper</button>`:''}${(r.student_rechecks||0)<1?`<button class="btn ghost" data-src="${esc(u.id)}">↻ Re-check my paper</button>`:''}<button class="btn ghost" data-rsub="${esc(x.id)}">📤 Submit a new answer sheet</button></div><p class="muted" data-m="${x.id}" style="font-size:13px;margin:0"></p>${r.overall_feedback?`<p style="margin:6px 0">${esc(r.overall_feedback)}</p>`:''}${(r.questions||[]).map(q=>`<div style="font-size:13px;padding:6px 0;border-top:1px solid var(--line)"><b>Q${esc(q.q)}</b> · <b style="color:${q.status==='correct'?'#15803D':q.status==='blank'?'var(--text-muted)':'#BE123C'}">${esc(q.marks)}/${esc(q.max)}</b> — ${esc(q.feedback||'')}${(q.errors||[]).length?`<div style="color:#BE123C;margin-top:3px">${q.errors.map((e,i)=>'⭕ '+esc(e.note||'')).join('<br>')}</div>`:''}${q.missing?`<div style="color:#BE123C;margin-top:3px">Missing: ${esc(q.missing)}</div>`:''}${q.correct_answer?`<details style="margin-top:4px"><summary style="cursor:pointer;color:#15803D;font-weight:600">Correct answer</summary><div style="white-space:pre-wrap;margin-top:4px;color:#15803D">${esc(q.correct_answer)}</div></details>`:''}</div>`).join('')}${(r.unreadable||[]).length?`<p class="muted" style="font-size:12.5px">Could not read: Q${esc(r.unreadable.join(', Q'))}. Write clearly and scan in good light.</p>`:''}${K[x.id]?`<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--ink-2)">Marking scheme</summary><pre style="white-space:pre-wrap;font:13px/1.5 Inter,sans-serif;margin:8px 0 0">${esc(K[x.id])}</pre></details>`:''}${KF[x.id]?`<div><button class="btn ghost" data-sp="${esc(KF[x.id])}" style="margin-top:8px">📄 Marking scheme (PDF)</button></div>`:''}</div>`}
+      st=`<div style="margin-top:10px"><b style="font-size:18px">${u.score} / ${u.max_marks}</b> <span class="muted">· checked by AI, your teacher may review it</span><div class="sx-b">${u.annotated_path?`<button class="btn primary" data-ck="${esc(u.annotated_path)}">📄 Open my checked paper</button>`:''}<button class="btn ghost" data-rsub="${esc(x.id)}">📤 Submit a new answer sheet</button></div><p class="muted" data-m="${x.id}" style="font-size:13px;margin:0"></p>${r.overall_feedback?`<p style="margin:6px 0">${esc(r.overall_feedback)}</p>`:''}${(r.questions||[]).map(q=>`<div style="font-size:13px;padding:6px 0;border-top:1px solid var(--line)"><b>Q${esc(q.q)}</b> · <b style="color:${q.status==='correct'?'#15803D':q.status==='blank'?'var(--text-muted)':'#BE123C'}">${esc(q.marks)}/${esc(q.max)}</b> — ${esc(q.feedback||'')}${(q.errors||[]).length?`<div style="color:#BE123C;margin-top:3px">${q.errors.map((e,i)=>'⭕ '+esc(e.note||'')).join('<br>')}</div>`:''}${q.missing?`<div style="color:#BE123C;margin-top:3px">Missing: ${esc(q.missing)}</div>`:''}${q.correct_answer?`<details style="margin-top:4px"><summary style="cursor:pointer;color:#15803D;font-weight:600">Correct answer</summary><div style="white-space:pre-wrap;margin-top:4px;color:#15803D">${esc(q.correct_answer)}</div></details>`:''}</div>`).join('')}${(r.unreadable||[]).length?`<p class="muted" style="font-size:12.5px">Could not read: Q${esc(r.unreadable.join(', Q'))}. Write clearly and scan in good light.</p>`:''}${K[x.id]?`<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--ink-2)">Marking scheme</summary><pre style="white-space:pre-wrap;font:13px/1.5 Inter,sans-serif;margin:8px 0 0">${esc(K[x.id])}</pre></details>`:''}${KF[x.id]?`<div><button class="btn ghost" data-sp="${esc(KF[x.id])}" style="margin-top:8px">📄 Marking scheme (PDF)</button></div>`:''}</div>`}
     else if(u&&u.status==='checking')st='<p class="muted" style="margin-top:10px">⏳ Your answers are being checked. Tap Tests again in a minute.</p>';
+    else if(u&&u.status==='uploaded')st=`<div style="margin-top:10px"><p style="margin:0 0 8px">✓ Your answer sheet was received.</p><button class="btn primary" data-chk2="${esc(u.id)}">Check my answers now</button><p class="muted" data-m="${x.id}" style="font-size:13px;margin:6px 0 0"></p></div>`;
     else st=`${u&&u.status==='error'?`<p style="color:var(--coral);font-size:13px">Last attempt failed: ${esc(u.error||'')}. You can upload again.</p>`:''}<div style="margin-top:10px;display:grid;gap:8px"><p class="muted" style="font-size:12.5px;margin:0">Add a photo of <b>each page</b> of your answers, in order. You can add pages one by one.</p>
       <div class="tp-btns"><label class="btn primary tp-add">📷 Take photo<input type="file" accept="image/*" capture="environment" data-add="${x.id}" hidden></label><label class="btn ghost tp-add">🖼️ Gallery<input type="file" accept="image/*,application/pdf" multiple data-add="${x.id}" hidden></label></div>
       <div class="tp-pages" data-pages="${x.id}">${tpPages(x.id)}</div>
@@ -4481,19 +4487,31 @@ window.peTests=async function(box,user,role){
     return `<div class="card" style="margin-bottom:12px"><b>${esc(x.title)}</b><div class="muted" style="font-size:12.5px">${esc(x.subject||'')} · ${x.max_marks} marks</div>${x.question_text?`<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--ink-2)">Question paper</summary><pre style="white-space:pre-wrap;font:13px/1.5 Inter,sans-serif;margin:8px 0 0">${esc(x.question_text)}</pre></details>`:''}${x.question_file?`<div><button class="btn ghost" data-qp="${esc(x.question_file)}" style="margin-top:8px">📄 Question paper (PDF)</button></div>`:''}${st}</div>`;
   };
   box.innerHTML=(t.data||[]).map(card).join('')||'<div class="card"><p class="muted" style="margin:0">No tests right now.</p></div>';
-  box.onchange=e=>{const inp=e.target.closest('[data-add]');if(!inp)return;const id=inp.dataset.add,m=box.querySelector(`[data-m="${id}"]`);
+  box.onchange=async e=>{const inp=e.target.closest('[data-add]');if(!inp)return;const id=inp.dataset.add,m=box.querySelector(`[data-m="${id}"]`);
     const add=[...(inp.files||[])];inp.value='';if(!add.length)return;
     const isPdf=x=>/\.pdf$/i.test(x.name)||x.type==='application/pdf';let L=window.__tp[id]||[];
     if(add.some(isPdf)){if(add.length>1||L.length){m.style.color='var(--coral)';m.textContent='Upload either one PDF, or photos — not both. Remove the photos first to use a PDF.';return}window.__tp[id]=[add[0]];tpRedraw(id);m.textContent='';return}
     if(L.length&&isPdf(L[0])){m.style.color='var(--coral)';m.textContent='Remove the PDF first to add photos instead.';return}
     if(L.length+add.length>20){m.style.color='var(--coral)';m.textContent='At most 20 pages. Remove some pages first.';return}
-    window.__tp[id]=L.concat(add);m.style.color='var(--text-muted)';m.textContent=`✓ ${window.__tp[id].length} page${window.__tp[id].length>1?'s':''} ready — add more, or submit.`;tpRedraw(id)};
+    m.style.color='var(--text-muted)';m.textContent='Preparing photo…';
+    const small=[];for(const f of add){try{const r=await toJpeg(f,2000,0.85);small.push(new File([r.jpeg],(f.name||'page').replace(/\.[^.]*$/,'')+'.jpg',{type:'image/jpeg'}))}catch(_){small.push(f)}}
+    L=window.__tp[id]||[];window.__tp[id]=L.concat(small);m.style.color='var(--text-muted)';m.textContent=`✓ ${window.__tp[id].length} page${window.__tp[id].length>1?'s':''} ready — add more, or submit.`;tpRedraw(id)};
+  {const w=box.querySelector('[data-chk2]');if(w&&!window.__autoChk){window.__autoChk=1;setTimeout(()=>{if(w.isConnected)w.click()},600)}}
+  (async()=>{for(const x of (t.data||[])){if((window.__tp[x.id]||[]).length||!box.querySelector(`[data-pages="${x.id}"]`))continue;
+    const v=await TPDB.get(user.id+'|'+x.id);if(!Array.isArray(v)||!v.length)continue;
+    window.__tp[x.id]=v.map(o=>new File([o.b],o.name||'page.jpg',{type:o.type||'image/jpeg'}));tpRedraw(x.id);
+    const m=box.querySelector(`[data-m="${x.id}"]`);if(m){m.style.color='var(--text-muted)';m.textContent=`✓ ${v.length} page${v.length>1?'s':''} restored — add more, or submit.`}}})();
   box.onclick=async e=>{
     const rm=e.target.closest('[data-rm]'),mv=e.target.closest('[data-mv]');
     if(rm){const[id,i]=rm.dataset.rm.split('|');const L=window.__tp[id]||[];const f=L.splice(+i,1)[0];if(f&&f._u)URL.revokeObjectURL(f._u);tpRedraw(id);return}
     if(mv){const[id,i,d]=mv.dataset.mv.split('|');const L=window.__tp[id]||[],a=+i,b=a+(+d);if(b>=0&&b<L.length){[L[a],L[b]]=[L[b],L[a]];tpRedraw(id)}return}
     const o=e.target.closest('[data-qp],[data-sp],[data-ck]');
     if(o)return openSigned(o.dataset.ck?'answer-sheets':'test-files',o.dataset.qp||o.dataset.sp||o.dataset.ck);
+    const c2=e.target.closest('[data-chk2]');
+    if(c2){if(c2.disabled)return;c2.disabled=true;c2.textContent='Checking…';const m=c2.parentElement.querySelector('[data-m]');if(m){m.style.color='var(--text-muted)';m.textContent='Checking your answers… this can take up to a minute. Please keep this screen open.'}
+      const r=await paceCloud.functions.invoke('super-task',{body:{submission_id:c2.dataset.chk2}});
+      if(r.error){c2.disabled=false;c2.textContent='Check my answers now';if(m){m.style.color='var(--coral)';m.textContent=await errMsg(r.error)}return}
+      return window.peTests(box,user,role)}
     const rc=e.target.closest('[data-src]'),rs=e.target.closest('[data-rsub]');
     if(rc||rs){const btn=rc||rs,card=btn.closest('.card'),m=card&&card.querySelector('[data-m]'),say=(x,bad)=>{if(m){m.style.color=bad?'var(--coral)':'var(--text-muted)';m.textContent=x}};
       if(rc){if(!confirm('Check your paper again?\n\nThe AI marks it once more and your marks may go up or down. You can do this only once for this test.'))return;
@@ -4520,7 +4538,7 @@ window.peTests=async function(box,user,role){
     const row=Array.isArray(b.data)?b.data[0]:b.data;
     const up=await paceCloud.storage.from('answer-sheets').upload(row.sub_path,f,{contentType:'application/pdf',upsert:true});
     if(up.error){g.disabled=false;return say('Upload failed: '+up.error.message,1)}
-    (window.__tp[id]||[]).forEach(f=>f._u&&URL.revokeObjectURL(f._u));delete window.__tp[id];
+    (window.__tp[id]||[]).forEach(f=>f._u&&URL.revokeObjectURL(f._u));delete window.__tp[id];TPDB.del(user.id+'|'+id);
     say('Checking your answers… this can take up to a minute. Please keep this screen open.');
     const r=await paceCloud.functions.invoke('super-task',{body:{submission_id:row.sub_id}});
     if(r.error)say(await errMsg(r.error),1);
