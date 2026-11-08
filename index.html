@@ -3558,6 +3558,121 @@ if(window.paceFestival()==='diwali'){
 }
 })();
 </script>
+<!-- ===== PACE student: My Mistakes + progress & motivation ===== -->
+<style id="pace-mist-css">
+.mx-hero{border-radius:18px;padding:16px 18px;margin:0 0 12px;color:#fff;background:linear-gradient(135deg,#7C3AED,#2F6BEB 60%,#06B6D4);box-shadow:0 10px 24px color-mix(in srgb,#2F6BEB 30%,transparent)}
+.mx-hero h3{margin:0 0 4px;font-size:18px}.mx-hero p{margin:0;opacity:.92;font-size:13.5px}
+.mx-bar{height:10px;border-radius:99px;background:rgba(255,255,255,.25);margin:12px 0 4px;overflow:hidden}.mx-bar i{display:block;height:100%;border-radius:99px;background:#FDE68A;transition:width .6s}
+.mx-tools{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px}
+.mx-test{margin:16px 0 6px;font-size:13px;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px}
+.mx-card{background:var(--card);border:1px solid var(--line);border-left:4px solid #E11D48;border-radius:14px;padding:12px 14px;margin:8px 0}
+.mx-card.part{border-left-color:#F59E0B}
+.mx-q{font-weight:800;font-size:14px}.mx-q small{font-weight:600;color:var(--text-muted)}
+.mx-txt{font-size:13.5px;margin:4px 0;color:var(--text)}
+.mx-your{font-size:13px;color:#BE123C;margin:4px 0}
+.mx-ans{display:none;margin-top:8px;padding:10px 12px;border-radius:10px;background:color-mix(in srgb,#16A34A 12%,var(--card));font-size:13.5px}
+.mx-card.open .mx-ans{display:block}.mx-ans b{color:#15803D}
+.mx-b{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.mx-b .btn{min-height:36px;padding:6px 12px;font-size:13px}
+.mx-done{opacity:.55}
+.mx-empty{text-align:center;padding:26px 10px}.mx-empty div{font-size:46px}
+/* tests page motivation */
+.pr-card{border-radius:18px;padding:16px 18px;margin:0 0 12px;background:linear-gradient(135deg,#0EA5E9,#6366F1);color:#fff;box-shadow:0 10px 24px color-mix(in srgb,#6366F1 30%,transparent)}
+.pr-card h3{margin:0;font-size:17px}.pr-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+.pr-st{background:rgba(255,255,255,.16);border-radius:12px;padding:8px 6px;text-align:center}.pr-st b{display:block;font-size:19px}.pr-st small{opacity:.9;font-size:11px}
+.pr-spark{display:flex;align-items:flex-end;gap:4px;height:46px;margin-top:12px}.pr-spark i{flex:1;max-width:26px;border-radius:5px 5px 2px 2px;background:rgba(255,255,255,.85)}
+.pr-q{margin-top:10px;font-size:13px;opacity:.95;font-style:italic}
+.pr-msg{border-radius:12px;padding:8px 12px;margin:8px 0;font-size:13.5px;font-weight:700}
+.pr-msg.a{background:color-mix(in srgb,#16A34A 14%,var(--card));color:#15803D}.pr-msg.b{background:color-mix(in srgb,#2F6BEB 14%,var(--card));color:#1D4ED8}
+.pr-msg.c{background:color-mix(in srgb,#F59E0B 16%,var(--card));color:#B45309}.pr-msg.d{background:color-mix(in srgb,#7C3AED 14%,var(--card));color:#6D28D9}
+#prConf{position:fixed;inset:0;pointer-events:none;z-index:9999}
+</style>
+<script>
+(function(){
+const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const LK=uid=>'pace-mist:'+uid;
+const learnt=uid=>{try{return new Set(JSON.parse(localStorage.getItem(LK(uid))||'[]'))}catch(_){return new Set()}};
+const saveL=(uid,S)=>{try{localStorage.setItem(LK(uid),JSON.stringify([...S].slice(-2000)))}catch(_){}};
+const QUOTES=["Mistakes are proof that you are trying. 💪","Every expert was once a beginner. 🌱","Small steps every day lead to big results. 🚀","Don't stop when you're tired, stop when you're done. 🔥",
+ "Success is the sum of small efforts, repeated day in and day out. ✨","Your only competition is who you were yesterday. 🏃","Hard work beats talent when talent doesn't work hard. 🏆","The secret of getting ahead is getting started. ⏳",
+ "Believe you can and you're halfway there. 🌟","Practice makes progress, not perfect. 📈","Push yourself, because no one else is going to do it for you. 💥","Dream big, study hard, stay focused. 🎯"];
+const quote=()=>QUOTES[Math.floor(Date.now()/864e5)%QUOTES.length];
+window.paceQuote=quote;
+
+/* load the student's checked papers + test names */
+async function load(uid){
+  const [t,s]=await Promise.all([paceCloud.from('pace_tests').select('id,title,subject,max_marks,created_at').order('created_at',{ascending:false}),
+    paceCloud.from('pace_test_submissions').select('id,test_id,status,score,max_marks,result').eq('user_id',uid).eq('status','done')]);
+  const T=Object.fromEntries((t.data||[]).map(x=>[x.id,x]));
+  return (s.data||[]).filter(x=>T[x.test_id]).map(x=>({...x,test:T[x.test_id]})).sort((a,b)=>String(b.test.created_at).localeCompare(String(a.test.created_at)));
+}
+
+/* ---------- 🎯 My Mistakes ---------- */
+window.peMistakes=async function(box,user,role){
+  if(!box)return;
+  if(role!=='student'){box.innerHTML='<div class="card"><p class="muted" style="margin:0">Mistakes are shown in the student\'s own login.</p></div>';return}
+  box.innerHTML='<p class="muted">Loading your mistakes…</p>';
+  let subs=[];try{subs=await load(user.id)}catch(e){box.innerHTML=`<div class="card"><p class="muted">${E(e.message||e)}</p></div>`;return}
+  const items=[];
+  for(const s of subs)for(const q of ((s.result||{}).questions||[])){
+    if(!(q.status==='wrong'||q.status==='partial'||q.status==='blank'))continue;
+    items.push({k:s.id+'|'+q.q,test:s.test,q,blank:q.status==='blank'})}
+  let showDone=false,subj='';
+  const draw=()=>{
+    const L=learnt(user.id),all=items.filter(x=>!subj||x.test.subject===subj),todo=all.filter(x=>!L.has(x.k)),done=all.length-todo.length;
+    const pct=all.length?Math.round(done/all.length*100):100,subs_=[...new Set(items.map(x=>x.test.subject).filter(Boolean))];
+    const shown=showDone?all:todo;let lastT='';
+    box.innerHTML=`<div class="mx-hero"><h3>🎯 My Mistakes</h3><p>${all.length?`${todo.length} to master · ${done} learnt ✓ — turn every mistake into marks!`:'No mistakes yet — keep it up! 🌟'}</p>
+      <div class="mx-bar"><i style="width:${pct}%"></i></div><p style="font-size:12px">${pct}% mastered · ${E(quote())}</p></div>
+      <div class="mx-tools">${subs_.length>1?`<button class="pe-chip${subj?'':' act'}" data-sj="">All</button>${subs_.map(x=>`<button class="pe-chip${subj===x?' act':''}" data-sj="${E(x)}">${E(x)}</button>`).join('')}`:''}
+        ${done?`<button class="pe-chip${showDone?' act':''}" data-sd>${showDone?'Hide':'Show'} learnt (${done})</button>`:''}</div>
+      ${shown.length?shown.map(x=>{const q=x.q,h=lastT!==x.test.id?`<div class="mx-test">${E(x.test.title)}${x.test.subject?' · '+E(x.test.subject):''}</div>`:'';lastT=x.test.id;
+        const your=q.your_answer||(String(q.feedback||'').match(/Your answer:?\s*(.+?)(?:\.\s|\. ?$| is )/)||[])[1]||'';
+        const corr=String(q.correct_answer||'').split(/\n|Marking:/)[0].trim(),mark=(String(q.correct_answer||'').match(/Marking:([\s\S]*)/)||[])[1];
+        return h+`<div class="mx-card${q.status==='partial'?' part':''}${L.has(x.k)?' mx-done':''}" data-k="${E(x.k)}">
+          <div class="mx-q">Q${E(q.q)} <small>· ${E(q.marks)}/${E(q.max)} ${x.blank?'· not attempted':q.status==='partial'?'· partly right':'· wrong'}</small></div>
+          ${q.question?`<div class="mx-txt">${E(q.question)}</div>`:''}
+          ${your&&!x.blank?`<div class="mx-your">✗ You wrote: ${E(your)}</div>`:''}
+          <div class="mx-ans">${corr?`<b>✓ Correct answer:</b> ${E(corr)}`:''}${mark?`<div style="font-size:12.5px;margin-top:4px;opacity:.85">${E(mark.trim())}</div>`:''}${q.feedback&&!/^Your answer/.test(q.feedback)?`<div style="margin-top:6px">💡 ${E(q.feedback)}</div>`:''}${q.missing?`<div style="margin-top:4px">📌 Remember: ${E(q.missing)}</div>`:''}</div>
+          <div class="mx-b"><button class="btn ghost" data-show>👀 Show correct answer</button>${L.has(x.k)?`<button class="btn ghost" data-un>↺ Practise again</button>`:`<button class="btn primary" data-lr>✓ I've learnt this</button>`}</div></div>`}).join('')
+        :`<div class="card mx-empty"><div>${all.length?'🏆':'🌟'}</div><h3 style="margin:6px 0">${all.length?'All mistakes mastered!':'Nothing to fix yet'}</h3><p class="muted" style="margin:0">${all.length?'Brilliant work. Every corrected mistake is a mark you will win in the exam.':'When your tests are checked, any wrong answers will appear here so you can learn them.'}</p></div>`}`;
+  };
+  box.onclick=e=>{const c=e.target.closest('.mx-card');
+    if(e.target.closest('[data-sj]')){subj=e.target.closest('[data-sj]').dataset.sj;return draw()}
+    if(e.target.closest('[data-sd]')){showDone=!showDone;return draw()}
+    if(!c)return;
+    if(e.target.closest('[data-show]')){c.classList.toggle('open');e.target.closest('[data-show]').textContent=c.classList.contains('open')?'🙈 Hide answer':'👀 Show correct answer';return}
+    if(e.target.closest('[data-lr]')){const L=learnt(user.id);L.add(c.dataset.k);saveL(user.id,L);burst(e.target,18);setTimeout(draw,350);return}
+    if(e.target.closest('[data-un]')){const L=learnt(user.id);L.delete(c.dataset.k);saveL(user.id,L);return draw()}};
+  draw();
+};
+
+/* ---------- progress card + messages on the Tests page ---------- */
+window.peProgress=async function(user){
+  const subs=(await load(user.id)).filter(s=>s.max_marks>0).reverse();       // oldest → newest
+  if(!subs.length)return`<div class="pr-card"><h3>🚀 Your journey starts here</h3><div class="pr-q">${E(quote())}</div></div>`;
+  const P=subs.map(s=>Math.max(0,Math.round(s.score/s.max_marks*100))),avg=Math.round(P.reduce((a,b)=>a+b,0)/P.length),best=Math.max(...P),last=P[P.length-1],prev=P[P.length-2];
+  const d=prev==null?null:last-prev,trend=d==null?'':d>0?`📈 +${d}% vs last test — you're improving!`:d===0?'➡️ Steady — push for a little more!':`💪 ${d}% vs last test — bounce back next time!`;
+  const mist=subs.reduce((a,s)=>a+(((s.result||{}).questions||[]).filter(q=>q.status==='wrong'||q.status==='partial'||q.status==='blank').length),0),L=learnt(user.id).size;
+  return`<div class="pr-card"><h3>${best>=90?'🏆':avg>=70?'🌟':'🚀'} Your progress</h3>
+    <div class="pr-row"><div class="pr-st"><b>${subs.length}</b><small>tests done</small></div><div class="pr-st"><b>${avg}%</b><small>average</small></div><div class="pr-st"><b>${best}%</b><small>best</small></div><div class="pr-st"><b>${last}%</b><small>latest</small></div></div>
+    ${P.length<2?'':`<div class="pr-spark">${P.slice(-12).map(p=>`<i style="height:${Math.max(8,p)}%" title="${p}%"></i>`).join('')}</div>`}
+    ${trend?`<div style="margin-top:8px;font-weight:700;font-size:13.5px">${trend}</div>`:''}
+    <div class="pr-q">${E(quote())}</div>
+    ${mist?`<button class="btn" data-tab="mist" style="margin-top:10px;background:#fff;color:#4338CA;border:0;font-weight:800">🎯 Practise my mistakes (${Math.max(0,mist-L)} left)</button>`:''}</div>`;
+};
+window.pePraise=function(score,max){const p=max?Math.round(score/max*100):0;
+  return p>=90?`<div class="pr-msg a">🏆 Outstanding! ${p}% — you're a star!</div>`:p>=75?`<div class="pr-msg b">🌟 Great work! ${p}% — just a few marks from the top.</div>`:
+    p>=50?`<div class="pr-msg c">💪 Good effort! ${p}% — practise your mistakes to score higher next time.</div>`:`<div class="pr-msg d">🌱 ${p}% — every mistake is a lesson. Open 🎯 My Mistakes and fix them one by one!</div>`};
+
+/* small confetti burst (once per great result) */
+function burst(el,n){const c=document.createElement('canvas');c.id='prConf';document.body.appendChild(c);const W=c.width=innerWidth,H=c.height=innerHeight,x=c.getContext('2d');
+  const r=el&&el.getBoundingClientRect?el.getBoundingClientRect():{left:W/2,top:H/3,width:0,height:0},ox=r.left+r.width/2,oy=r.top+r.height/2;
+  const C=['#F59E0B','#10B981','#3B82F6','#EC4899','#8B5CF6','#FDE68A'],P=Array.from({length:n||80},()=>({x:ox,y:oy,vx:(Math.random()-.5)*12,vy:-Math.random()*12-3,s:4+Math.random()*5,c:C[Math.random()*C.length|0],r:Math.random()*6}));
+  let t=0;(function f(){x.clearRect(0,0,W,H);P.forEach(p=>{p.vy+=.35;p.x+=p.vx;p.y+=p.vy;p.r+=.2;x.save();x.translate(p.x,p.y);x.rotate(p.r);x.fillStyle=p.c;x.fillRect(-p.s/2,-p.s/2,p.s,p.s*.6);x.restore()});
+    if(++t<90)requestAnimationFrame(f);else c.remove()})()}
+window.peConfetti=burst;
+})();
+</script>
 <!-- ===== PACE exam notices (admin writes, students & parents read) ===== -->
 <style id="pace-notice-css">
 .kv-ov{position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px}
@@ -4092,8 +4207,8 @@ async function member(user,role){
   }
   function paint(){
     const chip=(k,t)=>`<button class="pe-chip${tab===k?' act':''}" data-tab="${k}">${t}</button>`,tt0=tab==='tt';
-    V.innerHTML=top+`<div class="pg-wrap">${tt0?hero():''}${tt0&&window.PXN?'<div id="pgXN">'+PXN.html(user.id,FG)+'</div>':''}<div class="pe-filter pg-tabs">${chip('tt','📅 Timetable')}${chip('hw','📝 Homework'+(up.length?' <i class="pg-cnt">'+up.length+'</i>':''))}${chip('mat','📚 Materials')}${chip('tst','🧪 Tests')}${isStu?chip('fx','🧮 Formulas'):''}</div>${tt0?'<div id="pgNext">'+upNext()+'</div>'+installCard()+'<div id="pgNotif"></div>':''}<div id="pgDoubt">${doubtHTML()}</div>${tab==='hw'?homework():tab==='mat'?materials():tab==='tst'?'<div id="pgTests"></div>':tab==='fx'?formulas():(isStu?fxTeaser():'')+timetable()}</div>`;
-    $('pgOut').onclick=signOut;if(tab==='tst'&&window.peTests)window.peTests($('pgTests'),user,role);if(tab==='fx')typeset();if(window.PXN&&$('pgXN'))PXN.bind($('pgXN'),user.id);if(window.paceDiwali)setTimeout(()=>paceDiwali(String((P&&P.name)||'').trim().split(/\s+/)[0]),400);if(window.PNS&&$('pgNotif'))PNS.mount($('pgNotif'),{role,url:location.pathname});
+    V.innerHTML=top+`<div class="pg-wrap">${tt0?hero():''}${tt0&&window.PXN?'<div id="pgXN">'+PXN.html(user.id,FG)+'</div>':''}<div class="pe-filter pg-tabs">${chip('tt','📅 Timetable')}${chip('hw','📝 Homework'+(up.length?' <i class="pg-cnt">'+up.length+'</i>':''))}${chip('mat','📚 Materials')}${chip('tst','🧪 Tests')}${isStu?chip('mist','🎯 Mistakes'):''}${isStu?chip('fx','🧮 Formulas'):''}</div>${tt0?'<div id="pgNext">'+upNext()+'</div>'+installCard()+'<div id="pgNotif"></div>':''}<div id="pgDoubt">${doubtHTML()}</div>${tab==='hw'?homework():tab==='mat'?materials():tab==='tst'?'<div id="pgTests"></div>':tab==='mist'?'<div id="pgMist"></div>':tab==='fx'?formulas():(isStu?fxTeaser():'')+timetable()}</div>`;
+    $('pgOut').onclick=signOut;if(tab==='tst'&&window.peTests)window.peTests($('pgTests'),user,role);if(tab==='mist'&&window.peMistakes)window.peMistakes($('pgMist'),user,role);if(tab==='fx')typeset();if(window.PXN&&$('pgXN'))PXN.bind($('pgXN'),user.id);if(window.paceDiwali)setTimeout(()=>paceDiwali(String((P&&P.name)||'').trim().split(/\s+/)[0]),400);if(window.PNS&&$('pgNotif'))PNS.mount($('pgNotif'),{role,url:location.pathname});
   }
   V.onclick=e=>{
     const d=e.target.closest('[data-d]'),w=e.target.closest('[data-w]'),k=e.target.closest('[data-tab]'),s=e.target.closest('[data-sub]'),fx=e.target.closest('[data-fx]');
@@ -4477,7 +4592,8 @@ window.peTests=async function(box,user,role){
   const card=x=>{
     const u=S[x.id];let st='';
     if(u&&u.status==='done'){const r=u.result||{};
-      st=`<div style="margin-top:10px"><b style="font-size:18px">${u.score} / ${u.max_marks}</b> <span class="muted">· checked by AI, your teacher may review it</span><div class="sx-b">${u.annotated_path?`<button class="btn primary" data-ck="${esc(u.annotated_path)}">📄 Open my checked paper</button>`:''}<button class="btn ghost" data-rsub="${esc(x.id)}">📤 Submit a new answer sheet</button></div><p class="muted" data-m="${x.id}" style="font-size:13px;margin:0"></p>${r.overall_feedback?`<p style="margin:6px 0">${esc(r.overall_feedback)}</p>`:''}${(r.questions||[]).map(q=>`<div style="font-size:13px;padding:6px 0;border-top:1px solid var(--line)"><b>Q${esc(q.q)}</b> · <b style="color:${q.status==='correct'?'#15803D':q.status==='blank'?'var(--text-muted)':'#BE123C'}">${esc(q.marks)}/${esc(q.max)}</b> — ${esc(q.feedback||'')}${(q.errors||[]).length?`<div style="color:#BE123C;margin-top:3px">${q.errors.map((e,i)=>'⭕ '+esc(e.note||'')).join('<br>')}</div>`:''}${q.missing?`<div style="color:#BE123C;margin-top:3px">Missing: ${esc(q.missing)}</div>`:''}${q.correct_answer?`<details style="margin-top:4px"><summary style="cursor:pointer;color:#15803D;font-weight:600">Correct answer</summary><div style="white-space:pre-wrap;margin-top:4px;color:#15803D">${esc(q.correct_answer)}</div></details>`:''}</div>`).join('')}${(r.unreadable||[]).length?`<p class="muted" style="font-size:12.5px">Could not read: Q${esc(r.unreadable.join(', Q'))}. Write clearly and scan in good light.</p>`:''}${K[x.id]?`<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--ink-2)">Marking scheme</summary><pre style="white-space:pre-wrap;font:13px/1.5 Inter,sans-serif;margin:8px 0 0">${esc(K[x.id])}</pre></details>`:''}${KF[x.id]?`<div><button class="btn ghost" data-sp="${esc(KF[x.id])}" style="margin-top:8px">📄 Marking scheme (PDF)</button></div>`:''}</div>`}
+      const nm=(r.questions||[]).filter(q=>q.status==='wrong'||q.status==='partial'||q.status==='blank').length;
+      st=`<div style="margin-top:10px"><b style="font-size:18px">${u.score} / ${u.max_marks}</b> <span class="muted">· checked by AI, your teacher may review it</span>${window.pePraise?pePraise(u.score,u.max_marks):''}${nm?`<button class="btn ghost" data-tab="mist" style="margin:2px 0 4px">🎯 Practise ${nm} mistake${nm>1?'s':''}</button>`:''}<div class="sx-b">${u.annotated_path?`<button class="btn primary" data-ck="${esc(u.annotated_path)}">📄 Open my checked paper</button>`:''}<button class="btn ghost" data-rsub="${esc(x.id)}">📤 Submit a new answer sheet</button></div><p class="muted" data-m="${x.id}" style="font-size:13px;margin:0"></p>${r.overall_feedback?`<p style="margin:6px 0">${esc(r.overall_feedback)}</p>`:''}${(r.questions||[]).map(q=>`<div style="font-size:13px;padding:6px 0;border-top:1px solid var(--line)"><b>Q${esc(q.q)}</b> · <b style="color:${q.status==='correct'?'#15803D':q.status==='blank'?'var(--text-muted)':'#BE123C'}">${esc(q.marks)}/${esc(q.max)}</b> — ${esc(q.feedback||'')}${(q.errors||[]).length?`<div style="color:#BE123C;margin-top:3px">${q.errors.map((e,i)=>'⭕ '+esc(e.note||'')).join('<br>')}</div>`:''}${q.missing?`<div style="color:#BE123C;margin-top:3px">Missing: ${esc(q.missing)}</div>`:''}${q.correct_answer?`<details style="margin-top:4px"><summary style="cursor:pointer;color:#15803D;font-weight:600">Correct answer</summary><div style="white-space:pre-wrap;margin-top:4px;color:#15803D">${esc(q.correct_answer)}</div></details>`:''}</div>`).join('')}${(r.unreadable||[]).length?`<p class="muted" style="font-size:12.5px">Could not read: Q${esc(r.unreadable.join(', Q'))}. Write clearly and scan in good light.</p>`:''}${K[x.id]?`<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--ink-2)">Marking scheme</summary><pre style="white-space:pre-wrap;font:13px/1.5 Inter,sans-serif;margin:8px 0 0">${esc(K[x.id])}</pre></details>`:''}${KF[x.id]?`<div><button class="btn ghost" data-sp="${esc(KF[x.id])}" style="margin-top:8px">📄 Marking scheme (PDF)</button></div>`:''}</div>`}
     else if(u&&u.status==='checking')st='<p class="muted" style="margin-top:10px">⏳ Your answers are being checked. Tap Tests again in a minute.</p>';
     else if(u&&u.status==='uploaded')st=`<div style="margin-top:10px"><p style="margin:0 0 8px">✓ Your answer sheet was received.</p><button class="btn primary" data-chk2="${esc(u.id)}">Check my answers now</button><p class="muted" data-m="${x.id}" style="font-size:13px;margin:6px 0 0"></p></div>`;
     else st=`${u&&u.status==='error'?`<p style="color:var(--coral);font-size:13px">Last attempt failed: ${esc(u.error||'')}. You can upload again.</p>`:''}<div style="margin-top:10px;display:grid;gap:8px"><p class="muted" style="font-size:12.5px;margin:0">Add a photo of <b>each page</b> of your answers, in order. You can add pages one by one.</p>
@@ -4487,6 +4603,8 @@ window.peTests=async function(box,user,role){
     return `<div class="card" style="margin-bottom:12px"><b>${esc(x.title)}</b><div class="muted" style="font-size:12.5px">${esc(x.subject||'')} · ${x.max_marks} marks</div>${x.question_text?`<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--ink-2)">Question paper</summary><pre style="white-space:pre-wrap;font:13px/1.5 Inter,sans-serif;margin:8px 0 0">${esc(x.question_text)}</pre></details>`:''}${x.question_file?`<div><button class="btn ghost" data-qp="${esc(x.question_file)}" style="margin-top:8px">📄 Question paper (PDF)</button></div>`:''}${st}</div>`;
   };
   box.innerHTML=(t.data||[]).map(card).join('')||'<div class="card"><p class="muted" style="margin:0">No tests right now.</p></div>';
+  if(window.peProgress)peProgress(user).then(h=>{if(!box.isConnected||box.querySelector('.pr-card'))return;const d=document.createElement('div');d.innerHTML=h;box.prepend(d)}).catch(()=>{});
+  try{for(const x of (s.data||[])){if(x.status!=='done'||!x.max_marks||x.score/x.max_marks<0.8)continue;const k='pace-conf:'+x.id;if(localStorage.getItem(k))continue;localStorage.setItem(k,'1');setTimeout(()=>window.peConfetti&&peConfetti(null,140),500);break}}catch(_){}
   box.onchange=async e=>{const inp=e.target.closest('[data-add]');if(!inp)return;const id=inp.dataset.add,m=box.querySelector(`[data-m="${id}"]`);
     const add=[...(inp.files||[])];inp.value='';if(!add.length)return;
     const isPdf=x=>/\.pdf$/i.test(x.name)||x.type==='application/pdf';let L=window.__tp[id]||[];
