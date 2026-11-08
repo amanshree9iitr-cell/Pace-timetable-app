@@ -3646,13 +3646,27 @@ window.peMistakes=async function(box,user,role){
   for(const s of subs)for(const q of ((s.result||{}).questions||[])){
     if(!(q.status==='wrong'||q.status==='partial'||q.status==='blank'))continue;
     items.push({k:s.id+'|'+q.q,test:s.test,q,blank:q.status==='blank'})}
-  let showDone=false,subj='';
+  let showDone=false,subj='',quiz=null;
+  const wk=()=>{const d=new Date(),day=(d.getDay()+6)%7;d.setDate(d.getDate()-day);return d.toISOString().slice(0,10)};
+  const drawQuiz=()=>{const Q=quiz,x=Q.list[Q.i];
+    if(!x){const p=Math.round(Q.got/Q.list.length*100);try{localStorage.setItem('pace-quiz:'+user.id,wk())}catch(_){}
+      box.innerHTML=`<div class="mx-hero" style="text-align:center"><div style="font-size:52px">${p>=70?'🏆':'💪'}</div><h3>Quiz done: ${Q.got}/${Q.list.length}</h3><p>${p>=70?'Superb! Those mistakes are now marks in your pocket.':'Good practice! Try the quiz again tomorrow and you will nail them.'}</p></div><div class="mx-b" style="justify-content:center"><button class="btn primary" data-qx>Back to my mistakes</button><button class="btn ghost" data-qa>🔁 Quiz again</button></div>`;
+      if(p>=70)burst(null,120);return}
+    const q=x.q,your=q.your_answer||(String(q.feedback||'').match(/Your answer:?\s*(.+?)(?:\.\s|\. ?$| is )/)||[])[1]||'',corr=String(q.correct_answer||'').split(/\n|Marking:/)[0].trim();
+    box.innerHTML=`<div class="mx-hero"><h3>🧠 Mistakes quiz · ${Q.i+1} of ${Q.list.length}</h3><div class="mx-bar"><i style="width:${Math.round(Q.i/Q.list.length*100)}%"></i></div><p>Think of the answer first, then reveal it. Be honest! 😊</p></div>
+      <div class="mx-card${Q.open?' open':''}" style="border-left-color:#7C3AED"><div class="mx-q">Q${E(q.q)} <small>· ${E(x.test.title)}</small></div>
+      <div class="mx-txt" style="font-size:15px">${q.question?E(q.question):'What is the correct answer for this question?'}</div>${your&&!x.blank?`<div class="mx-your">Last time you wrote: ${E(your)}</div>`:''}
+      <div class="mx-ans"><b>✓ Answer:</b> ${E(corr||'see your checked paper')}${q.missing?`<div style="margin-top:4px">📌 ${E(q.missing)}</div>`:''}</div>
+      <div class="mx-b">${Q.open?`<button class="btn primary" data-qy>✓ I got it</button><button class="btn ghost" data-qn>✗ Still learning</button>`:`<button class="btn primary" data-qr>👀 Reveal answer</button>`}<button class="btn ghost" data-qx style="margin-left:auto">Exit</button></div></div>`};
+  const startQuiz=todo=>{const L=[...todo].sort(()=>Math.random()-.5).slice(0,10);quiz={list:L,i:0,got:0,open:false};drawQuiz()};
+  window.__mxStart=()=>{const Ls=learnt(user.id);startQuiz(items.filter(x=>!Ls.has(x.k)))};
   const draw=()=>{
     const L=learnt(user.id),all=items.filter(x=>!subj||x.test.subject===subj),todo=all.filter(x=>!L.has(x.k)),done=all.length-todo.length;
     const pct=all.length?Math.round(done/all.length*100):100,subs_=[...new Set(items.map(x=>x.test.subject).filter(Boolean))];
     const shown=showDone?all:todo;let lastT='';
     box.innerHTML=`<div class="mx-hero"><h3>🎯 My Mistakes</h3><p>${all.length?`${todo.length} to master · ${done} learnt ✓ — turn every mistake into marks!`:'No mistakes yet — keep it up! 🌟'}</p>
-      <div class="mx-bar"><i style="width:${pct}%"></i></div><p style="font-size:12px">${pct}% mastered · ${E(quote())}</p></div>
+      <div class="mx-bar"><i style="width:${pct}%"></i></div><p style="font-size:12px">${pct}% mastered · ${E(quote())}</p>
+      ${todo.length?`<button class="btn" data-qs style="margin-top:10px;background:#fff;color:#6D28D9;border:0;font-weight:800">🧠 Start quiz (${Math.min(10,todo.length)} questions)</button>`:''}</div>
       <div class="mx-tools">${subs_.length>1?`<button class="pe-chip${subj?'':' act'}" data-sj="">All</button>${subs_.map(x=>`<button class="pe-chip${subj===x?' act':''}" data-sj="${E(x)}">${E(x)}</button>`).join('')}`:''}
         ${done?`<button class="pe-chip${showDone?' act':''}" data-sd>${showDone?'Hide':'Show'} learnt (${done})</button>`:''}</div>
       ${shown.length?shown.map(x=>{const q=x.q,h=lastT!==x.test.id?`<div class="mx-test">${E(x.test.title)}${x.test.subject?' · '+E(x.test.subject):''}</div>`:'';lastT=x.test.id;
@@ -3666,14 +3680,21 @@ window.peMistakes=async function(box,user,role){
           <div class="mx-b"><button class="btn ghost" data-show>👀 Show correct answer</button>${L.has(x.k)?`<button class="btn ghost" data-un>↺ Practise again</button>`:`<button class="btn primary" data-lr>✓ I've learnt this</button>`}</div></div>`}).join('')
         :`<div class="card mx-empty"><div>${all.length?'🏆':'🌟'}</div><h3 style="margin:6px 0">${all.length?'All mistakes mastered!':'Nothing to fix yet'}</h3><p class="muted" style="margin:0">${all.length?'Brilliant work. Every corrected mistake is a mark you will win in the exam.':'When your tests are checked, any wrong answers will appear here so you can learn them.'}</p></div>`}`;
   };
-  box.onclick=e=>{const c=e.target.closest('.mx-card');
+  box.onclick=e=>{
+    if(e.target.closest('[data-qs]')){const Ls=learnt(user.id);return startQuiz(items.filter(x=>!subj||x.test.subject===subj).filter(x=>!Ls.has(x.k)))}
+    if(quiz){if(e.target.closest('[data-qr]')){quiz.open=true;return drawQuiz()}
+      if(e.target.closest('[data-qy]')){const L=learnt(user.id);L.add(quiz.list[quiz.i].k);saveL(user.id,L);quiz.got++;quiz.i++;quiz.open=false;return drawQuiz()}
+      if(e.target.closest('[data-qn]')){quiz.i++;quiz.open=false;return drawQuiz()}
+      if(e.target.closest('[data-qa]')){const Ls=learnt(user.id);return startQuiz(items.filter(x=>!Ls.has(x.k)).length?items.filter(x=>!Ls.has(x.k)):items)}
+      if(e.target.closest('[data-qx]')){quiz=null;return draw()}return}
+    const c=e.target.closest('.mx-card');
     if(e.target.closest('[data-sj]')){subj=e.target.closest('[data-sj]').dataset.sj;return draw()}
     if(e.target.closest('[data-sd]')){showDone=!showDone;return draw()}
     if(!c)return;
     if(e.target.closest('[data-show]')){c.classList.toggle('open');e.target.closest('[data-show]').textContent=c.classList.contains('open')?'🙈 Hide answer':'👀 Show correct answer';return}
     if(e.target.closest('[data-lr]')){const L=learnt(user.id);L.add(c.dataset.k);saveL(user.id,L);burst(e.target,18);setTimeout(draw,350);return}
     if(e.target.closest('[data-un]')){const L=learnt(user.id);L.delete(c.dataset.k);saveL(user.id,L);return draw()}};
-  draw();
+  if(window.__mxQuizNext){window.__mxQuizNext=0;window.__mxStart()}else draw();
 };
 
 /* ---------- progress card + messages on the Tests page ---------- */
@@ -3688,8 +3709,17 @@ window.peProgress=async function(user){
     ${P.length<2?'':`<div class="pr-spark">${P.slice(-12).map(p=>`<i style="height:${Math.max(8,p)}%" title="${p}%"></i>`).join('')}</div>`}
     ${trend?`<div style="margin-top:8px;font-weight:700;font-size:13.5px">${trend}</div>`:''}
     <div class="pr-q">${E(quote())}</div>
-    ${mist?`<button class="btn" data-tab="mist" style="margin-top:10px;background:#fff;color:#4338CA;border:0;font-weight:800">🎯 Practise my mistakes (${Math.max(0,mist-L)} left)</button>`:''}</div>`;
+    ${mist?`<button class="btn" data-tab="mist" style="margin-top:10px;background:#fff;color:#4338CA;border:0;font-weight:800">🎯 Practise my mistakes (${Math.max(0,mist-L)} left)</button>`:''}</div>`+strength(subs);
 };
+function strength(subs){
+  const G=new Map();for(const s of subs){const t=String(s.test.title||'').replace(/\(.*?\)/g,' ').replace(/\bpages?\b.*$/i,' ').replace(/[-–:]\s*$/,'').replace(/\s+/g,' ').trim()||s.test.title;
+    const k=(s.test.subject?s.test.subject+'|':'')+t.toLowerCase(),o=G.get(k)||{name:t,subject:s.test.subject||'',p:[]};o.p.push(s.score/s.max_marks*100);G.set(k,o)}
+  const L=[...G.values()].map(o=>({...o,v:Math.round(o.p.reduce((a,b)=>a+b,0)/o.p.length)})).sort((a,b)=>a.v-b.v);
+  if(!L.length)return'';
+  const col=v=>v>=75?'#16A34A':v>=50?'#F59E0B':'#E11D48',tag=v=>v>=75?'Strong 💪':v>=50?'Getting there':'Needs practice';
+  return`<div class="card" style="margin:0 0 12px"><h3 style="margin:0 0 2px;font-size:16px">📊 Chapter strength</h3><p class="muted" style="margin:0 0 10px;font-size:12.5px">Red chapters first: revise them and practise their mistakes.</p>
+    ${L.slice(0,10).map(o=>`<div style="margin:8px 0"><div style="display:flex;justify-content:space-between;gap:8px;font-size:13.5px"><b style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${E(o.name)}${o.subject?` <span class="muted" style="font-weight:500">· ${E(o.subject)}</span>`:''}</b><span style="color:${col(o.v)};font-weight:800;white-space:nowrap">${o.v}% · ${tag(o.v)}</span></div>
+      <div style="height:9px;border-radius:99px;background:color-mix(in srgb,${col(o.v)} 15%,var(--card));margin-top:4px;overflow:hidden"><i style="display:block;height:100%;width:${Math.max(4,o.v)}%;background:${col(o.v)};border-radius:99px"></i></div></div>`).join('')}</div>`}
 window.pePraise=function(score,max){const p=max?Math.round(score/max*100):0;
   return p>=90?`<div class="pr-msg a">🏆 Outstanding! ${p}% — you're a star!</div>`:p>=75?`<div class="pr-msg b">🌟 Great work! ${p}% — just a few marks from the top.</div>`:
     p>=50?`<div class="pr-msg c">💪 Good effort! ${p}% — practise your mistakes to score higher next time.</div>`:`<div class="pr-msg d">🌱 ${p}% — every mistake is a lesson. Open 🎯 My Mistakes and fix them one by one!</div>`};
@@ -3701,6 +3731,15 @@ function burst(el,n){const c=document.createElement('canvas');c.id='prConf';docu
   let t=0;(function f(){x.clearRect(0,0,W,H);P.forEach(p=>{p.vy+=.35;p.x+=p.vx;p.y+=p.vy;p.r+=.2;x.save();x.translate(p.x,p.y);x.rotate(p.r);x.fillStyle=p.c;x.fillRect(-p.s/2,-p.s/2,p.s,p.s*.6);x.restore()});
     if(++t<90)requestAnimationFrame(f);else c.remove()})()}
 window.peConfetti=burst;
+window.peQuizBanner=async function(el,user){if(!el)return;try{
+  const d=new Date(),day=(d.getDay()+6)%7;d.setDate(d.getDate()-day);const wk=d.toISOString().slice(0,10);
+  if(localStorage.getItem('pace-quiz:'+user.id)===wk)return;
+  const subs=await load(user.id),L=learnt(user.id);let n=0;
+  for(const s of subs)for(const q of ((s.result||{}).questions||[]))if((q.status==='wrong'||q.status==='partial'||q.status==='blank')&&!L.has(s.id+'|'+q.q))n++;
+  if(!n||!el.isConnected)return;
+  el.innerHTML=`<button class="pf-tz" data-quizgo style="background:linear-gradient(135deg,#7C3AED,#EC4899);color:#fff;border:0"><span>🧠</span><div><b>Your weekly mistakes quiz is ready</b><small style="color:#fde7f3">${Math.min(10,n)} quick questions from your own mistakes · 2 minutes</small></div><span style="font-size:18px">›</span></button>`;
+  el.querySelector('[data-quizgo]').onclick=()=>{window.__mxQuizNext=1;const t=document.querySelector('.pe-chip[data-tab="mist"]');if(t)t.click()};
+}catch(_){}};
 })();
 </script>
 <!-- ===== PACE exam notices (admin writes, students & parents read) ===== -->
@@ -3736,6 +3775,8 @@ window.peConfetti=burst;
 @media(max-width:780px){.ma-card{grid-template-columns:1fr;padding-right:36px}.ma-p2{grid-template-columns:1fr}.ma-cnt{display:none}}
 .sx-b{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.sx-b .btn{min-height:38px}
 .ma-bh{margin:18px 0 6px;font-size:14px;padding:6px 10px;border-radius:10px;background:color-mix(in srgb,#2F6BEB 10%,var(--card))}.ma-bh span,.ma-bh small{font-weight:600;color:var(--text-muted)}
+.xn-cd{display:flex;gap:8px;margin:2px 0 10px;overflow-x:auto}.xn-cdi{flex:1 0 110px;border-radius:14px;padding:8px 10px;color:#fff;background:linear-gradient(135deg,#F97316,#E11D48);text-align:center}
+.xn-cdi b{display:block;font-size:24px;line-height:1.1}.xn-cdi small{display:block;font-size:11px;opacity:.9}.xn-cdi span{display:block;font-size:12px;font-weight:700;margin-top:3px;line-height:1.25}
 .xn-box{background:var(--card);border:1.5px solid color-mix(in srgb,#2F6BEB 35%,transparent);border-radius:16px;padding:10px 12px;margin:0 0 12px}
 .xn-h{display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px;margin:2px 2px 6px}
 .xn-h small{font-weight:600;color:var(--text-muted);font-size:12px}
@@ -3788,7 +3829,9 @@ const PXN=window.PXN={
     if(!r.error)PXN.list=r.data||[];return r.error},
   /* students & parents: headings on top, tap to open */
   html(uid,grade){const L=PXN.list.filter(x=>(x.status||'published')==='published'&&((x.audience||'xii')==='all'||(x.audience||'xii')===grade));if(!L.length)return'';const S=seen(uid),n=L.filter(x=>!S.has(x.id)).length;
-    return `<div class="xn-box"><div class="xn-h">📢 Exam Notices${n?` <small>· ${n} new</small>`:''}</div>`+
+    const td=new Date(Date.now()+5.5*3600e3).toISOString().slice(0,10),cd=L.filter(x=>x.exam_date&&x.exam_date>=td).sort((a,b)=>a.exam_date.localeCompare(b.exam_date)).slice(0,3);
+    const days=d=>Math.round((Date.parse(d+'T00:00:00Z')-Date.parse(td+'T00:00:00Z'))/864e5);
+    return `<div class="xn-box">${cd.length?`<div class="xn-cd">${cd.map(x=>{const n2=days(x.exam_date);return`<div class="xn-cdi"><b>${n2===0?'Today!':n2}</b><small>${n2===0?'':n2===1?'day to go':'days to go'}</small><span>${E(String(x.title).replace(/\s*(?::|\s[-–]\s).*$/,'').slice(0,40))}</span></div>`}).join('')}</div>`:''}<div class="xn-h">📢 Exam Notices${n?` <small>· ${n} new</small>`:''}</div>`+
       L.map(x=>`<details class="xn-it" data-xn="${E(x.id)}"><summary><span class="t">${E(x.title)}${x.source==='auto'?' <span class="xn-auto" title="Found on the official website">🤖 Official update</span>':''}</span>${S.has(x.id)?'':'<span class="xn-new">NEW</span>'}<span class="ar">›</span></summary><div class="xn-d">${body(x.body)}<span class="xn-dt">Posted ${E(when(x.created_at))}</span></div></details>`).join('')+'</div>'},
   bind(el,uid){if(!el)return;el.querySelectorAll('details[data-xn]').forEach(d=>d.addEventListener('toggle',()=>{if(!d.open)return;
     const S=seen(uid);S.add(d.dataset.xn);try{localStorage.setItem(SK(uid),JSON.stringify([...S].slice(-200)))}catch(_){}
@@ -3802,19 +3845,20 @@ const PXN=window.PXN={
       const e=editing&&PXN.list.find(x=>x.id===editing);
       el.innerHTML=`<div class="card"><h2 style="margin:0 0 4px">📢 Exam Notices</h2><p class="muted" style="margin:0;font-size:13px">Students and parents of the chosen class see these headings at the top of their screen. Tapping a heading opens the description.</p>
         <form class="xn-f"><div class="field"><label>Heading</label><input name="t" required maxlength="150" placeholder="e.g. JEE Main 2027 – Session 1 form is out" value="${E(e?e.title:'')}"></div>
+        <div class="field"><label>Exam date (optional, shows a countdown to students)</label><input name="d" type="date" value="${E(e&&e.exam_date?e.exam_date:'')}"></div>
         <div class="field"><label>Show to</label><select name="a">${Object.entries(AUD).map(([k,v])=>`<option value="${k}"${(e?e.audience||'xii':'xii')===k?' selected':''}>${v}</option>`).join('')}</select></div>
         <div class="field"><label>Description</label><textarea name="b" required maxlength="5000" placeholder="Last date, fees, documents needed, link to apply…">${E(e?e.body:'')}</textarea></div>
         <div class="xn-b"><button class="btn primary" type="submit">${e?'Save changes':'Publish notice'}</button>${e?'<button class="btn ghost" type="button" data-cx>Cancel edit</button>':''}</div>
         <div style="font-size:12.5px;color:${bad?'var(--coral)':'var(--text-muted)'}">${E(msg||'')}</div></form></div>
         ${err?`<p class="muted">Could not load notices: ${E(err)}</p>`:''}
         <h3 style="margin:16px 0 0;font-size:14px">Published (${PXN.list.length})</h3>
-        ${PXN.list.length?PXN.list.map(x=>`<div class="xn-row${x.status==='pending'?' xn-pend':''}"><span class="xn-aud">${E(AUD[x.audience||'xii']||'')}</span>${x.status==='pending'?'<span class="xn-aud xn-wait">⏳ Waiting for your approval</span>':''}${x.source==='auto'?'<span class="xn-aud">🤖 Auto</span>':''}<b>${E(x.title)}</b><div class="xn-d">${body(x.body)}<span class="xn-dt">Posted ${E(when(x.created_at))}</span></div>
+        ${PXN.list.length?PXN.list.map(x=>`<div class="xn-row${x.status==='pending'?' xn-pend':''}"><span class="xn-aud">${E(AUD[x.audience||'xii']||'')}</span>${x.status==='pending'?'<span class="xn-aud xn-wait">⏳ Waiting for your approval</span>':''}${x.source==='auto'?'<span class="xn-aud">🤖 Auto</span>':''}<b>${E(x.title)}</b><div class="xn-d">${body(x.body)}<span class="xn-dt">Posted ${E(when(x.created_at))}${x.exam_date?' · 📅 Exam: '+E(new Date(x.exam_date+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})):''}</span></div>
           <div class="xn-b">${x.status==='pending'?`<button class="btn primary" type="button" data-pub="${E(x.id)}">✅ Publish</button>`:''}<button class="btn ghost" type="button" data-ed="${E(x.id)}">✏️ Edit</button><button class="btn ghost" type="button" data-del="${E(x.id)}">🗑 Delete</button></div></div>`).join(''):'<p class="muted">No notices yet.</p>'}`;
       const F=el.querySelector('form');
-      F.onsubmit=async ev=>{ev.preventDefault();const t=F.t.value.trim(),b=F.b.value.trim(),au=F.a.value||'xii';if(!t||!b)return draw('Please fill the heading and the description.',true);
-        const btn=F.querySelector('[type=submit]');btn.disabled=true;btn.textContent='Saving…';
-        const r=editing?await paceCloud.from('pace_notices').update({title:t,body:b,audience:au,updated_at:new Date().toISOString()}).eq('id',editing)
-                       :await paceCloud.from('pace_notices').insert({title:t,body:b,audience:au});
+      F.onsubmit=async ev=>{ev.preventDefault();const t=F.t.value.trim(),b=F.b.value.trim(),au=F.a.value||'xii',ed=F.d.value||null;if(!t||!b)return draw('Please fill the heading and the description.',true);
+        const e0=editing&&PXN.list.find(x=>x.id===editing);const btn=F.querySelector('[type=submit]');btn.disabled=true;btn.textContent='Saving…';
+        const r=editing?await paceCloud.from('pace_notices').update(Object.assign({title:t,body:b,audience:au,updated_at:new Date().toISOString()},ed||(e0&&e0.exam_date)?{exam_date:ed}:{})).eq('id',editing)
+                       :await paceCloud.from('pace_notices').insert(Object.assign({title:t,body:b,audience:au},ed?{exam_date:ed}:{}));
         if(r.error){btn.disabled=false;btn.textContent=editing?'Save changes':'Publish notice';const m=el.querySelector('form>div:last-child');if(m){m.style.color='var(--coral)';m.textContent='Could not save: '+r.error.message}return}
         const was=editing;editing=null;err=(await PXN.load())?.message||'';draw(was?'Saved ✓':'Published ✓ Students and parents will see it next time they open the app.')};
       el.querySelectorAll('[data-ed]').forEach(b=>b.onclick=()=>{editing=b.dataset.ed;draw();el.querySelector('form').scrollIntoView({behavior:'smooth',block:'start'})});
@@ -4237,8 +4281,8 @@ async function member(user,role){
   }
   function paint(){
     const chip=(k,t)=>`<button class="pe-chip${tab===k?' act':''}" data-tab="${k}">${t}</button>`,tt0=tab==='tt';
-    V.innerHTML=top+`<div class="pg-wrap">${tt0?hero():''}${tt0&&window.PXN?'<div id="pgXN">'+PXN.html(user.id,FG)+'</div>':''}<div class="pe-filter pg-tabs">${chip('tt','📅 Timetable')}${chip('hw','📝 Homework'+(up.length?' <i class="pg-cnt">'+up.length+'</i>':''))}${chip('mat','📚 Materials')}${chip('tst','🧪 Tests')}${isStu?chip('mist','🎯 Mistakes'):''}${isStu?chip('fx','🧮 Formulas'):''}</div>${tt0?'<div id="pgNext">'+upNext()+'</div>'+installCard()+'<div id="pgNotif"></div>':''}<div id="pgDoubt">${doubtHTML()}</div>${tab==='hw'?homework():tab==='mat'?materials():tab==='tst'?'<div id="pgTests"></div>':tab==='mist'?'<div id="pgMist"></div>':tab==='fx'?formulas():(isStu?fxTeaser():'')+timetable()}</div>`;
-    $('pgOut').onclick=signOut;if(tab==='tst'&&window.peTests)window.peTests($('pgTests'),user,role);if(tab==='mist'&&window.peMistakes)window.peMistakes($('pgMist'),user,role);if(tab==='fx')typeset();window.__pgPop=t=>{tab=t;window.__pgTab=t;if(t==='fx'){fday=todayStr();fmode='day'}paint()};if(window.paceNav)paceNav.refresh();if(window.PXN&&$('pgXN'))PXN.bind($('pgXN'),user.id);if(window.paceDiwali)setTimeout(()=>paceDiwali(String((P&&P.name)||'').trim().split(/\s+/)[0]),400);if(window.PNS&&$('pgNotif'))PNS.mount($('pgNotif'),{role,url:location.pathname});
+    V.innerHTML=top+`<div class="pg-wrap">${tt0?hero():''}${tt0&&window.PXN?'<div id="pgXN">'+PXN.html(user.id,FG)+'</div>':''}<div class="pe-filter pg-tabs">${chip('tt','📅 Timetable')}${chip('hw','📝 Homework'+(up.length?' <i class="pg-cnt">'+up.length+'</i>':''))}${chip('mat','📚 Materials')}${chip('tst','🧪 Tests')}${isStu?chip('mist','🎯 Mistakes'):''}${isStu?chip('fx','🧮 Formulas'):''}</div>${tt0?'<div id="pgNext">'+upNext()+'</div>'+installCard()+'<div id="pgNotif"></div>'+(isStu?'<div id="pgQB"></div>':''):''}<div id="pgDoubt">${doubtHTML()}</div>${tab==='hw'?homework():tab==='mat'?materials():tab==='tst'?'<div id="pgTests"></div>':tab==='mist'?'<div id="pgMist"></div>':tab==='fx'?formulas():(isStu?fxTeaser():'')+timetable()}</div>`;
+    $('pgOut').onclick=signOut;if(tab==='tst'&&window.peTests)window.peTests($('pgTests'),user,role);if(tab==='mist'&&window.peMistakes)window.peMistakes($('pgMist'),user,role);if(tab==='fx')typeset();window.__pgPop=t=>{tab=t;window.__pgTab=t;if(t==='fx'){fday=todayStr();fmode='day'}paint()};if(window.paceNav)paceNav.refresh();if(isStu&&window.peQuizBanner&&$('pgQB'))peQuizBanner($('pgQB'),user);if(window.PXN&&$('pgXN'))PXN.bind($('pgXN'),user.id);if(window.paceDiwali)setTimeout(()=>paceDiwali(String((P&&P.name)||'').trim().split(/\s+/)[0]),400);if(window.PNS&&$('pgNotif'))PNS.mount($('pgNotif'),{role,url:location.pathname});
   }
   V.onclick=e=>{
     const d=e.target.closest('[data-d]'),w=e.target.closest('[data-w]'),k=e.target.closest('[data-tab]'),s=e.target.closest('[data-sub]'),fx=e.target.closest('[data-fx]');
