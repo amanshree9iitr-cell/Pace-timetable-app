@@ -914,7 +914,7 @@ function render(){
     const btn = document.createElement('button');
     btn.className = item.id===UI.tab ? 'active' : '';
     btn.innerHTML = `<span class="ic">${item.ic}</span> ${item.label}`;
-    btn.onclick = ()=>{ UI.tab=item.id; render(); };
+    btn.onclick = ()=>{ const pv=UI.tab; UI.tab=item.id; if(window.paceNav&&pv!==UI.tab)paceNav.push({uiTab:UI.tab},{uiTab:pv}); render(); };
     nav.appendChild(btn);
   });
 
@@ -925,7 +925,7 @@ function render(){
     const btn = document.createElement('button');
     btn.className = item.id===UI.tab ? 'active' : '';
     btn.textContent = item.label;
-    btn.onclick = ()=>{ UI.tab=item.id; render(); };
+    btn.onclick = ()=>{ const pv=UI.tab; UI.tab=item.id; if(window.paceNav&&pv!==UI.tab)paceNav.push({uiTab:UI.tab},{uiTab:pv}); render(); };
     mt.appendChild(btn);
   });
 
@@ -3558,6 +3558,36 @@ if(window.paceFestival()==='diwali'){
 }
 })();
 </script>
+<!-- ===== PACE in-app Back button (works with iPad swipe-back and phone back key too) ===== -->
+<style id="pace-back-css">
+.pace-back{display:none;align-items:center;gap:4px;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:12px;
+  padding:6px 12px 6px 9px;font:inherit;font-weight:700;font-size:14px;cursor:pointer;min-height:38px;margin-right:10px;flex:0 0 auto}
+.pace-back b{font-size:20px;line-height:1;margin-top:-2px}.pace-back.on{display:inline-flex}.pace-back:active{transform:scale(.96)}
+.topbar .pace-back{margin-right:12px}.topbar:has(.pace-back.on) #pagetitle{margin-right:auto}
+@media(max-width:480px){.pace-back{padding:6px 10px;margin-right:8px}.pace-back .bt{display:none}.pace-back b{font-size:22px}}
+</style>
+<script>
+(function(){
+  let depth=0,popping=false;
+  const upd=()=>document.querySelectorAll('.pace-back').forEach(b=>b.classList.toggle('on',depth>0||!!document.querySelector('.kv-ov')));
+  window.paceNav={
+    push(next,cur){if(popping)return;try{if(!history.state||!history.state.pace)history.replaceState(Object.assign({pace:1},cur||{}),'');history.pushState(Object.assign({pace:1},next),'');depth++}catch(_){}upd()},
+    refresh:upd,
+    back(){const ov=document.querySelector('.kv-ov');if(ov){ov.remove();upd();return}if(depth>0)history.back()}
+  };
+  document.addEventListener('click',e=>{if(e.target.closest('.pace-back'))window.paceNav.back()});
+  addEventListener('popstate',e=>{
+    const ov=document.querySelector('.kv-ov');if(ov)ov.remove();
+    depth=Math.max(0,depth-1);const st=e.state||{};popping=true;
+    try{if(st.pgTab!==undefined&&window.__pgPop)window.__pgPop(st.pgTab);
+        else if(st.uiTab&&typeof UI!=='undefined'&&typeof render==='function'){UI.tab=st.uiTab;render()}}
+    finally{popping=false}upd()});
+  const addTo=(el,first)=>{if(!el||el.querySelector(':scope > .pace-back'))return;const b=document.createElement('button');b.type='button';b.className='pace-back';b.innerHTML='<b>‹</b><span class="bt">Back</span>';b.setAttribute('aria-label','Back');first?el.prepend(b):el.insertBefore(b,el.firstChild)};
+  const mount=()=>{addTo(document.querySelector('.topbar'),true);document.querySelectorAll('header').forEach(h=>{if(/Faculty Timetable/.test(h.textContent))addTo(h,true)});upd()};
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount);else mount();
+  setTimeout(mount,1500);setTimeout(mount,4000);
+})();
+</script>
 <!-- ===== PACE student: My Mistakes + progress & motivation ===== -->
 <style id="pace-mist-css">
 .mx-hero{border-radius:18px;padding:16px 18px;margin:0 0 12px;color:#fff;background:linear-gradient(135deg,#7C3AED,#2F6BEB 60%,#06B6D4);box-shadow:0 10px 24px color-mix(in srgb,#2F6BEB 30%,transparent)}
@@ -4060,7 +4090,7 @@ async function member(user,role){
     paceCloud.from('pace_batch_timetables').select('batch_id,payload'),
     paceCloud.from('pace_member_accounts').select('batch_id,name')]);
   const data=tt.data,error=tt.error,HW=hw.data||[];
-  const P=mergeBatches(bt.data,ac.data,role)||(data&&data.payload),top=`<div class="pg-top"><div class="lg">P</div><div><b>PACE IIT &amp; Medical</b><span>${LABEL[role]}${P&&P.name?' · '+esc(P.name):''}</span></div><button class="btn ghost" id="pgOut" style="margin-left:auto">Sign out</button></div>`;
+  const P=mergeBatches(bt.data,ac.data,role)||(data&&data.payload),top=`<div class="pg-top"><button type="button" class="pace-back" aria-label="Back"><b>‹</b><span class="bt">Back</span></button><div class="lg">P</div><div><b>PACE IIT &amp; Medical</b><span>${LABEL[role]}${P&&P.name?' · '+esc(P.name):''}</span></div><button class="btn ghost" id="pgOut" style="margin-left:auto">Sign out</button></div>`;
   if(!P){V.innerHTML=top+`<div class="pg-wrap"><div class="card"><h2>Almost there</h2><p class="muted">${error?esc(error.message):'Your timetable will appear as soon as the administrator publishes it.'}</p><button class="btn primary" id="pgRef">Refresh</button></div></div>`;$('pgOut').onclick=signOut;$('pgRef').onclick=()=>member(user,role);return}
   const TC=Object.fromEntries((P.teachers||[]).map(t=>[t.id,String(t.code||'').toUpperCase()])),chap=(c,b)=>{const i=window.PCH&&PCH.info(c,P.classes,id=>TC[id],b||c.batchId);return i&&!i.none?i:null};
   const T=Object.fromEntries((P.teachers||[]).map(t=>[t.id,t.name])),B=Object.fromEntries((P.batches||[]).map(b=>[b.id,b.label])),many=(P.batches||[]).length>1;
@@ -4208,7 +4238,7 @@ async function member(user,role){
   function paint(){
     const chip=(k,t)=>`<button class="pe-chip${tab===k?' act':''}" data-tab="${k}">${t}</button>`,tt0=tab==='tt';
     V.innerHTML=top+`<div class="pg-wrap">${tt0?hero():''}${tt0&&window.PXN?'<div id="pgXN">'+PXN.html(user.id,FG)+'</div>':''}<div class="pe-filter pg-tabs">${chip('tt','📅 Timetable')}${chip('hw','📝 Homework'+(up.length?' <i class="pg-cnt">'+up.length+'</i>':''))}${chip('mat','📚 Materials')}${chip('tst','🧪 Tests')}${isStu?chip('mist','🎯 Mistakes'):''}${isStu?chip('fx','🧮 Formulas'):''}</div>${tt0?'<div id="pgNext">'+upNext()+'</div>'+installCard()+'<div id="pgNotif"></div>':''}<div id="pgDoubt">${doubtHTML()}</div>${tab==='hw'?homework():tab==='mat'?materials():tab==='tst'?'<div id="pgTests"></div>':tab==='mist'?'<div id="pgMist"></div>':tab==='fx'?formulas():(isStu?fxTeaser():'')+timetable()}</div>`;
-    $('pgOut').onclick=signOut;if(tab==='tst'&&window.peTests)window.peTests($('pgTests'),user,role);if(tab==='mist'&&window.peMistakes)window.peMistakes($('pgMist'),user,role);if(tab==='fx')typeset();if(window.PXN&&$('pgXN'))PXN.bind($('pgXN'),user.id);if(window.paceDiwali)setTimeout(()=>paceDiwali(String((P&&P.name)||'').trim().split(/\s+/)[0]),400);if(window.PNS&&$('pgNotif'))PNS.mount($('pgNotif'),{role,url:location.pathname});
+    $('pgOut').onclick=signOut;if(tab==='tst'&&window.peTests)window.peTests($('pgTests'),user,role);if(tab==='mist'&&window.peMistakes)window.peMistakes($('pgMist'),user,role);if(tab==='fx')typeset();window.__pgPop=t=>{tab=t;window.__pgTab=t;if(t==='fx'){fday=todayStr();fmode='day'}paint()};if(window.paceNav)paceNav.refresh();if(window.PXN&&$('pgXN'))PXN.bind($('pgXN'),user.id);if(window.paceDiwali)setTimeout(()=>paceDiwali(String((P&&P.name)||'').trim().split(/\s+/)[0]),400);if(window.PNS&&$('pgNotif'))PNS.mount($('pgNotif'),{role,url:location.pathname});
   }
   V.onclick=e=>{
     const d=e.target.closest('[data-d]'),w=e.target.closest('[data-w]'),k=e.target.closest('[data-tab]'),s=e.target.closest('[data-sub]'),fx=e.target.closest('[data-fx]');
@@ -4221,7 +4251,7 @@ async function member(user,role){
     if(qa&&Q&&Q.ans==null){Q.ans=+qa.dataset.qa;const q=Q.qs[Q.i];if(q.opts[Q.ans]===q.a)Q.score++;paint();return}
     if(qn&&Q){Q.i++;Q.ans=null;if(Q.i>=Q.qs.length){const t=todayStr();FX.done[t]=Math.max(FX.done[t]??0,Q.score);fxSave()}paint();return}
     if(sb){const k=+sb.dataset.star,i=FX.stars.indexOf(k);if(i>=0)FX.stars.splice(i,1);else FX.stars.push(k);fxSave();paint();return}
-    if(k){tab=k.dataset.tab;window.__pgTab=tab;if(tab==='fx'){fday=todayStr();fmode='day'}paint()}else if(s){sub=s.dataset.sub;paint()}
+    if(k){const pv=tab;tab=k.dataset.tab;window.__pgTab=tab;if(tab==='fx'){fday=todayStr();fmode='day'}if(window.paceNav&&pv!==tab)paceNav.push({pgTab:tab},{pgTab:pv});paint();window.scrollTo({top:0})}else if(s){sub=s.dataset.sub;paint()}
     else if(d){day=d.dataset.d;paint()}else if(w){day=addD(day,+w.dataset.w);paint()}
   };
   clearInterval(window.__pgT);window.__pgT=setInterval(()=>{const el=$('pgDoubt');if(el&&V.classList.contains('open'))el.innerHTML=doubtHTML();const nx=$('pgNext');if(nx&&V.classList.contains('open'))nx.innerHTML=upNext()},60000);
