@@ -1,6 +1,6 @@
 /* PACE service worker: makes the app installable and shows schedule alerts.
    Pages always load fresh from the network (falls back to a cached copy only when offline). */
-const CACHE='pace-shell-v2';
+const CACHE='pace-shell-v3';
 self.addEventListener('install',e=>self.skipWaiting());
 self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));
 self.addEventListener('fetch',e=>{
@@ -14,7 +14,7 @@ self.addEventListener('push',e=>{
   let d={};try{d=e.data?e.data.json():{}}catch(_){d={body:e.data&&e.data.text()}}
   e.waitUntil(self.registration.showNotification(d.title||'PACE IIT & Medical',{
     body:d.body||'Your schedule has been updated.',icon:'icon-192.png',badge:'icon-192.png',
-    tag:'pace-schedule',renotify:true,data:{url:d.url||'./'}}));
+    tag:d.tag||'pace-schedule',renotify:true,data:{url:d.url||'./'}}));
 });
 self.addEventListener('notificationclick',e=>{
   e.notification.close();
