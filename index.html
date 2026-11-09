@@ -1999,6 +1999,7 @@ async function initPrivateTeacherView(){
       if(window.PNS){let ns=document.getElementById('peNotif');if(!ns){ns=document.createElement('div');ns.id='peNotif';ns.style.marginTop='16px';scheduleCard.before(ns)}PNS.mount(ns,{role:'teacher',url:location.pathname+'?teacher=1'})}
       for(let w=0;w<100&&!window.PLV;w++)await new Promise(r=>setTimeout(r,50));
       if(window.PLV){let ls=document.getElementById('peLeave');if(!ls){ls=document.createElement('section');ls.className='card';ls.id='peLeave';ls.style.marginTop='16px';(document.getElementById('peChap')||scheduleCard).after(ls)}PLV.teacher(ls,payload)}
+      if(window.PM&&!document.getElementById('peAtt'))PM.teacherMount(payload);
       renderTeacherDay();
     }catch(e){status.textContent='Could not load your timetable: '+e.message;}
   }
@@ -3614,7 +3615,7 @@ if(window.paceFestival()==='diwali'){
 .pr-msg{border-radius:12px;padding:8px 12px;margin:8px 0;font-size:13.5px;font-weight:700}
 .pr-msg.a{background:color-mix(in srgb,#16A34A 14%,var(--card));color:#15803D}.pr-msg.b{background:color-mix(in srgb,#2F6BEB 14%,var(--card));color:#1D4ED8}
 .pr-msg.c{background:color-mix(in srgb,#F59E0B 16%,var(--card));color:#B45309}.pr-msg.d{background:color-mix(in srgb,#7C3AED 14%,var(--card));color:#6D28D9}
-#prConf{position:fixed;inset:0;pointer-events:none;z-index:9999}
+#prConf{position:fixed;inset:0;pointer-events:none;z-index:100004}
 </style>
 <script>
 (function(){
@@ -3709,6 +3710,7 @@ window.peProgress=async function(user){
     ${P.length<2?'':`<div class="pr-spark">${P.slice(-12).map(p=>`<i style="height:${Math.max(8,p)}%" title="${p}%"></i>`).join('')}</div>`}
     ${trend?`<div style="margin-top:8px;font-weight:700;font-size:13.5px">${trend}</div>`:''}
     <div class="pr-q">${E(quote())}</div>
+    <button class="btn" data-plan style="margin:10px 8px 0 0;background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.5);font-weight:800">📅 Make my revision plan</button>
     ${mist?`<button class="btn" data-tab="mist" style="margin-top:10px;background:#fff;color:#4338CA;border:0;font-weight:800">🎯 Practise my mistakes (${Math.max(0,mist-L)} left)</button>`:''}</div>`+strength(subs);
 };
 function strength(subs){
@@ -3742,9 +3744,309 @@ window.peQuizBanner=async function(el,user){if(!el)return;try{
 }catch(_){}};
 })();
 </script>
+<!-- ===== PACE more: analysis, reminders, edit marks, review queue, QR attendance, calendar, doubts, practice, toppers, planner, parent report ===== -->
+<style id="pace-more-css">
+.pm-ov{position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:14px}
+.pm-box{background:var(--card);color:var(--text);border-radius:16px;max-width:780px;width:100%;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 20px 50px rgba(0,0,0,.4)}
+.pm-h{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}.pm-h b{font-size:16px}
+.pm-body{overflow:auto;padding:12px 16px 16px}
+.pm-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:12px}.pm-st{border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}.pm-st b{display:block;font-size:22px}.pm-st small{color:var(--text-muted)}
+.pm-row{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:13.5px}.pm-row:last-child{border-bottom:0}
+.pm-bar{height:9px;border-radius:99px;background:color-mix(in srgb,#2F6BEB 14%,var(--card));overflow:hidden;flex:1}.pm-bar i{display:block;height:100%;border-radius:99px;background:#2F6BEB}
+.pm-sec{font-weight:800;font-size:14px;margin:14px 0 6px}
+.pm-in{width:74px!important;min-height:34px!important;text-align:center}
+.pm-tag{display:inline-block;font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 8px;background:color-mix(in srgb,#E8890C 16%,var(--card));color:#B45309}
+.pm-qr{display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px}.pm-qr #pmQR img,.pm-qr #pmQR canvas{width:min(70vw,320px)!important;height:auto!important;background:#fff;padding:10px;border-radius:12px}
+.pm-code{font:800 34px/1 ui-monospace,monospace;letter-spacing:6px}
+.pm-card{border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:10px 0;background:var(--card)}
+.pm-card img{max-width:100%;border-radius:10px;margin-top:8px}
+.pm-grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:620px){.pm-grid2{grid-template-columns:1fr}}
+.pm-tap{display:grid;gap:10px;margin-top:10px}.pm-tq{border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.pm-tq .opts{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}.pm-tq .opts button{min-width:46px;min-height:42px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);font:inherit;font-weight:800;cursor:pointer;color:var(--text)}
+.pm-tq .opts button.on{background:#2F6BEB;border-color:#2F6BEB;color:#fff}.pm-tq input{width:100%;box-sizing:border-box;margin-top:6px}
+.pm-due{display:inline-block;margin-top:6px;font-size:12.5px;font-weight:700;border-radius:999px;padding:3px 10px;background:color-mix(in srgb,#E11D48 12%,var(--card));color:#BE123C}
+.pm-top{margin:6px 0;padding:8px 10px;border-radius:12px;background:color-mix(in srgb,#F59E0B 12%,var(--card));font-size:13px}
+.pm-dpp{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;border-radius:16px;padding:12px 14px;margin:0 0 12px;color:#fff;cursor:pointer;font:inherit;background:linear-gradient(135deg,#059669,#0EA5E9)}
+.pm-dpp span:first-child{font-size:26px}.pm-dpp b{display:block;font-size:15px}.pm-dpp small{opacity:.92}
+.pm-cal-d{font-weight:800;margin:14px 0 4px}.pm-cal-i{display:flex;gap:8px;align-items:center;padding:6px 10px;border-radius:10px;margin:4px 0;background:color-mix(in srgb,#2F6BEB 8%,var(--card));font-size:13.5px}
+.pm-cal-i.clash{background:color-mix(in srgb,#E11D48 14%,var(--card))}
+.pm-toast{position:fixed;left:50%;top:18px;transform:translateX(-50%);z-index:100003;background:#16A34A;color:#fff;padding:12px 18px;border-radius:14px;font-weight:800;box-shadow:0 10px 30px rgba(0,0,0,.3);max-width:90vw;text-align:center}
+.pm-toast.bad{background:#E11D48}
+</style>
+<script>
+(function(){
+const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ok=()=>typeof paceCloud!=='undefined'&&paceCloud;
+const fn=(body)=>paceCloud.functions.invoke('super-task',{body});
+const em=async e=>{try{const j=await e.context.clone().json();if(j&&j.error)return String(j.error)}catch(_){}return (e&&e.message)||String(e)};
+const toast=(m,bad)=>{const t=document.createElement('div');t.className='pm-toast'+(bad?' bad':'');t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),4200)};
+const modal=(title,html)=>{const o=document.createElement('div');o.className='pm-ov kv-ov';o.innerHTML=`<div class="pm-box"><div class="pm-h"><b>${title}</b><button class="btn ghost" data-pmx>✕</button></div><div class="pm-body">${html}</div></div>`;
+  document.body.appendChild(o);o.addEventListener('click',e=>{if(e.target===o||e.target.closest('[data-pmx]'))o.remove()});if(window.paceNav)paceNav.refresh();return o.querySelector('.pm-body')};
+const pct=(a,b)=>b?Math.round(a/b*100):0;
+const loadScript=src=>new Promise((r,j)=>{if(document.querySelector(`script[src="${src}"]`))return r();const s=document.createElement('script');s.src=src;s.onload=r;s.onerror=j;document.head.appendChild(s)});
+const istDay=(off=0)=>new Date(Date.now()+5.5*3600e3+off*864e5).toISOString().slice(0,10);
+const PM=window.PM={toast};
+
+/* ===== 5. test analysis ===== */
+PM.analysis=function(x,L){
+  const D=L.filter(u=>u.status==='done'),S=D.map(u=>+u.score||0),M=+x.max_marks||1;
+  if(!D.length)return modal('📊 '+E(x.title),'<p class="muted">No checked papers yet.</p>');
+  const avg=S.reduce((a,b)=>a+b,0)/S.length,band=Array(10).fill(0);S.forEach(s=>band[Math.min(9,Math.floor(pct(s,M)/10))]++);
+  const qs={};D.forEach(u=>((u.result||{}).questions||[]).forEach(q=>{const o=qs[q.q]=qs[q.q]||{q:q.q,question:q.question||'',n:0,wrong:0,ans:q.correct_answer||''};o.n++;if(q.status!=='correct')o.wrong++;if(!o.question&&q.question)o.question=q.question}));
+  const hard=Object.values(qs).filter(o=>o.n).sort((a,b)=>b.wrong/b.n-a.wrong/a.n).slice(0,5),top=D.slice().sort((a,b)=>b.score-a.score).slice(0,5),mx=Math.max(1,...band);
+  modal('📊 '+E(x.title),`<div class="pm-stats"><div class="pm-st"><b>${D.length}</b><small>checked</small></div><div class="pm-st"><b>${pct(avg,M)}%</b><small>average (${Math.round(avg*10)/10}/${M})</small></div><div class="pm-st"><b>${Math.max(...S)}</b><small>highest</small></div><div class="pm-st"><b>${Math.min(...S)}</b><small>lowest</small></div><div class="pm-st"><b>${pct(S.filter(s=>s>=M*0.4).length,S.length)}%</b><small>scored 40%+</small></div></div>
+    <div class="pm-sec">🏅 Top 5</div>${top.map((u,i)=>`<div class="pm-row"><b style="width:22px">${i+1}.</b><span style="flex:1">${E(u.student_name||'Student')}</span><b>${u.score}/${M}</b></div>`).join('')}
+    <div class="pm-sec">❗ Questions most students got wrong (reteach these)</div>${hard.map(o=>`<div class="pm-row"><b style="width:44px">Q${E(o.q)}</b><span style="flex:1">${E(o.question||'')}${o.ans?`<br><small class="muted">Answer: ${E(String(o.ans).split(/\n|Marking:/)[0])}</small>`:''}</span><b style="color:#E11D48;white-space:nowrap">${pct(o.wrong,o.n)}% wrong</b></div>`).join('')||'<p class="muted">—</p>'}
+    <div class="pm-sec">📈 Score spread</div>${band.map((n,i)=>`<div class="pm-row" style="border:0;padding:3px 0"><span style="width:70px;font-size:12px">${i*10}–${i===9?100:i*10+9}%</span><div class="pm-bar"><i style="width:${n/mx*100}%"></i></div><b style="width:24px;text-align:right">${n}</b></div>`).join('')}`);
+};
+
+/* ===== 6. not submitted + reminders ===== */
+PM.notSubmitted=function(x,L,D,uidByDir){
+  const done=new Set(L.map(u=>u.user_id)),roster=Object.values(D||{}).filter(d=>d.role==='student'&&String(d.batch_id)===String(x.batch_id));
+  const miss=roster.filter(d=>!done.has(uidByDir[d.id])).sort((a,b)=>String(a.name).localeCompare(String(b.name))),can=miss.filter(d=>uidByDir[d.id]);
+  const b=modal('🙋 Not submitted: '+E(x.title),`<p class="muted" style="margin-top:0">${miss.length} of ${roster.length} students have not submitted.${x.due_at?' Deadline: '+E(new Date(x.due_at).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'})):''}</p>
+    ${miss.map(d=>`<div class="pm-row"><span style="flex:1">${E(d.name||d.email||'Student')}</span>${uidByDir[d.id]?'':'<span class="pm-tag">not signed in to the app</span>'}</div>`).join('')||'<p>🎉 Everyone has submitted!</p>'}
+    ${can.length?`<label style="display:flex;gap:8px;align-items:center;margin:12px 0 0;font-size:13px"><input type="checkbox" id="pmPar" style="width:auto"> Also notify their parents</label><button class="btn primary" id="pmRem" style="margin-top:10px">🔔 Send reminder to ${can.length} student${can.length>1?'s':''}</button><p class="muted" id="pmRemM" style="font-size:12.5px"></p>`:''}`);
+  const r=b.querySelector('#pmRem');if(r)r.onclick=async()=>{r.disabled=true;r.textContent='Sending…';
+    const q=await fn({notify:{user_ids:can.map(d=>uidByDir[d.id]),parents:b.querySelector('#pmPar').checked,title:'📝 Reminder: '+x.title,body:'Please submit your answer sheet in the PACE app'+(x.due_at?' before '+new Date(x.due_at).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'}):'')+'.'}});
+    r.textContent=q.error?'Try again':'Sent ✓';r.disabled=!q.error;b.querySelector('#pmRemM').textContent=q.error?await em(q.error):`Delivered to ${q.data.sent} phone(s). Students without alerts turned on will see it when they open the app.`};
+};
+
+/* ===== 4. edit marks ===== */
+PM.editMarks=function(u,x,again){
+  const Q=(u.result||{}).questions||[];
+  const b=modal('✏️ Edit marks: '+E(u.student_name||'Student'),`<p class="muted" style="margin-top:0">${E(x.title)} · now ${u.score}/${u.max_marks}. Change only what is wrong; the checked paper is redrawn.</p>
+    ${(u.result||{}).dup_with?`<p class="pm-tag" style="display:block;margin:0 0 8px">⚠ Same answers as ${u.result.dup_with.map(d=>E(d.name)+' ('+d.pct+'%)').join(', ')}</p>`:''}
+    ${Q.map(q=>`<div class="pm-row"><b style="width:44px">Q${E(q.q)}</b><span style="flex:1;font-size:12.5px">${E(q.your_answer?('Wrote: '+q.your_answer):(q.feedback||''))}</span><input class="pm-in" type="number" step="0.5" data-q="${E(q.q)}" value="${E(q.marks)}"><span class="muted">/ ${E(q.max)}</span></div>`).join('')}
+    <label style="display:flex;gap:8px;align-items:center;margin:12px 0 0;font-size:13px"><input type="checkbox" id="pmN" style="width:auto" checked> Tell the student their marks were updated</label>
+    <button class="btn primary" id="pmSave" style="margin-top:10px">Save marks</button><p class="muted" id="pmSM" style="font-size:12.5px"></p>`);
+  b.querySelector('#pmSave').onclick=async e=>{const m={};b.querySelectorAll('[data-q]').forEach(i=>{const q=Q.find(z=>String(z.q)===i.dataset.q);if(q&&String(q.marks)!==i.value)m[i.dataset.q]=i.value});
+    e.target.disabled=true;e.target.textContent='Saving…';const r=await fn({override:{submission_id:u.id,marks:m,notify:b.querySelector('#pmN').checked}});
+    if(r.error){e.target.disabled=false;e.target.textContent='Save marks';b.querySelector('#pmSM').textContent=await em(r.error);return}
+    b.closest('.pm-ov').remove();toast(`Saved ✓ New total ${r.data.total}`);if(again)again()};
+};
+const openFile=async(path)=>{const w=window.open('','_blank');const r=await paceCloud.storage.from('answer-sheets').createSignedUrl(path,600);if(r.error){if(w)w.close();return toast(r.error.message,1)}if(w)w.location=r.data.signedUrl;else location.href=r.data.signedUrl};
+
+/* ===== 4. review queue (admin) ===== */
+PM.review=async function(el){
+  el.innerHTML='<div class="card"><p class="muted">Loading…</p></div>';
+  const [t,s]=await Promise.all([paceCloud.from('pace_tests').select('*'),paceCloud.from('pace_test_submissions').select('id,test_id,user_id,student_name,status,score,max_marks,result,file_path,annotated_path').eq('status','done')]);
+  const T=Object.fromEntries((t.data||[]).map(x=>[x.id,x])),L=(s.data||[]).filter(u=>T[u.test_id]&&u.result&&(u.result.needs_review||u.result.dup_with));
+  el.innerHTML=`<div class="card"><h2 style="margin:0 0 4px">🧐 Review queue</h2><p class="muted" style="margin:0 0 10px;font-size:13px">Papers the AI was unsure about, papers with unreadable answers, and possible copying. Check, fix marks if needed, then mark as reviewed.</p>
+    ${L.map(u=>{const x=T[u.test_id],r=u.result;return`<div class="pm-card"><b>${E(u.student_name||'Student')}</b> · ${E(x.title)} · <b>${u.score}/${u.max_marks}</b>
+      <div style="margin:6px 0;display:flex;gap:6px;flex-wrap:wrap">${r.dup_with?`<span class="pm-tag" style="background:color-mix(in srgb,#E11D48 14%,var(--card));color:#BE123C">Same answers as ${r.dup_with.map(d=>E(d.name)+' '+d.pct+'%').join(', ')}</span>`:''}${(r.unreadable||[]).length?`<span class="pm-tag">Could not read Q${r.unreadable.map(E).join(', Q')}</span>`:''}${r.review_note?`<span class="pm-tag">${E(r.review_note).slice(0,90)}</span>`:''}${r.confidence==='low'?'<span class="pm-tag">AI not sure</span>':''}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">${u.file_path&&u.file_path!=='typed'?`<button class="btn ghost" data-f="${E(u.file_path)}">Sheet ↗</button>`:''}${u.annotated_path?`<button class="btn ghost" data-f="${E(u.annotated_path)}">Checked paper ↗</button>`:''}<button class="btn ghost" data-ed="${u.id}">✏️ Edit marks</button><button class="btn primary" data-ok="${u.id}">✓ Marks are fine</button></div></div>`}).join('')||'<p>🎉 Nothing to review.</p>'}</div>`;
+  el.onclick=async e=>{const b=e.target.closest('button');if(!b)return;
+    if(b.dataset.f)return openFile(b.dataset.f);
+    const u=L.find(z=>z.id===(b.dataset.ed||b.dataset.ok));if(!u)return;
+    if(b.dataset.ed)return PM.editMarks(u,T[u.test_id],()=>PM.review(el));
+    b.disabled=true;const r=await fn({override:{submission_id:u.id,marks:{},notify:false}});if(r.error){b.disabled=false;return toast(await em(r.error),1)}PM.review(el)};
+};
+
+/* ===== 7. QR attendance ===== */
+PM.attendance=async function(el,ctx){
+  const B=ctx.batches||[],bn=id=>{const b=B.find(x=>String(x.id)===String(id));return b?(b.label||b.name)+(b.center?' ('+b.center+')':''):'Batch'};
+  const today=istDay(),cls=(ctx.classes||[]).filter(c=>c&&c.date===today&&!c.isDoubt).sort((a,b)=>String(a.start).localeCompare(String(b.start)));
+  const past=await paceCloud.from('pace_att_sessions').select('id,batch_id,class_label,class_date,created_at').order('created_at',{ascending:false}).limit(25);
+  const ids=(past.data||[]).map(p=>p.id),cnt={};
+  if(ids.length){const a=await paceCloud.from('pace_attendance').select('session_id').in('session_id',ids);(a.data||[]).forEach(r=>cnt[r.session_id]=(cnt[r.session_id]||0)+1)}
+  el.innerHTML=`<div class="card"><h2 style="margin:0 0 4px">📷 QR attendance</h2><p class="muted" style="margin:0 0 10px;font-size:13px">Show the QR code in class. Students open the PACE app and tap <b>📷 Scan attendance</b> (or scan it with their phone camera). It works for 15 minutes.</p>
+    ${past.error?`<p style="color:var(--coral)">${E(/pace_att/.test(past.error.message)?'Run more.sql in Supabase first. ':'')+E(past.error.message)}</p>`:''}
+    <div class="pm-grid2"><div class="field"><label>Class</label><select id="pmCls">${cls.map((c,i)=>`<option value="${i}">${E(String(c.start||'').slice(0,5))} · ${E(c.subject||'Class')} · ${E(bn(c.batchId))}</option>`).join('')}<option value="x">Other (choose batch)</option></select></div>
+    <div class="field"><label>Batch</label><select id="pmBat">${B.map(b=>`<option value="${E(b.id)}">${E(bn(b.id))}</option>`).join('')}</select></div></div>
+    <button class="btn primary" id="pmGo" style="margin-top:10px">Show QR code</button></div>
+    <div class="card" style="margin-top:12px"><h3 style="margin:0 0 6px">Recent sessions</h3>${(past.data||[]).map(p=>`<div class="pm-row"><span style="flex:1">${E(p.class_date)} · ${E(p.class_label||'Class')} · ${E(bn(p.batch_id))}</span><b>${cnt[p.id]||0} present</b><button class="btn ghost" data-ps="${p.id}">Names</button></div>`).join('')||'<p class="muted">No sessions yet.</p>'}</div>`;
+  const sc=el.querySelector('#pmCls'),sb=el.querySelector('#pmBat');const sync=()=>{const c=cls[+sc.value];if(c&&c.batchId)sb.value=c.batchId;sb.disabled=!!c};if(sc){sc.onchange=sync;sync()}
+  el.onclick=async e=>{const b=e.target.closest('button');if(!b)return;
+    if(b.dataset.ps){const a=await paceCloud.from('pace_attendance').select('name,marked_at').eq('session_id',b.dataset.ps).order('name');
+      return modal('Present',(a.data||[]).map(r=>`<div class="pm-row"><span style="flex:1">${E(r.name||'Student')}</span><small class="muted">${new Date(r.marked_at).toLocaleTimeString('en-IN',{timeStyle:'short'})}</small></div>`).join('')||'<p class="muted">Nobody yet.</p>')}
+    if(b.id!=='pmGo')return;
+    const c=cls[+sc.value],batch=c&&c.batchId?c.batchId:sb.value,label=c?`${String(c.start||'').slice(0,5)} ${c.subject||'Class'}`:'Class';
+    const code=String(Math.floor(100000+Math.random()*900000));
+    const r=await paceCloud.from('pace_att_sessions').insert({batch_id:String(batch),class_label:label,code}).select('id,expires_at').single();
+    if(r.error)return toast(r.error.message,1);
+    const url=`${location.origin}${location.pathname.replace(/[^/]*$/,'')}?att=${r.data.id}.${code}`;
+    const m=modal('📷 '+E(label)+' · '+E(bn(batch)),`<div class="pm-qr"><div id="pmQR"></div><div class="muted">or type this code in the app</div><div class="pm-code">${code}</div><div id="pmLeft" class="muted"></div><b id="pmCount" style="font-size:18px">0 present</b><div id="pmNames" style="width:100%"></div></div>`);
+    try{await loadScript('https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js');new QRCode(m.querySelector('#pmQR'),{text:url,width:320,height:320,correctLevel:QRCode.CorrectLevel.M})}catch(_){m.querySelector('#pmQR').textContent=url}
+    const end=Date.parse(r.data.expires_at);
+    const tick=async()=>{if(!m.isConnected)return;const left=Math.max(0,end-Date.now());m.querySelector('#pmLeft').textContent=left?`Valid for ${Math.ceil(left/60000)} more min`:'Expired';
+      const a=await paceCloud.from('pace_attendance').select('name').eq('session_id',r.data.id).order('marked_at',{ascending:false});
+      m.querySelector('#pmCount').textContent=`${(a.data||[]).length} present`;m.querySelector('#pmNames').innerHTML=(a.data||[]).map(x=>`<div class="pm-row">✅ ${E(x.name||'Student')}</div>`).join('');
+      if(left>0)setTimeout(tick,4000)};tick();
+  };
+};
+/* student: mark attendance from a QR link or the in-app scanner */
+PM.markAtt=async function(sid,code){
+  if(!ok())return;const r=await paceCloud.rpc('mark_attendance',{p_session:sid,p_code:code});
+  if(r.error)return toast('❌ '+r.error.message,1);toast('✅ Attendance marked: '+(r.data||'Class'));try{if(window.peConfetti)peConfetti(null,60)}catch(_){}
+};
+PM.scan=async function(){
+  const b=modal('📷 Scan attendance QR',`<video id="pmV" playsinline muted style="width:100%;border-radius:12px;background:#000"></video><p class="muted" style="text-align:center">Point the camera at the QR code on the board…</p>
+    <div style="display:flex;gap:8px"><input id="pmCodeIn" inputmode="numeric" placeholder="or type the 6-digit code" style="flex:1"><button class="btn primary" id="pmCodeGo">OK</button></div><p class="muted" id="pmScM" style="font-size:12.5px"></p>`);
+  const ov=b.closest('.pm-ov'),v=b.querySelector('#pmV');let stream=null,stop=false;
+  const close=()=>{stop=true;if(stream)stream.getTracks().forEach(t=>t.stop());ov.remove()};
+  ov.addEventListener('click',e=>{if(e.target===ov||e.target.closest('[data-pmx]'))close()});
+  const done=async(sid,code)=>{close();await PM.markAtt(sid,code)};
+  b.querySelector('#pmCodeGo').onclick=async()=>{const c=b.querySelector('#pmCodeIn').value.trim();if(!/^\d{6}$/.test(c))return b.querySelector('#pmScM').textContent='Enter the 6-digit code shown with the QR.';
+    const r=await paceCloud.rpc('mark_attendance_code',{p_code:c});if(r.error)return b.querySelector('#pmScM').textContent=r.error.message;close();toast('✅ Attendance marked: '+(r.data||'Class'))};
+  try{await loadScript('https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js');stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});v.srcObject=stream;await v.play()}
+  catch(e){b.querySelector('#pmScM').textContent='Camera not available — type the code instead.';return}
+  const c=document.createElement('canvas'),x=c.getContext('2d',{willReadFrequently:true});
+  const loop=()=>{if(stop)return;if(v.videoWidth){c.width=v.videoWidth;c.height=v.videoHeight;x.drawImage(v,0,0);const d=x.getImageData(0,0,c.width,c.height),q=window.jsQR&&jsQR(d.data,c.width,c.height);
+    if(q&&q.data){const m=q.data.match(/[?&]att=([0-9a-f-]{36})\.(\d{6})/i);if(m)return done(m[1],m[2])}}requestAnimationFrame(loop)};loop();
+};
+/* link opened from the QR (phone camera): remember it until signed in */
+(function(){const m=location.search.match(/[?&]att=([0-9a-f-]{36})\.(\d{6})/i);if(m){try{sessionStorage.setItem('pace-att',m[1]+'.'+m[2])}catch(_){}history.replaceState(history.state,'',location.pathname)}
+  let n=0;const t=async()=>{let v=null;try{v=sessionStorage.getItem('pace-att')}catch(_){}if(!v||++n>60)return;
+    let u=null;try{const r=await paceCloud.auth.getSession();u=r.data.session&&r.data.session.user}catch(_){}if(!u)return setTimeout(t,2000);
+    try{sessionStorage.removeItem('pace-att')}catch(_){}const [s,c]=v.split('.');PM.markAtt(s,c)};setTimeout(t,1500)})();
+
+/* ===== 8. test calendar ===== */
+PM.calendar=async function(el,ctx){
+  const B=ctx.batches||[],bn=id=>{const b=B.find(x=>String(x.id)===String(id));return b?(b.label||b.name)+(b.center?' ('+b.center+')':''):'Batch'};
+  const t=await paceCloud.from('pace_tests').select('*').order('created_at',{ascending:false}),from=istDay(-1),to=istDay(60),ev=[];
+  (t.data||[]).forEach(x=>{const d=x.due_at?new Date(Date.parse(x.due_at)+5.5*3600e3).toISOString().slice(0,10):null;if(d&&d>=from&&d<=to)ev.push({d,b:x.batch_id,t:'📝 '+x.title+' (submit by '+new Date(x.due_at).toLocaleTimeString('en-IN',{timeStyle:'short'})+')'})});
+  (ctx.classes||[]).forEach(c=>{if(c&&(c.isTest||c.testKind)&&c.date>=from&&c.date<=to)[c.batchId,c.secondBatchId].filter(Boolean).forEach(b=>ev.push({d:c.date,b,t:'🧪 '+(c.testKind==='major'?'Major Test':c.testKind==='topic'?'Topic-wise Test'+(c.twtName?' – '+c.twtName:''):(c.subject||'Test'))+' · '+String(c.start||'').slice(0,5)}))});
+  const by={};ev.forEach(e=>(by[e.d]=by[e.d]||[]).push(e));
+  const days=Object.keys(by).sort();
+  el.innerHTML=`<div class="card"><h2 style="margin:0 0 4px">🗓️ Test calendar</h2><p class="muted" style="margin:0 0 6px;font-size:13px">All tests for the next 60 days: timetable tests and AI-checked tests with a deadline. <span style="color:#BE123C;font-weight:700">Red</span> = a batch has two tests on the same day.</p>
+    ${days.map(d=>{const L=by[d],n={};L.forEach(e=>n[e.b]=(n[e.b]||0)+1);return`<div class="pm-cal-d">${new Date(d+'T00:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})}</div>${L.map(e=>`<div class="pm-cal-i${n[e.b]>1?' clash':''}"><b style="min-width:120px">${E(bn(e.b))}</b><span>${E(e.t)}</span>${n[e.b]>1?'<span class="pm-tag" style="margin-left:auto">2 tests</span>':''}</div>`).join('')}`}).join('')||'<p class="muted">No tests in the next 60 days.</p>'}</div>`;
+};
+
+/* ===== 10. doubt box ===== */
+const shrink=f=>new Promise((res,rej)=>{const i=new Image(),u=URL.createObjectURL(f);i.onload=()=>{const s=Math.min(1,900/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=Math.round(i.width*s);c.height=Math.round(i.height*s);c.getContext('2d').drawImage(i,0,0,c.width,c.height);URL.revokeObjectURL(u);res(c.toDataURL('image/jpeg',0.72))};i.onerror=rej;i.src=u});
+PM.studentDoubts=async function(el,user){
+  el.innerHTML='<p class="muted">Loading…</p>';
+  const [a,d]=await Promise.all([paceCloud.from('pace_member_accounts').select('batch_id,name').eq('user_id',user.id).limit(1),paceCloud.from('pace_doubts').select('*').eq('user_id',user.id).order('created_at',{ascending:false}).limit(50)]);
+  const me=(a.data||[])[0]||{};let photo=null;
+  el.innerHTML=`<div class="mx-hero" style="background:linear-gradient(135deg,#0EA5E9,#6366F1)"><h3>❓ Ask a doubt</h3><p>Stuck on a question? Ask your teachers here. A clear photo helps!</p></div>
+    ${d.error?`<p style="color:var(--coral)">${E(d.error.message)}</p>`:''}
+    <div class="card"><div class="pm-grid2"><div class="field"><label>Subject</label><select id="dbS"><option>Physics</option><option>Chemistry</option><option>Mathematics</option><option>Biology</option><option>Other</option></select></div>
+    <div class="field"><label>Photo (optional)</label><label class="btn ghost" style="justify-content:center">📷 Add photo<input type="file" accept="image/*" id="dbP" hidden></label></div></div>
+    <div class="field" style="margin-top:8px"><label>Your doubt</label><textarea id="dbQ" rows="3" maxlength="2000" placeholder="Write the question and where you are stuck…"></textarea></div><div id="dbPv"></div>
+    <button class="btn primary" id="dbGo" style="margin-top:8px">Send doubt</button><p class="muted" id="dbM" style="font-size:12.5px"></p></div>
+    ${(d.data||[]).map(x=>`<div class="pm-card"><div style="display:flex;gap:8px;align-items:center"><b>${E(x.subject||'')}</b><span class="pm-tag" style="${x.status==='solved'?'background:color-mix(in srgb,#16A34A 14%,var(--card));color:#15803D':''}">${x.status==='solved'?'✓ Answered':'⏳ Waiting'}</span><small class="muted" style="margin-left:auto">${new Date(x.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</small></div>
+      <div style="margin-top:6px;white-space:pre-wrap">${E(x.question||'')}</div>${x.photo?`<img src="${E(x.photo)}" alt="">`:''}
+      ${x.reply?`<div style="margin-top:8px;padding:10px;border-radius:10px;background:color-mix(in srgb,#16A34A 12%,var(--card));white-space:pre-wrap"><b>💬 ${E(x.replied_by||'Teacher')}:</b> ${E(x.reply)}</div>`:''}</div>`).join('')}`;
+  el.querySelector('#dbP').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{photo=await shrink(f);el.querySelector('#dbPv').innerHTML=`<img src="${photo}" style="max-width:160px;border-radius:10px;margin-top:8px">`}catch(_){toast('Could not read that photo',1)}};
+  el.querySelector('#dbGo').onclick=async e=>{const q=el.querySelector('#dbQ').value.trim();if(!q&&!photo)return el.querySelector('#dbM').textContent='Write your doubt or add a photo.';
+    e.target.disabled=true;const r=await paceCloud.from('pace_doubts').insert({user_id:user.id,name:me.name||null,batch_id:me.batch_id?String(me.batch_id):null,subject:el.querySelector('#dbS').value,question:q,photo});
+    if(r.error){e.target.disabled=false;return el.querySelector('#dbM').textContent=r.error.message}toast('Doubt sent ✓ Your teacher will reply here.');PM.studentDoubts(el,user)};
+};
+PM.staffDoubts=async function(el,ctx){
+  el.innerHTML='<p class="muted">Loading doubts…</p>';
+  const B=ctx.batches||[],bn=id=>{const b=B.find(x=>String(x.id)===String(id));return b?(b.label||b.name):''};
+  const d=await paceCloud.from('pace_doubts').select('*').order('created_at',{ascending:false}).limit(80);
+  let f=ctx.subject||'';
+  const draw=()=>{const L=(d.data||[]).filter(x=>!f||x.subject===f).sort((a,b)=>(a.status==='open'?0:1)-(b.status==='open'?0:1));const subs=[...new Set((d.data||[]).map(x=>x.subject).filter(Boolean))];
+    el.innerHTML=`<div class="card"><h2 style="margin:0 0 4px">❓ Student doubts</h2><p class="muted" style="margin:0 0 8px;font-size:13px">${(d.data||[]).filter(x=>x.status==='open').length} waiting for a reply.</p>
+      ${d.error?`<p style="color:var(--coral)">${E(/pace_doubts/.test(d.error.message)?'Run more.sql in Supabase first. ':'')+E(d.error.message)}</p>`:''}
+      <div style="display:flex;gap:6px;flex-wrap:wrap"><button class="pe-chip${f?'':' act'}" data-sf="">All</button>${subs.map(s=>`<button class="pe-chip${f===s?' act':''}" data-sf="${E(s)}">${E(s)}</button>`).join('')}</div>
+      ${L.map(x=>`<div class="pm-card" data-id="${x.id}"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b>${E(x.name||'Student')}</b><span class="muted">${E(bn(x.batch_id))} · ${E(x.subject||'')}</span><span class="pm-tag" style="${x.status==='solved'?'background:color-mix(in srgb,#16A34A 14%,var(--card));color:#15803D':''}">${x.status==='solved'?'✓ Answered':'⏳ Waiting'}</span><small class="muted" style="margin-left:auto">${new Date(x.created_at).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'})}</small></div>
+        <div style="margin-top:6px;white-space:pre-wrap">${E(x.question||'')}</div>${x.photo?`<img src="${E(x.photo)}" alt="">`:''}
+        ${x.reply?`<div style="margin-top:8px;padding:10px;border-radius:10px;background:color-mix(in srgb,#16A34A 12%,var(--card));white-space:pre-wrap"><b>${E(x.replied_by||'Teacher')}:</b> ${E(x.reply)}</div>`:''}
+        <textarea rows="2" placeholder="${x.reply?'Edit reply…':'Write the answer…'}" style="width:100%;box-sizing:border-box;margin-top:8px">${E(x.reply||'')}</textarea><button class="btn primary" data-rp="${x.id}" style="margin-top:6px">Send reply</button></div>`).join('')||'<p class="muted">No doubts yet.</p>'}</div>`};
+  draw();
+  el.onclick=async e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.sf!==undefined){f=b.dataset.sf;return draw()}
+    if(!b.dataset.rp)return;const c=b.closest('.pm-card'),txt=c.querySelector('textarea').value.trim();if(!txt)return;
+    b.disabled=true;const who=ctx.name||'Teacher',r=await paceCloud.from('pace_doubts').update({reply:txt,status:'solved',replied_by:who,replied_at:new Date().toISOString()}).eq('id',b.dataset.rp);
+    if(r.error){b.disabled=false;return toast(r.error.message,1)}const x=(d.data||[]).find(z=>z.id===b.dataset.rp);
+    if(x){x.reply=txt;x.status='solved';x.replied_by=who;fn({notify:{user_ids:[x.user_id],title:'💬 Your doubt was answered',body:txt.slice(0,140)}}).catch(()=>{})}toast('Reply sent ✓');draw()};
+};
+
+/* ===== 9. daily practice ===== */
+PM.dppCard=function(el,user){if(!el)return;
+  const K='pace-dpp:'+user.id;let st={};try{st=JSON.parse(localStorage.getItem(K)||'{}')}catch(_){}
+  const today=istDay(),yest=istDay(-1),streak=st.last===today||st.last===yest?(st.streak||0):0,doneToday=st.last===today;
+  el.innerHTML=`<button class="pm-dpp" data-dpp><span>⚡</span><div style="flex:1"><b>${doneToday?'Daily practice done ✓':'Daily practice: 5 questions'}</b><small>${streak?`🔥 ${streak}-day streak${doneToday?' — come back tomorrow!':' — keep it alive!'}`:'From your batch\'s past tests · 2 minutes'}</small></div><span style="font-size:18px">›</span></button>`;
+  el.querySelector('[data-dpp]').onclick=async()=>{const b=modal('⚡ Daily practice','<p class="muted">Loading today\'s questions…</p>');
+    const r=await fn({dpp:true,dpp_day:today});const L=(r.data&&r.data.items)||[];
+    if(r.error||!L.length){b.innerHTML=`<p>${r.error?E(await em(r.error)):'No practice questions yet — they come from your finished tests. Check back after your next test! 💪'}</p>`;return}
+    let i=0,got=0,open=false;const draw=()=>{const q=L[i];
+      if(!q){const s2=(st.last===today?st:{last:today,streak:(st.last===yest?(st.streak||0):0)+1});try{localStorage.setItem(K,JSON.stringify(s2))}catch(_){}
+        b.innerHTML=`<div style="text-align:center;padding:10px"><div style="font-size:50px">${got>=4?'🏆':'💪'}</div><h3>${got}/${L.length} correct</h3><p>🔥 ${s2.streak}-day streak! See you tomorrow.</p></div>`;if(got>=4&&window.peConfetti)peConfetti(null,100);PM.dppCard(el,user);return}
+      b.innerHTML=`<p class="muted" style="margin-top:0">Question ${i+1} of ${L.length} · ${E(q.subject||'')} · ${E(q.test)}</p><div style="font-size:16px;font-weight:700">${E(q.question)}</div>
+        ${open?`<div class="mx-ans" style="display:block"><b>✓ Answer:</b> ${E(String(q.answer).split(/\n|Marking:/)[0])}</div><div class="mx-b"><button class="btn primary" data-y>✓ I got it</button><button class="btn ghost" data-n>✗ Missed it</button></div>`:`<div class="mx-b"><button class="btn primary" data-r>👀 Reveal answer</button></div>`}`;
+      b.onclick=e=>{if(e.target.closest('[data-r]')){open=true;draw()}else if(e.target.closest('[data-y]')){got++;i++;open=false;draw()}else if(e.target.closest('[data-n]')){i++;open=false;draw()}}};draw()};
+};
+
+/* ===== 11. batch toppers ===== */
+PM.toppers=async function(box){
+  for(const el of box.querySelectorAll('[data-top]')){const r=await paceCloud.rpc('test_toppers',{p_test:el.dataset.top});const L=r.data||[];
+    if(L.length>=3)el.innerHTML=`<div class="pm-top">🏅 <b>Batch toppers:</b> ${L.map((x,i)=>`${['🥇','🥈','🥉'][i]} ${E(x.name)} ${x.score}/${x.max_marks}`).join(' · ')}</div>`}
+};
+
+/* ===== 12. revision planner ===== */
+PM.planner=async function(user){
+  const td=istDay(),nx=((window.PXN&&PXN.list)||[]).filter(x=>x.exam_date&&x.exam_date>td).sort((a,b)=>a.exam_date.localeCompare(b.exam_date))[0];
+  const b=modal('📅 My revision plan',`<div class="pm-grid2"><div class="field"><label>Exam / test date</label><input type="date" id="rpD" value="${E(nx?nx.exam_date:istDay(14))}" min="${istDay(1)}"></div><div class="field"><label>Hours per day</label><select id="rpH"><option>1</option><option selected>2</option><option>3</option><option>4</option></select></div></div><button class="btn primary" id="rpGo" style="margin-top:8px">Make my plan</button><div id="rpOut"></div>`);
+  b.querySelector('#rpGo').onclick=async()=>{const out=b.querySelector('#rpOut');out.innerHTML='<p class="muted">Making your plan…</p>';
+    const [t,s]=await Promise.all([paceCloud.from('pace_tests').select('id,title,subject'),paceCloud.from('pace_test_submissions').select('test_id,score,max_marks').eq('user_id',user.id).eq('status','done')]);
+    const T=Object.fromEntries((t.data||[]).map(x=>[x.id,x])),G=new Map();
+    (s.data||[]).forEach(x=>{const tt=T[x.test_id];if(!tt||!x.max_marks)return;const n=String(tt.title).replace(/\(.*?\)/g,' ').replace(/\bpages?\b.*$/i,' ').replace(/\s+/g,' ').trim();const k=(tt.subject||'')+'|'+n.toLowerCase(),o=G.get(k)||{n,s:tt.subject||'',p:[]};o.p.push(x.score/x.max_marks*100);G.set(k,o)});
+    const ch=[...G.values()].map(o=>({...o,v:Math.round(o.p.reduce((a,c)=>a+c,0)/o.p.length)})).sort((a,c)=>a.v-c.v);
+    const days=Math.max(1,Math.round((Date.parse(b.querySelector('#rpD').value+'T00:00:00Z')-Date.parse(td+'T00:00:00Z'))/864e5)),h=+b.querySelector('#rpH').value;
+    if(!ch.length){out.innerHTML='<p>Give a few tests first — the plan is built from your chapter strengths. Meanwhile: revise class notes daily and do the Daily practice ⚡</p>';return}
+    const order=[];ch.forEach(c=>{order.push(c);if(c.v<50)order.push(c);if(c.v<75)order.push(c)});
+    const rows=[];for(let i=0;i<days;i++){const d=istDay(i),last=i===days-1,c=order[i%order.length];
+      rows.push(`<div class="pm-row"><b style="width:86px;font-size:12.5px">${new Date(d+'T00:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})}</b><span style="flex:1">${last?'🧘 Light revision of formulas + early sleep. You are ready!':`${c.v<50?'🔴':c.v<75?'🟡':'🟢'} <b>${E(c.n)}</b>${c.s?' ('+E(c.s)+')':''} — ${h>=2?'revise notes '+Math.ceil(h/2)+'h, then solve questions':'revise notes + 10 questions'}${i%3===2?' · 🧠 Mistakes quiz':''}`}</span></div>`)}
+    out.innerHTML=`<p class="muted" style="margin:10px 0 4px">${days} days · weakest chapters get more days. Tick off each day as you go!</p>${rows.join('')}`};
+};
+
+/* ===== 13. parent weekly report ===== */
+PM.parentReport=async function(el){if(!el)return;
+  const r=await paceCloud.rpc('child_tests',{p_days:7});if(r.error||!(r.data||[]).length){if(r.error)console.warn(r.error.message);return}
+  const L=r.data,c=L[0].child,av=Math.round(L.reduce((a,x)=>a+(x.max_marks?x.score/x.max_marks*100:0),0)/L.length);
+  el.innerHTML=`<div class="card" style="margin:0 0 12px;border-left:4px solid #6366F1"><h3 style="margin:0 0 4px">📋 This week: ${E(c)}</h3><p class="muted" style="margin:0 0 8px;font-size:13px">${L.length} test${L.length>1?'s':''} checked · average ${av}% ${av>=75?'🌟':av>=50?'👍':'— extra practice will help 💪'}</p>
+    ${L.map(x=>`<div class="pm-row"><span style="flex:1">${E(x.title)} <small class="muted">${E(x.subject||'')}</small></span><b>${x.score}/${x.max_marks}</b><span class="muted" style="width:44px;text-align:right">${x.max_marks?Math.round(x.score/x.max_marks*100):0}%</span></div>`).join('')}</div>`;
+};
+
+/* ===== 1. tap-answer test (student) ===== */
+PM.tapForm=async function(host,x,user,after){
+  host.innerHTML='<p class="muted">Loading questions…</p>';
+  const r=await fn({tap_form:x.id});if(r.error){host.innerHTML=`<p style="color:var(--coral)">${E(await em(r.error))}</p>`;return}
+  const K='pace-tap:'+user.id+':'+x.id;let A={};try{A=JSON.parse(localStorage.getItem(K)||'{}')}catch(_){}
+  const L=r.data.items;const save=()=>{try{localStorage.setItem(K,JSON.stringify(A))}catch(_){}};
+  const draw=()=>{const n=L.filter(q=>String(A[q.q]||'').trim()).length;
+    host.innerHTML=`<div class="pm-tap">${L.map(q=>`<div class="pm-tq"><b>Q${E(q.q)}</b> <small class="muted">· ${E(q.max)} mark${q.max>1?'s':''}${q.type==='multi'?' · one or more':''}</small>${q.question?`<div style="font-size:13px;margin-top:2px">${E(q.question)}</div>`:''}
+      ${q.type==='mcq'||q.type==='multi'?`<div class="opts">${['A','B','C','D'].map(o=>`<button type="button" data-o="${E(q.q)}|${o}" class="${String(A[q.q]||'').split(',').includes(o)?'on':''}">${o}</button>`).join('')}</div>`
+        :`<input data-t="${E(q.q)}" ${q.type==='numeric'?'inputmode="decimal"':''} placeholder="${q.type==='numeric'?'Your answer (number)':'Your answer'}" value="${E(A[q.q]||'')}">`}</div>`).join('')}
+      <button class="btn primary" data-sub>Submit answers (${n}/${L.length} answered)</button><p class="muted" data-tm style="font-size:12.5px;margin:0">Answers are saved on this phone until you submit. You can submit only once.</p></div>`};
+  draw();
+  host.onclick=async e=>{const o=e.target.closest('[data-o]');if(o){const [q,v]=o.dataset.o.split('|'),it=L.find(z=>z.q===q);let cur=String(A[q]||'').split(',').filter(Boolean);
+      if(it.type==='multi'){cur=cur.includes(v)?cur.filter(z=>z!==v):cur.concat(v).sort()}else cur=cur[0]===v?[]:[v];A[q]=cur.join(',');save();return draw()}
+    if(e.target.closest('[data-sub]')){const n=L.filter(q=>String(A[q.q]||'').trim()).length;if(!confirm(`Submit ${n} of ${L.length} answers? You cannot change them after this.`))return;
+      const b=e.target.closest('[data-sub]');b.disabled=true;b.textContent='Checking…';const s=await fn({tap_submit:{test_id:x.id,answers:A}});
+      if(s.error){b.disabled=false;b.textContent='Submit answers';host.querySelector('[data-tm]').textContent=await em(s.error);return}
+      try{localStorage.removeItem(K)}catch(_){}toast(`✅ Submitted! You scored ${s.data.score}/${s.data.max}`);if(after)after()}};
+  host.oninput=e=>{const t=e.target.closest('[data-t]');if(t){A[t.dataset.t]=t.value;save();const b=host.querySelector('[data-sub]');if(b)b.textContent=`Submit answers (${L.filter(q=>String(A[q.q]||'').trim()).length}/${L.length} answered)`}};
+};
+
+/* ===== admin menu pages ===== */
+if(typeof NAV_ITEMS!=='undefined'&&typeof render==='function'&&!/[?&](teacher|student)=1/.test(location.search)){
+  const add=(id,label,ic)=>{if(!NAV_ITEMS.some(x=>x.id===id))NAV_ITEMS.splice(Math.max(0,NAV_ITEMS.findIndex(x=>x.id==='leave')),0,{id,label,ic})};
+  add('review','Review Queue','🧐');add('attend','Attendance','📷');add('tcal','Test Calendar','🗓️');add('doubts','Doubts','❓');
+  const prevR=render;
+  render=function(){prevR.apply(this,arguments);
+    const pages={review:PM.review,attend:PM.attendance,tcal:PM.calendar,doubts:PM.staffDoubts};const f=pages[UI.tab];if(!f)return;
+    const v=document.getElementById('view');if(!v)return;
+    if(UI.accessRole!=='admin'){v.innerHTML='<div class="card"><p class="muted">Admin only.</p></div>';return}
+    if(!ok()){v.innerHTML='<div class="card"><p class="muted">Connect to the internet first.</p></div>';return}
+    if(v.dataset.pm===UI.tab&&v.querySelector('#pmPage'))return;v.dataset.pm=UI.tab;v.innerHTML='<div id="pmPage"></div>';
+    f(v.querySelector('#pmPage'),{batches:STATE.batches,classes:STATE.classes,name:'Admin'}).catch(e=>{v.querySelector('#pmPage').innerHTML=`<div class="card"><p style="color:var(--coral)">${E(e.message||e)}</p></div>`})};
+}
+/* teacher page: attendance + doubts panels */
+PM.teacherMount=function(payload){
+  const anchor=document.getElementById('peLeave')||document.getElementById('peChap');if(!anchor||!ok())return;
+  const mk=(id)=>{let s=document.getElementById(id);if(!s){s=document.createElement('section');s.id=id;s.style.marginTop='16px';anchor.after(s)}return s};
+  const ctx={batches:payload.batches||[],classes:payload.classes||[],name:(payload.teacher&&payload.teacher.name)||'Teacher',subject:(payload.teacher&&payload.teacher.subject)||''};
+  PM.staffDoubts(mk('peDbt'),ctx).catch(()=>{});PM.attendance(mk('peAtt'),ctx).catch(()=>{});
+};
+})();
+</script>
 <!-- ===== PACE exam notices (admin writes, students & parents read) ===== -->
 <style id="pace-notice-css">
-.kv-ov{position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px}
+.kv-ov{position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px}
 .kv-box{background:var(--card);border-radius:16px;max-width:760px;width:100%;max-height:86vh;display:flex;flex-direction:column;padding:16px;box-shadow:0 20px 50px rgba(0,0,0,.4)}
 .kv-h{display:flex;justify-content:space-between;align-items:center;gap:10px}.kv-list{overflow:auto;border-top:1px solid var(--line)}
 .kv-r{display:grid;grid-template-columns:48px 1fr minmax(90px,34%) 34px;gap:10px;padding:8px 2px;border-bottom:1px solid var(--line);font-size:13px;align-items:start}
@@ -4281,8 +4583,8 @@ async function member(user,role){
   }
   function paint(){
     const chip=(k,t)=>`<button class="pe-chip${tab===k?' act':''}" data-tab="${k}">${t}</button>`,tt0=tab==='tt';
-    V.innerHTML=top+`<div class="pg-wrap">${tt0?hero():''}${tt0&&window.PXN?'<div id="pgXN">'+PXN.html(user.id,FG)+'</div>':''}<div class="pe-filter pg-tabs">${chip('tt','📅 Timetable')}${chip('hw','📝 Homework'+(up.length?' <i class="pg-cnt">'+up.length+'</i>':''))}${chip('mat','📚 Materials')}${chip('tst','🧪 Tests')}${isStu?chip('mist','🎯 Mistakes'):''}${isStu?chip('fx','🧮 Formulas'):''}</div>${tt0?'<div id="pgNext">'+upNext()+'</div>'+installCard()+'<div id="pgNotif"></div>'+(isStu?'<div id="pgQB"></div>':''):''}<div id="pgDoubt">${doubtHTML()}</div>${tab==='hw'?homework():tab==='mat'?materials():tab==='tst'?'<div id="pgTests"></div>':tab==='mist'?'<div id="pgMist"></div>':tab==='fx'?formulas():(isStu?fxTeaser():'')+timetable()}</div>`;
-    $('pgOut').onclick=signOut;if(tab==='tst'&&window.peTests)window.peTests($('pgTests'),user,role);if(tab==='mist'&&window.peMistakes)window.peMistakes($('pgMist'),user,role);if(tab==='fx')typeset();window.__pgPop=t=>{tab=t;window.__pgTab=t;if(t==='fx'){fday=todayStr();fmode='day'}paint()};if(window.paceNav)paceNav.refresh();if(isStu&&window.peQuizBanner&&$('pgQB'))peQuizBanner($('pgQB'),user);if(window.PXN&&$('pgXN'))PXN.bind($('pgXN'),user.id);if(window.paceDiwali)setTimeout(()=>paceDiwali(String((P&&P.name)||'').trim().split(/\s+/)[0]),400);if(window.PNS&&$('pgNotif'))PNS.mount($('pgNotif'),{role,url:location.pathname});
+    V.innerHTML=top+`<div class="pg-wrap">${tt0?hero():''}${tt0&&window.PXN?'<div id="pgXN">'+PXN.html(user.id,FG)+'</div>':''}<div class="pe-filter pg-tabs">${chip('tt','📅 Timetable')}${chip('hw','📝 Homework'+(up.length?' <i class="pg-cnt">'+up.length+'</i>':''))}${chip('mat','📚 Materials')}${chip('tst','🧪 Tests')}${isStu?chip('mist','🎯 Mistakes'):''}${isStu?chip('dbt','❓ Doubts'):''}${isStu?chip('fx','🧮 Formulas'):''}</div>${tt0?'<div id="pgNext">'+upNext()+'</div>'+installCard()+'<div id="pgNotif"></div>'+(isStu?'<div id="pgQB"></div><div id="pgDPP"></div><button class="btn ghost" id="pgScan" style="width:100%;margin:0 0 12px;min-height:44px;font-weight:800">📷 Scan attendance QR</button>':'<div id="pgWR"></div>'):''}<div id="pgDoubt">${doubtHTML()}</div>${tab==='hw'?homework():tab==='mat'?materials():tab==='tst'?'<div id="pgTests"></div>':tab==='mist'?'<div id="pgMist"></div>':tab==='dbt'?'<div id="pgDbt"></div>':tab==='fx'?formulas():(isStu?fxTeaser():'')+timetable()}</div>`;
+    $('pgOut').onclick=signOut;if(tab==='tst'&&window.peTests)window.peTests($('pgTests'),user,role);if(tab==='mist'&&window.peMistakes)window.peMistakes($('pgMist'),user,role);if(tab==='dbt'&&window.PM)PM.studentDoubts($('pgDbt'),user).catch(e=>{$('pgDbt').innerHTML='<p class="muted">'+esc(e.message||e)+'</p>'});if(tab==='fx')typeset();window.__pgPop=t=>{tab=t;window.__pgTab=t;if(t==='fx'){fday=todayStr();fmode='day'}paint()};if(window.paceNav)paceNav.refresh();if(isStu&&window.peQuizBanner&&$('pgQB'))peQuizBanner($('pgQB'),user);if(window.PM){if(isStu){PM.dppCard($('pgDPP'),user);const sc=$('pgScan');if(sc)sc.onclick=()=>PM.scan()}else if($('pgWR'))PM.parentReport($('pgWR')).catch(()=>{})}if(window.PXN&&$('pgXN'))PXN.bind($('pgXN'),user.id);if(window.paceDiwali)setTimeout(()=>paceDiwali(String((P&&P.name)||'').trim().split(/\s+/)[0]),400);if(window.PNS&&$('pgNotif'))PNS.mount($('pgNotif'),{role,url:location.pathname});
   }
   V.onclick=e=>{
     const d=e.target.closest('[data-d]'),w=e.target.closest('[data-w]'),k=e.target.closest('[data-tab]'),s=e.target.closest('[data-sub]'),fx=e.target.closest('[data-fx]');
@@ -4651,7 +4953,7 @@ window.peTests=async function(box,user,role){
   if(role==='parent')return parentTests(box);
   if(role!=='student'){box.innerHTML='<div class="card"><p class="muted" style="margin:0">Tests are submitted by students from their own login.</p></div>';return}
   box.innerHTML='<p class="muted">Loading tests…</p>';
-  const [t,s,k]=await Promise.all([paceCloud.from('pace_tests').select('id,title,subject,max_marks,question_text,question_file').order('created_at',{ascending:false}),
+  const [t,s,k]=await Promise.all([paceCloud.from('pace_tests').select('*').order('created_at',{ascending:false}),
     paceCloud.from('pace_test_submissions').select('id,test_id,status,score,max_marks,result,error,annotated_path').eq('user_id',user.id),
     paceCloud.from('pace_test_keys').select('test_id,scheme_text,scheme_file')]);
   if(t.error){box.innerHTML=`<div class="card"><p class="muted" style="margin:0">${esc(t.error.message)}</p></div>`;return}
@@ -4667,17 +4969,21 @@ window.peTests=async function(box,user,role){
     const u=S[x.id];let st='';
     if(u&&u.status==='done'){const r=u.result||{};
       const nm=(r.questions||[]).filter(q=>q.status==='wrong'||q.status==='partial'||q.status==='blank').length;
-      st=`<div style="margin-top:10px"><b style="font-size:18px">${u.score} / ${u.max_marks}</b> <span class="muted">· checked by AI, your teacher may review it</span>${window.pePraise?pePraise(u.score,u.max_marks):''}${nm?`<button class="btn ghost" data-tab="mist" style="margin:2px 0 4px">🎯 Practise ${nm} mistake${nm>1?'s':''}</button>`:''}<div class="sx-b">${u.annotated_path?`<button class="btn primary" data-ck="${esc(u.annotated_path)}">📄 Open my checked paper</button>`:''}<button class="btn ghost" data-rsub="${esc(x.id)}">📤 Submit a new answer sheet</button></div><p class="muted" data-m="${x.id}" style="font-size:13px;margin:0"></p>${r.overall_feedback?`<p style="margin:6px 0">${esc(r.overall_feedback)}</p>`:''}${(r.questions||[]).map(q=>`<div style="font-size:13px;padding:6px 0;border-top:1px solid var(--line)"><b>Q${esc(q.q)}</b> · <b style="color:${q.status==='correct'?'#15803D':q.status==='blank'?'var(--text-muted)':'#BE123C'}">${esc(q.marks)}/${esc(q.max)}</b> — ${esc(q.feedback||'')}${(q.errors||[]).length?`<div style="color:#BE123C;margin-top:3px">${q.errors.map((e,i)=>'⭕ '+esc(e.note||'')).join('<br>')}</div>`:''}${q.missing?`<div style="color:#BE123C;margin-top:3px">Missing: ${esc(q.missing)}</div>`:''}${q.correct_answer?`<details style="margin-top:4px"><summary style="cursor:pointer;color:#15803D;font-weight:600">Correct answer</summary><div style="white-space:pre-wrap;margin-top:4px;color:#15803D">${esc(q.correct_answer)}</div></details>`:''}</div>`).join('')}${(r.unreadable||[]).length?`<p class="muted" style="font-size:12.5px">Could not read: Q${esc(r.unreadable.join(', Q'))}. Write clearly and scan in good light.</p>`:''}${K[x.id]?`<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--ink-2)">Marking scheme</summary><pre style="white-space:pre-wrap;font:13px/1.5 Inter,sans-serif;margin:8px 0 0">${esc(K[x.id])}</pre></details>`:''}${KF[x.id]?`<div><button class="btn ghost" data-sp="${esc(KF[x.id])}" style="margin-top:8px">📄 Marking scheme (PDF)</button></div>`:''}</div>`}
+      st=`<div style="margin-top:10px"><b style="font-size:18px">${u.score} / ${u.max_marks}</b> <span class="muted">· checked by AI, your teacher may review it</span>${window.pePraise?pePraise(u.score,u.max_marks):''}${nm?`<button class="btn ghost" data-tab="mist" style="margin:2px 0 4px">🎯 Practise ${nm} mistake${nm>1?'s':''}</button>`:''}<div data-top="${x.id}"></div><div class="sx-b">${u.annotated_path?`<button class="btn primary" data-ck="${esc(u.annotated_path)}">📄 Open my checked paper</button>`:''}<button class="btn ghost" data-rsub="${esc(x.id)}">📤 Submit a new answer sheet</button></div><p class="muted" data-m="${x.id}" style="font-size:13px;margin:0"></p>${r.overall_feedback?`<p style="margin:6px 0">${esc(r.overall_feedback)}</p>`:''}${(r.questions||[]).map(q=>`<div style="font-size:13px;padding:6px 0;border-top:1px solid var(--line)"><b>Q${esc(q.q)}</b> · <b style="color:${q.status==='correct'?'#15803D':q.status==='blank'?'var(--text-muted)':'#BE123C'}">${esc(q.marks)}/${esc(q.max)}</b> — ${esc(q.feedback||'')}${(q.errors||[]).length?`<div style="color:#BE123C;margin-top:3px">${q.errors.map((e,i)=>'⭕ '+esc(e.note||'')).join('<br>')}</div>`:''}${q.missing?`<div style="color:#BE123C;margin-top:3px">Missing: ${esc(q.missing)}</div>`:''}${q.correct_answer?`<details style="margin-top:4px"><summary style="cursor:pointer;color:#15803D;font-weight:600">Correct answer</summary><div style="white-space:pre-wrap;margin-top:4px;color:#15803D">${esc(q.correct_answer)}</div></details>`:''}</div>`).join('')}${(r.unreadable||[]).length?`<p class="muted" style="font-size:12.5px">Could not read: Q${esc(r.unreadable.join(', Q'))}. Write clearly and scan in good light.</p>`:''}${K[x.id]?`<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--ink-2)">Marking scheme</summary><pre style="white-space:pre-wrap;font:13px/1.5 Inter,sans-serif;margin:8px 0 0">${esc(K[x.id])}</pre></details>`:''}${KF[x.id]?`<div><button class="btn ghost" data-sp="${esc(KF[x.id])}" style="margin-top:8px">📄 Marking scheme (PDF)</button></div>`:''}</div>`}
     else if(u&&u.status==='checking')st='<p class="muted" style="margin-top:10px">⏳ Your answers are being checked. Tap Tests again in a minute.</p>';
     else if(u&&u.status==='uploaded')st=`<div style="margin-top:10px"><p style="margin:0 0 8px">✓ Your answer sheet was received.</p><button class="btn primary" data-chk2="${esc(u.id)}">Check my answers now</button><p class="muted" data-m="${x.id}" style="font-size:13px;margin:6px 0 0"></p></div>`;
+    else if(x.due_at&&Date.now()>Date.parse(x.due_at))st='<p style="margin-top:10px;color:#BE123C;font-weight:700">⏰ The deadline has passed — submissions are closed.</p>';
+    else if(x.answer_mode==='tap')st=`<div style="margin-top:10px"><button class="btn primary" data-tap="${x.id}">✍️ Answer on screen</button><div data-tapbox="${x.id}"></div></div>`;
     else st=`${u&&u.status==='error'?`<p style="color:var(--coral);font-size:13px">Last attempt failed: ${esc(u.error||'')}. You can upload again.</p>`:''}<div style="margin-top:10px;display:grid;gap:8px"><p class="muted" style="font-size:12.5px;margin:0">Add a photo of <b>each page</b> of your answers, in order. You can add pages one by one.</p>
       <div class="tp-btns"><label class="btn primary tp-add">📷 Take photo<input type="file" accept="image/*" capture="environment" data-add="${x.id}" hidden></label><label class="btn ghost tp-add">🖼️ Gallery<input type="file" accept="image/*,application/pdf" multiple data-add="${x.id}" hidden></label></div>
       <div class="tp-pages" data-pages="${x.id}">${tpPages(x.id)}</div>
       <button class="btn primary" data-go="${x.id}"${(window.__tp[x.id]||[]).length?'':' disabled'}>${tpLabel(x.id)}</button><p class="muted" data-m="${x.id}" style="font-size:13px;margin:0"></p></div>`;
-    return `<div class="card" style="margin-bottom:12px"><b>${esc(x.title)}</b><div class="muted" style="font-size:12.5px">${esc(x.subject||'')} · ${x.max_marks} marks</div>${x.question_text?`<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--ink-2)">Question paper</summary><pre style="white-space:pre-wrap;font:13px/1.5 Inter,sans-serif;margin:8px 0 0">${esc(x.question_text)}</pre></details>`:''}${x.question_file?`<div><button class="btn ghost" data-qp="${esc(x.question_file)}" style="margin-top:8px">📄 Question paper (PDF)</button></div>`:''}${st}</div>`;
+    const dueL=x.due_at&&!(u&&u.status==='done')?`<span class="pm-due">⏰ Submit by ${esc(new Date(x.due_at).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}))}</span>`:'';
+    return `<div class="card" style="margin-bottom:12px"><b>${esc(x.title)}</b><div class="muted" style="font-size:12.5px">${esc(x.subject||'')} · ${x.max_marks} marks${x.answer_mode==='tap'?' · ✍️ answer on screen':''}</div>${dueL}${x.question_text?`<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--ink-2)">Question paper</summary><pre style="white-space:pre-wrap;font:13px/1.5 Inter,sans-serif;margin:8px 0 0">${esc(x.question_text)}</pre></details>`:''}${x.question_file?`<div><button class="btn ghost" data-qp="${esc(x.question_file)}" style="margin-top:8px">📄 Question paper (PDF)</button></div>`:''}${st}</div>`;
   };
   box.innerHTML=(t.data||[]).map(card).join('')||'<div class="card"><p class="muted" style="margin:0">No tests right now.</p></div>';
   if(window.peProgress)peProgress(user).then(h=>{if(!box.isConnected||box.querySelector('.pr-card'))return;const d=document.createElement('div');d.innerHTML=h;box.prepend(d)}).catch(()=>{});
+  if(window.PM)PM.toppers(box).catch(()=>{});
   try{for(const x of (s.data||[])){if(x.status!=='done'||!x.max_marks||x.score/x.max_marks<0.8)continue;const k='pace-conf:'+x.id;if(localStorage.getItem(k))continue;localStorage.setItem(k,'1');setTimeout(()=>window.peConfetti&&peConfetti(null,140),500);break}}catch(_){}
   box.onchange=async e=>{const inp=e.target.closest('[data-add]');if(!inp)return;const id=inp.dataset.add,m=box.querySelector(`[data-m="${id}"]`);
     const add=[...(inp.files||[])];inp.value='';if(!add.length)return;
@@ -4699,6 +5005,8 @@ window.peTests=async function(box,user,role){
     if(mv){const[id,i,d]=mv.dataset.mv.split('|');const L=window.__tp[id]||[],a=+i,b=a+(+d);if(b>=0&&b<L.length){[L[a],L[b]]=[L[b],L[a]];tpRedraw(id)}return}
     const o=e.target.closest('[data-qp],[data-sp],[data-ck]');
     if(o)return openSigned(o.dataset.ck?'answer-sheets':'test-files',o.dataset.qp||o.dataset.sp||o.dataset.ck);
+    const tp=e.target.closest('[data-tap]');if(tp&&window.PM){tp.remove();return PM.tapForm(box.querySelector(`[data-tapbox="${tp.dataset.tap}"]`),{id:tp.dataset.tap},user,()=>window.peTests(box,user,role))}
+    if(e.target.closest('[data-plan]')&&window.PM)return PM.planner(user);
     const c2=e.target.closest('[data-chk2]');
     if(c2){if(c2.disabled)return;c2.disabled=true;c2.textContent='Checking…';const m=c2.parentElement.querySelector('[data-m]');if(m){m.style.color='var(--text-muted)';m.textContent='Checking your answers… this can take up to a minute. Please keep this screen open.'}
       const r=await paceCloud.functions.invoke('super-task',{body:{submission_id:c2.dataset.chk2}});
@@ -4777,7 +5085,7 @@ async function paintTests(host,ctx){
 }
 async function paintTests0(host,ctx){
   if(!host)return;const TE=!!ctx.teacher;
-  const qs=[paceCloud.from('pace_tests').select('id,batch_id,title,subject,max_marks,is_open,created_at').order('created_at',{ascending:false}),
+  const qs=[paceCloud.from('pace_tests').select('*').order('created_at',{ascending:false}),
     paceCloud.from('pace_test_submissions').select('id,test_id,user_id,student_name,status,score,max_marks,result,error,file_path,annotated_path')];
   if(!TE)qs.push(paceCloud.from('pace_member_directory').select('id,role,name,email,batch_id'),paceCloud.from('pace_member_accounts').select('user_id,directory_id'));
   const [t,s,dir,acc]=await Promise.all(qs);
@@ -4794,10 +5102,12 @@ async function paintTests0(host,ctx){
   <div class="field"><label>Question paper (paste from ChatGPT; students can read this)</label><textarea id="tQ" rows="7"></textarea><label style="margin-top:8px;font-size:12.5px">…or attach the question paper as a PDF</label><input type="file" id="tQF" accept="application/pdf"></div>
   <div class="field"><label>Marking scheme / model answers (students can NOT see this)</label><textarea id="tK" rows="7" placeholder="Paste the answer key with marks for each question"></textarea><label style="margin-top:8px;font-size:12.5px">…or attach the marking scheme as a PDF</label><input type="file" id="tKF" accept="application/pdf"></div>
   <label style="display:flex;gap:8px;align-items:center;font-size:13px"><input type="checkbox" id="tR" style="width:auto"> Show the marking scheme to students after their answers are checked</label>
+  ${TE?'':`<div class="pm-grid2"><div class="field"><label>How students answer</label><select id="tA"><option value="photo">📷 Photo of answer sheet (AI checks)</option><option value="tap">✍️ Tap answers on screen (MCQ / numerical, instant, no AI cost)</option></select></div>
+  <div class="field"><label>Submit by (optional deadline)</label><input type="datetime-local" id="tDue"></div></div>`}
   <button class="btn primary" type="submit">Create test</button></form></div>
   <div class="card"><div class="cardhead"><h2>Tests &amp; results</h2></div>
   ${bl.length?`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 10px"><select id="xB" style="width:auto;flex:0 1 220px">${opts}</select><button class="btn ghost" id="xBatch" type="button">⬇ Download batch marks (Excel)</button></div>`:''}
-  ${(t.data||[]).map(x=>{const L=by[x.id]||[];return `<div style="padding:10px 0;border-bottom:1px solid var(--line)"><b>${esc(x.title)}</b> <span class="muted" style="font-size:12.5px">${esc(bn(x.batch_id))} · ${x.max_marks} marks · ${L.length} submitted</span><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"><button class="btn ghost" data-tg="${x.id}" data-o="${x.is_open?1:0}">${x.is_open?'Close test':'Reopen test'}</button><button class="btn ghost" data-xl="${x.id}">⬇ Excel</button><button class="btn ghost" data-key="${x.id}">🔑 Answer key</button>${L.length?`<button class="btn ghost" data-rca="${x.id}">↻ Re-check all (${L.length})</button>`:''}<button class="btn ghost" data-dt="${x.id}">Delete</button></div><details data-tid="${x.id}"${T.open===x.id?' open':''} style="margin-top:8px"><summary style="cursor:pointer;color:var(--ink-2);font-weight:600">Results (${L.length})</summary>${L.map(u=>`<div style="padding:8px 0;border-top:1px solid var(--line);font-size:13px"><b>${esc(u.student_name||'Student')}</b> · ${u.status==='done'?u.score+' / '+u.max_marks:u.status}${u.error?` <span style="color:var(--coral)">${esc(u.error)}</span>`:''} <button class="btn ghost" data-sheet="${esc(u.file_path)}">Sheet ↗</button>${u.annotated_path?` <button class="btn ghost" data-ck="${esc(u.annotated_path)}">Checked paper ↗</button>`:''} ${u.result&&u.result.needs_review?'<span class="pill" style="background:color-mix(in srgb,#E8890C 18%,transparent);color:#B45309">⚠ Please review</span> ':''}${u.result&&u.result.review_note?`<div style="color:#B45309;font-size:12.5px;margin:4px 0">⚠ ${esc(u.result.review_note)}</div>`:''}<button class="btn ghost" data-chk="${u.id}">${u.status==='done'?'↻ Re-check':'Check now'}</button> <button class="btn ghost" data-rs="${u.id}">Reset</button>${u.result?`<div class="muted" style="margin-top:4px">${esc(u.result.overall_feedback||'')}</div>${(u.result.questions||[]).map(q=>`<div>Q${esc(q.q)}: ${esc(q.marks)}/${esc(q.max)} — ${esc(q.feedback||'')}</div>`).join('')}`:''}</div>`).join('')||'<p class="muted" style="font-size:13px">No submissions yet.</p>'}</details></div>`}).join('')||'<p class="muted">No tests yet.</p>'}</div>`;
+  ${(t.data||[]).map(x=>{const L=by[x.id]||[];return `<div style="padding:10px 0;border-bottom:1px solid var(--line)"><b>${esc(x.title)}</b> <span class="muted" style="font-size:12.5px">${esc(bn(x.batch_id))} · ${x.max_marks} marks · ${L.length} submitted${x.answer_mode==='tap'?' · ✍️ tap answers':''}${x.due_at?' · ⏰ by '+esc(new Date(x.due_at).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'})):''}</span><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"><button class="btn ghost" data-tg="${x.id}" data-o="${x.is_open?1:0}">${x.is_open?'Close test':'Reopen test'}</button><button class="btn ghost" data-xl="${x.id}">⬇ Excel</button><button class="btn ghost" data-key="${x.id}">🔑 Answer key</button>${L.length?`<button class="btn ghost" data-ana="${x.id}">📊 Analysis</button>`:''}${TE?'':`<button class="btn ghost" data-nos="${x.id}">🙋 Not submitted</button>`}${x.answer_mode==='tap'?`<button class="btn ghost" data-bk="${x.id}">↻ Prepare answers</button>`:''}${L.length?`<button class="btn ghost" data-rca="${x.id}">↻ Re-check all (${L.length})</button>`:''}<button class="btn ghost" data-dt="${x.id}">Delete</button></div><details data-tid="${x.id}"${T.open===x.id?' open':''} style="margin-top:8px"><summary style="cursor:pointer;color:var(--ink-2);font-weight:600">Results (${L.length})</summary>${L.map(u=>`<div style="padding:8px 0;border-top:1px solid var(--line);font-size:13px"><b>${esc(u.student_name||'Student')}</b> · ${u.status==='done'?u.score+' / '+u.max_marks:u.status}${u.error?` <span style="color:var(--coral)">${esc(u.error)}</span>`:''} <button class="btn ghost" data-sheet="${esc(u.file_path)}">Sheet ↗</button>${u.annotated_path?` <button class="btn ghost" data-ck="${esc(u.annotated_path)}">Checked paper ↗</button>`:''} ${u.result&&u.result.needs_review?'<span class="pill" style="background:color-mix(in srgb,#E8890C 18%,transparent);color:#B45309">⚠ Please review</span> ':''}${u.result&&u.result.review_note?`<div style="color:#B45309;font-size:12.5px;margin:4px 0">⚠ ${esc(u.result.review_note)}</div>`:''}${u.result&&u.result.dup_with?`<div style="color:#BE123C;font-size:12.5px;margin:4px 0">⚠ Same answers as ${u.result.dup_with.map(d=>esc(d.name)+' ('+d.pct+'%)').join(', ')}</div>`:''}${u.status==='done'?`<button class="btn ghost" data-edm="${u.id}">✏️ Edit marks</button> `:''}${u.file_path==='typed'?'':`<button class="btn ghost" data-chk="${u.id}">${u.status==='done'?'↻ Re-check':'Check now'}</button>`} <button class="btn ghost" data-rs="${u.id}">Reset</button>${u.result?`<div class="muted" style="margin-top:4px">${esc(u.result.overall_feedback||'')}</div>${(u.result.questions||[]).map(q=>`<div>Q${esc(q.q)}: ${esc(q.marks)}/${esc(q.max)} — ${esc(q.feedback||'')}</div>`).join('')}`:''}</div>`).join('')||'<p class="muted" style="font-size:13px">No submissions yet.</p>'}</details></div>`}).join('')||'<p class="muted">No tests yet.</p>'}</div>`;
   const pick=v=>host.querySelectorAll('#tB input').forEach(c=>{c.checked=v;c.closest('.tb-c').classList.toggle('on',v)});
   if($('tBall'))$('tBall').onclick=e=>{e.preventDefault();pick(true)};if($('tBnone'))$('tBnone').onclick=e=>{e.preventDefault();pick(false)};
   host.querySelectorAll('#tB input').forEach(c=>c.onchange=()=>c.closest('.tb-c').classList.toggle('on',c.checked));
@@ -4812,7 +5122,7 @@ async function paintTests0(host,ctx){
     const done=[];
     for(let i=0;i<sel.length;i++){
     if(sel.length>1)btn.textContent=`Creating ${i+1} of ${sel.length}…`;
-    const f0={batch_id:sel[i],title:$('tT').value.trim(),subject:$('tS').value.trim(),max_marks:+$('tM').value||100,question_text:qt,reveal_key:$('tR').checked};
+    const f0={batch_id:sel[i],title:$('tT').value.trim(),subject:$('tS').value.trim(),max_marks:+$('tM').value||100,question_text:qt,reveal_key:$('tR').checked,...(TE?{}:{...($('tA').value==='tap'?{answer_mode:'tap'}:{}),...($('tDue').value?{due_at:new Date($('tDue').value).toISOString()}:{})})};
     const fail=m=>{btn.disabled=false;btn.textContent='Create test';tip((done.length?'Created for '+done.map(bn).join(', ')+'. ':'')+'Stopped at '+bn(sel[i])+': '+m)};
     let id;
     if(TE){const a=await paceCloud.rpc('teacher_create_test',{p_batch:f0.batch_id,p_title:f0.title,p_subject:f0.subject,p_max:f0.max_marks,p_question:qt,p_reveal:f0.reveal_key});if(a.error)return fail(a.error.message);id=a.data}
@@ -4823,14 +5133,22 @@ async function paintTests0(host,ctx){
       if(TE){const r=await paceCloud.rpc('teacher_save_test_files',{p_test:id,p_question_file:qp||'',p_scheme_text:kt,p_scheme_file:sp||''});if(r.error)throw r.error}
       else{if(qp)await paceCloud.from('pace_tests').update({question_file:qp}).eq('id',id);if(kt||sp)await paceCloud.from('pace_test_keys').insert({test_id:id,scheme_text:kt||null,scheme_file:sp})}
     }catch(err){return fail('file upload failed: '+(err.message||err))}
-    done.push(sel[i]);
+    done.push(sel[i]);(window.__newIds=window.__newIds||[]).push(id);
     }
-    tip(done.length>1?`Test created for ${done.length} batches ✓`:'Test created ✓');paintTests(host,ctx)};
+    const nid=window.__newIds||[];window.__newIds=[];
+    if(!TE&&$('tA')&&$('tA').value==='tap'&&nid.length){btn.textContent='Preparing the answers…';const k=await paceCloud.functions.invoke('super-task',{body:{build_key:nid}});
+      if(k.error){let m=k.error.message;try{m=(await k.error.context.clone().json()).error||m}catch(_){}tip('Test created, but the answers could not be prepared: '+m+' — tap 🔑 Answer key → Rebuild later.')}
+      else tip(`Tap-answer test ready ✓ ${k.data.questions} questions`)}
+    else tip(done.length>1?`Test created for ${done.length} batches ✓`:'Test created ✓');paintTests(host,ctx)};
   host.onclick=async e=>{
     const b=e.target.closest('button');if(!b)return;
     const dt=b.closest('details');if(dt)T.open=dt.dataset.tid;
     const again=()=>paintTests(host,ctx);
     if(b.id==='xBatch'){const bid=$('xB').value;saveSheet('Marks - '+bn(bid),batchRows(bid,t.data||[],s.data||[],TE?[]:(dir.data||[]).filter(d=>d.role==='student'&&d.batch_id===bid).map(d=>({name:d.name,email:d.email||'',uid:uidByDir[d.id]}))))}
+    else if(b.dataset.ana&&window.PM){const x=(t.data||[]).find(z=>z.id===b.dataset.ana);PM.analysis(x,by[x.id]||[])}
+    else if(b.dataset.nos&&window.PM){const x=(t.data||[]).find(z=>z.id===b.dataset.nos);PM.notSubmitted(x,by[x.id]||[],D,uidByDir)}
+    else if(b.dataset.edm&&window.PM){const u=(s.data||[]).find(z=>z.id===b.dataset.edm),x=(t.data||[]).find(z=>z.id===u.test_id);PM.editMarks(u,x,again)}
+    else if(b.dataset.bk){b.disabled=true;b.textContent='Preparing…';const k=await paceCloud.functions.invoke('super-task',{body:{build_key:[b.dataset.bk]}});let m='';if(k.error){m=k.error.message;try{m=(await k.error.context.clone().json()).error||m}catch(_){}}tip(m?'Could not prepare: '+m:`Answers ready ✓ ${k.data.questions} questions`);b.disabled=false;b.textContent='↻ Prepare answers'}
     else if(b.dataset.key){const tid=b.dataset.key,x=(t.data||[]).find(z=>z.id===tid);b.disabled=true;const old=b.textContent;b.textContent='Loading key…';
       const r=await paceCloud.functions.invoke('super-task',{body:{view_key:tid}});b.disabled=false;b.textContent=old;
       let msg='';if(r.error){try{msg=(await r.error.context.clone().json()).error}catch(_){msg=r.error.message}}
