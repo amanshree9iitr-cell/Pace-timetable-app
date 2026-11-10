@@ -3772,6 +3772,9 @@ window.peQuizBanner=async function(el,user){if(!el)return;try{
 .pm-cal-i.clash{background:color-mix(in srgb,#E11D48 14%,var(--card))}
 .pm-toast{position:fixed;left:50%;top:18px;transform:translateX(-50%);z-index:100003;background:#16A34A;color:#fff;padding:12px 18px;border-radius:14px;font-weight:800;box-shadow:0 10px 30px rgba(0,0,0,.3);max-width:90vw;text-align:center}
 .pm-toast.bad{background:#E11D48}
+.pm-ann{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;margin:0 0 10px;border-radius:14px;background:color-mix(in srgb,#F59E0B 16%,var(--card));border:1px solid color-mix(in srgb,#F59E0B 45%,var(--card));font-size:14.5px;font-weight:600}
+.pm-ann-i{font-size:22px;line-height:1.2}.pm-ann small{display:block;margin-top:4px;font-weight:500;opacity:.7;font-size:12px}
+.pm-ann button{border:0;background:transparent;color:inherit;font-size:16px;opacity:.6;cursor:pointer;min-width:32px;min-height:32px}
 </style>
 <script>
 (function(){
@@ -4022,13 +4025,58 @@ PM.tapForm=async function(host,x,user,after){
   host.oninput=e=>{const t=e.target.closest('[data-t]');if(t){A[t.dataset.t]=t.value;save();const b=host.querySelector('[data-sub]');if(b)b.textContent=`Submit answers (${L.filter(q=>String(A[q.q]||'').trim()).length}/${L.length} answered)`}};
 };
 
+/* ===== 15. quick announcements ===== */
+const annSeen=()=>{try{return new Set(JSON.parse(localStorage.getItem('pace-ann-hide')||'[]'))}catch(_){return new Set()}};
+const annAgo=t=>{const m=Math.round((Date.now()-new Date(t))/6e4);return m<1?'just now':m<60?m+' min ago':m<1440?Math.round(m/60)+' h ago':new Date(t).toLocaleDateString('en-IN',{day:'numeric',month:'short'})};
+PM.announce=async function(el,ctx){
+  el.innerHTML='<p class="muted">Loading…</p>';
+  const B=ctx.batches||[],bn=id=>{if(!id)return'Everyone';const b=B.find(x=>String(x.id)===String(id));return b?(b.label||b.name||'Batch'):'Batch'};
+  const d=await paceCloud.from('pace_announcements').select('*').order('created_at',{ascending:false}).limit(40);
+  const L=d.data||[],now=Date.now();
+  el.innerHTML=`<div class="card"><h2 style="margin:0 0 4px">📢 Announcements</h2><p class="muted" style="margin:0 0 10px;font-size:13px">Send a short message. It shows at the top of the student app and goes out as a phone alert.</p>
+    ${d.error?`<p style="color:var(--coral)">${E(/pace_announcements/.test(d.error.message)?'Run announce.sql in Supabase first. ':'')+E(d.error.message)}</p>`:''}
+    <textarea id="anT" rows="3" maxlength="500" placeholder="e.g. Tomorrow's Physics class is at 8:00 AM instead of 9:00 AM." style="width:100%;box-sizing:border-box"></textarea>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center">
+      <select id="anB" style="flex:1;min-width:150px"><option value="">Everyone (all batches)</option>${B.map(b=>`<option value="${E(b.id)}">${E(b.label||b.name||b.id)}</option>`).join('')}</select>
+      <select id="anD" style="flex:1;min-width:130px"><option value="1">Show for 1 day</option><option value="3" selected>Show for 3 days</option><option value="7">Show for 7 days</option></select></div>
+    <label style="display:flex;gap:8px;align-items:center;margin:10px 0 0;font-size:13px"><input type="checkbox" id="anP" style="width:auto" checked> Also show to parents</label>
+    <button class="btn primary" id="anS" style="margin-top:10px;min-height:44px">📢 Send announcement</button><p class="muted" id="anM" style="font-size:12.5px;margin:6px 0 0"></p>
+    <div class="pm-sec">Sent</div>
+    ${L.map(x=>{const live=new Date(x.expires_at)>now;return`<div class="pm-card"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="pm-tag">${E(bn(x.batch_id))}</span>${x.to_parents?'':'<span class="pm-tag">students only</span>'}<span class="pm-tag" style="${live?'background:color-mix(in srgb,#16A34A 14%,var(--card));color:#15803D':''}">${live?'● Showing':'Expired'}</span><small class="muted" style="margin-left:auto">${E(x.by_name||'')} · ${annAgo(x.created_at)}</small></div>
+      <div style="margin-top:6px;white-space:pre-wrap">${E(x.body)}</div><button class="btn ghost" data-del="${x.id}" style="margin-top:8px;font-size:12.5px">🗑 Remove</button></div>`}).join('')||'<p class="muted">Nothing sent yet.</p>'}</div>`;
+  const $=s=>el.querySelector(s);
+  $('#anS').onclick=async()=>{const txt=$('#anT').value.trim(),m=$('#anM'),b=$('#anS');if(txt.length<3){m.textContent='Write the message first.';return}
+    const batch=$('#anB').value||null,par=$('#anP').checked;
+    if(!confirm('Send this to '+bn(batch)+(par?' (students and parents)':' (students only)')+'?'))return;
+    b.disabled=true;b.textContent='Sending…';
+    const r=await paceCloud.from('pace_announcements').insert({body:txt,batch_id:batch,to_parents:par,by_name:ctx.name||'Teacher',expires_at:new Date(Date.now()+(+$('#anD').value)*864e5).toISOString()});
+    if(r.error){b.disabled=false;b.textContent='📢 Send announcement';m.textContent=(/pace_announcements/.test(r.error.message)?'Run announce.sql in Supabase first. ':'')+r.error.message;return}
+    let note='Saved ✓ Students see it when they open the app.';
+    try{const t=await paceCloud.rpc('announce_targets',{p_batch:batch,p_parents:par});const ids=(t.data||[]).map(x=>x.user_id||x).filter(Boolean);
+      if(ids.length){const q=await fn({notify:{user_ids:ids,title:'📢 '+(ctx.name&&ctx.name!=='Admin'?ctx.name+' (PACE)':'PACE IIT & Medical'),body:txt.slice(0,280)}});if(!q.error)note=`Sent ✓ Phone alert delivered to ${q.data.sent} device(s).`}}catch(_){}
+    toast(note);PM.announce(el,ctx)};
+  el.onclick=async e=>{const b=e.target.closest('[data-del]');if(!b||!confirm('Remove this announcement? Students will no longer see it.'))return;b.disabled=true;
+    const r=await paceCloud.from('pace_announcements').delete().eq('id',b.dataset.del);if(r.error){b.disabled=false;return toast(r.error.message,1)}PM.announce(el,ctx)};
+};
+/* student / parent home: live announcements */
+let annCache=null,annAt=0;
+PM.annCard=function(el){if(!el||!ok())return;
+  const draw=()=>{const H=annSeen(),L=(annCache||[]).filter(x=>!H.has(x.id));
+    el.innerHTML=L.map(x=>`<div class="pm-ann"><span class="pm-ann-i">📢</span><div style="flex:1;min-width:0"><div style="white-space:pre-wrap;word-wrap:break-word">${E(x.body)}</div><small>${E(x.by_name||'PACE')} · ${annAgo(x.created_at)}</small></div><button data-anx="${x.id}" aria-label="Hide">✕</button></div>`).join('');
+    el.onclick=e=>{const b=e.target.closest('[data-anx]');if(!b)return;const S=annSeen();S.add(b.dataset.anx);try{localStorage.setItem('pace-ann-hide',JSON.stringify([...S].slice(-60)))}catch(_){}draw()}};
+  if(annCache)draw();
+  if(Date.now()-annAt<60000)return;annAt=Date.now();
+  paceCloud.from('pace_announcements').select('id,body,by_name,created_at,expires_at').gt('expires_at',new Date().toISOString()).order('created_at',{ascending:false}).limit(5)
+    .then(r=>{if(r.error)return;annCache=r.data||[];if(document.body.contains(el))draw();else{const n=document.getElementById('pgAN');if(n)PM.annCard(n)}}).catch(()=>{});
+};
+
 /* ===== admin menu pages ===== */
 if(typeof NAV_ITEMS!=='undefined'&&typeof render==='function'&&!/[?&](teacher|student)=1/.test(location.search)){
   const add=(id,label,ic)=>{if(!NAV_ITEMS.some(x=>x.id===id))NAV_ITEMS.splice(Math.max(0,NAV_ITEMS.findIndex(x=>x.id==='leave')),0,{id,label,ic})};
-  add('review','Review Queue','🧐');add('attend','Attendance','📷');add('tcal','Test Calendar','🗓️');add('doubts','Doubts','❓');
+  add('announce','Announcements','📢');add('review','Review Queue','🧐');add('attend','Attendance','📷');add('tcal','Test Calendar','🗓️');add('doubts','Doubts','❓');
   const prevR=render;
   render=function(){prevR.apply(this,arguments);
-    const pages={review:PM.review,attend:PM.attendance,tcal:PM.calendar,doubts:PM.staffDoubts};const f=pages[UI.tab];if(!f)return;
+    const pages={announce:PM.announce,review:PM.review,attend:PM.attendance,tcal:PM.calendar,doubts:PM.staffDoubts};const f=pages[UI.tab];if(!f)return;
     const v=document.getElementById('view');if(!v)return;
     if(UI.accessRole!=='admin'){v.innerHTML='<div class="card"><p class="muted">Admin only.</p></div>';return}
     if(!ok()){v.innerHTML='<div class="card"><p class="muted">Connect to the internet first.</p></div>';return}
@@ -4040,7 +4088,7 @@ PM.teacherMount=function(payload){
   const anchor=document.getElementById('peLeave')||document.getElementById('peChap');if(!anchor||!ok())return;
   const mk=(id)=>{let s=document.getElementById(id);if(!s){s=document.createElement('section');s.id=id;s.style.marginTop='16px';anchor.after(s)}return s};
   const ctx={batches:payload.batches||[],classes:payload.classes||[],name:(payload.teacher&&payload.teacher.name)||'Teacher',subject:(payload.teacher&&payload.teacher.subject)||''};
-  PM.staffDoubts(mk('peDbt'),ctx).catch(()=>{});PM.attendance(mk('peAtt'),ctx).catch(()=>{});
+  PM.staffDoubts(mk('peDbt'),ctx).catch(()=>{});PM.attendance(mk('peAtt'),ctx).catch(()=>{});PM.announce(mk('peAnn'),ctx).catch(()=>{});
 };
 })();
 </script>
@@ -4583,8 +4631,8 @@ async function member(user,role){
   }
   function paint(){
     const chip=(k,t)=>`<button class="pe-chip${tab===k?' act':''}" data-tab="${k}">${t}</button>`,tt0=tab==='tt';
-    V.innerHTML=top+`<div class="pg-wrap">${tt0?hero():''}${tt0&&window.PXN?'<div id="pgXN">'+PXN.html(user.id,FG)+'</div>':''}<div class="pe-filter pg-tabs">${chip('tt','📅 Timetable')}${chip('hw','📝 Homework'+(up.length?' <i class="pg-cnt">'+up.length+'</i>':''))}${chip('mat','📚 Materials')}${chip('tst','🧪 Tests')}${isStu?chip('mist','🎯 Mistakes'):''}${isStu?chip('dbt','❓ Doubts'):''}${isStu?chip('fx','🧮 Formulas'):''}</div>${tt0?'<div id="pgNext">'+upNext()+'</div>'+installCard()+'<div id="pgNotif"></div>'+(isStu?'<div id="pgQB"></div><div id="pgDPP"></div><button class="btn ghost" id="pgScan" style="width:100%;margin:0 0 12px;min-height:44px;font-weight:800">📷 Scan attendance QR</button>':'<div id="pgWR"></div>'):''}<div id="pgDoubt">${doubtHTML()}</div>${tab==='hw'?homework():tab==='mat'?materials():tab==='tst'?'<div id="pgTests"></div>':tab==='mist'?'<div id="pgMist"></div>':tab==='dbt'?'<div id="pgDbt"></div>':tab==='fx'?formulas():(isStu?fxTeaser():'')+timetable()}</div>`;
-    $('pgOut').onclick=signOut;if(tab==='tst'&&window.peTests)window.peTests($('pgTests'),user,role);if(tab==='mist'&&window.peMistakes)window.peMistakes($('pgMist'),user,role);if(tab==='dbt'&&window.PM)PM.studentDoubts($('pgDbt'),user).catch(e=>{$('pgDbt').innerHTML='<p class="muted">'+esc(e.message||e)+'</p>'});if(tab==='fx')typeset();window.__pgPop=t=>{tab=t;window.__pgTab=t;if(t==='fx'){fday=todayStr();fmode='day'}paint()};if(window.paceNav)paceNav.refresh();if(isStu&&window.peQuizBanner&&$('pgQB'))peQuizBanner($('pgQB'),user);if(window.PM){if(isStu){PM.dppCard($('pgDPP'),user);const sc=$('pgScan');if(sc)sc.onclick=()=>PM.scan()}else if($('pgWR'))PM.parentReport($('pgWR')).catch(()=>{})}if(window.PXN&&$('pgXN'))PXN.bind($('pgXN'),user.id);if(window.paceDiwali)setTimeout(()=>paceDiwali(String((P&&P.name)||'').trim().split(/\s+/)[0]),400);if(window.PNS&&$('pgNotif'))PNS.mount($('pgNotif'),{role,url:location.pathname});
+    V.innerHTML=top+`<div class="pg-wrap">${tt0?hero():''}${tt0&&window.PM?'<div id="pgAN"></div>':''}${tt0&&window.PXN?'<div id="pgXN">'+PXN.html(user.id,FG)+'</div>':''}<div class="pe-filter pg-tabs">${chip('tt','📅 Timetable')}${chip('hw','📝 Homework'+(up.length?' <i class="pg-cnt">'+up.length+'</i>':''))}${chip('mat','📚 Materials')}${chip('tst','🧪 Tests')}${isStu?chip('mist','🎯 Mistakes'):''}${isStu?chip('dbt','❓ Doubts'):''}${isStu?chip('fx','🧮 Formulas'):''}</div>${tt0?'<div id="pgNext">'+upNext()+'</div>'+installCard()+'<div id="pgNotif"></div>'+(isStu?'<div id="pgQB"></div><div id="pgDPP"></div><button class="btn ghost" id="pgScan" style="width:100%;margin:0 0 12px;min-height:44px;font-weight:800">📷 Scan attendance QR</button>':'<div id="pgWR"></div>'):''}<div id="pgDoubt">${doubtHTML()}</div>${tab==='hw'?homework():tab==='mat'?materials():tab==='tst'?'<div id="pgTests"></div>':tab==='mist'?'<div id="pgMist"></div>':tab==='dbt'?'<div id="pgDbt"></div>':tab==='fx'?formulas():(isStu?fxTeaser():'')+timetable()}</div>`;
+    $('pgOut').onclick=signOut;if(tab==='tst'&&window.peTests)window.peTests($('pgTests'),user,role);if(tab==='mist'&&window.peMistakes)window.peMistakes($('pgMist'),user,role);if(tab==='dbt'&&window.PM)PM.studentDoubts($('pgDbt'),user).catch(e=>{$('pgDbt').innerHTML='<p class="muted">'+esc(e.message||e)+'</p>'});if(tab==='fx')typeset();window.__pgPop=t=>{tab=t;window.__pgTab=t;if(t==='fx'){fday=todayStr();fmode='day'}paint()};if(window.paceNav)paceNav.refresh();if(isStu&&window.peQuizBanner&&$('pgQB'))peQuizBanner($('pgQB'),user);if(window.PM){PM.annCard($('pgAN'));if(isStu){PM.dppCard($('pgDPP'),user);const sc=$('pgScan');if(sc)sc.onclick=()=>PM.scan()}else if($('pgWR'))PM.parentReport($('pgWR')).catch(()=>{})}if(window.PXN&&$('pgXN'))PXN.bind($('pgXN'),user.id);if(window.paceDiwali)setTimeout(()=>paceDiwali(String((P&&P.name)||'').trim().split(/\s+/)[0]),400);if(window.PNS&&$('pgNotif'))PNS.mount($('pgNotif'),{role,url:location.pathname});
   }
   V.onclick=e=>{
     const d=e.target.closest('[data-d]'),w=e.target.closest('[data-w]'),k=e.target.closest('[data-tab]'),s=e.target.closest('[data-sub]'),fx=e.target.closest('[data-fx]');
