@@ -5357,9 +5357,10 @@ async function paintTests0(host,ctx){
     done.push(sel[i]);(window.__newIds=window.__newIds||[]).push(id);
     }
     const nid=window.__newIds||[];window.__newIds=[];
-    if(!TE&&$('tA')&&$('tA').value==='tap'&&nid.length){btn.textContent='Preparing the answers…';const k=await paceCloud.functions.invoke('super-task',{body:{build_key:nid}});
-      if(k.error){let m=k.error.message;try{m=(await k.error.context.clone().json()).error||m}catch(_){}tip('Test created, but the answers could not be prepared: '+m+' — tap 🔑 Answer key → Rebuild later.')}
-      else tip(`Tap-answer test ready ✓ ${k.data.questions} questions`)}
+    const isTap=!TE&&$('tA')&&$('tA').value==='tap';
+    if(nid.length&&(isTap||kt||kf)){btn.textContent='Preparing the answer key… (about 30 seconds)';const k=await paceCloud.functions.invoke('super-task',{body:{build_key:nid}});
+      if(k.error){let m=k.error.message;try{m=(await k.error.context.clone().json()).error||m}catch(_){}tip('Test created, but the answer key could not be prepared: '+m+' Tap 🔑 Answer key on the test to try again.')}
+      else tip(`${isTap?'Tap-answer test':'Test'} ready ✓ Answer key made: ${k.data.questions} questions. Tap 🔑 Answer key to check it.`)}
     else tip(done.length>1?`Test created for ${done.length} batches ✓`:'Test created ✓');paintTests(host,ctx)};
   host.onclick=async e=>{
     const b=e.target.closest('button');if(!b)return;
