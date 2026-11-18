@@ -3770,6 +3770,12 @@ window.peQuizBanner=async function(el,user){if(!el)return;try{
 .pm-res{border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:8px 0;background:var(--card)}.pm-res b{font-size:15px}.pm-res small{display:block;color:var(--text-muted);font-size:12.5px;margin-top:2px}
 .pm-res-s{text-align:right;white-space:nowrap}.pm-res-s b{font-size:22px;font-weight:800}.pm-res-s i{font-style:normal;font-size:13px;font-weight:600;opacity:.6}
 .pm-res-f{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);font-size:12.5px;color:var(--text-muted)}.pm-res-f b{font-size:12.5px;color:var(--text)}
+.pm-mtr{height:12px;border-radius:99px;background:color-mix(in srgb,var(--text) 10%,var(--card));overflow:hidden;margin-top:8px}.pm-mtr i{display:block;height:100%;border-radius:99px}
+.pm-mdays{display:flex;gap:4px;align-items:flex-end;height:110px;padding-top:6px}.pm-mdays>div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;min-width:0}
+.pm-mdays i{display:block;width:100%;max-width:26px;border-radius:5px 5px 2px 2px;background:#6366F1}.pm-mdays small{font-size:10.5px;color:var(--text-muted);margin-top:3px}
+.pm-mbar span{flex:1;min-width:0}
+.pm-mbar{position:fixed;left:12px;right:12px;top:12px;margin:0 auto;z-index:100003;display:flex;gap:10px;align-items:center;max-width:680px;background:#7C2D12;color:#fff;border-radius:14px;padding:10px 12px;box-shadow:0 10px 30px rgba(0,0,0,.3);font-size:14px}
+.pm-mbar button{border:0;border-radius:9px;padding:7px 10px;font:inherit;font-weight:800;cursor:pointer;background:#fff;color:#7C2D12;white-space:nowrap}.pm-mbar button[data-x]{background:transparent;color:#fff;padding:4px 6px}
 .pm-ann-i{font-size:22px;line-height:1.2}.pm-ann small{display:block;margin-top:4px;font-weight:500;opacity:.7;font-size:12px}
 .pm-ann button{border:0;background:transparent;color:inherit;font-size:16px;opacity:.6;cursor:pointer;min-width:32px;min-height:32px}
 </style>
@@ -4321,13 +4327,82 @@ PM.upload=async function(el,ctx){
     if(a.dataset.up&&d)return up(d)};
 };
 
+/* ===== 18. AI credit meter (Gemini spend estimate) ===== */
+const mtDay=(t=Date.now())=>new Date(t+5.5*3600e3).toISOString().slice(0,10);
+const mtRs=v=>'₹'+(v>=100?Math.round(v).toLocaleString('en-IN'):v.toFixed(v>=10?0:1));
+PM.meterData=async function(){
+  const today=mtDay(),mStart=today.slice(0,8)+'01';
+  const st=await paceCloud.from('pace_ai_meter').select('*').eq('id',1).maybeSingle();
+  if(st.error)throw new Error(/pace_ai_meter/.test(st.error.message)?'Run ai-meter.sql in Supabase first (SQL Editor).':st.error.message);
+  const M=Object.assign({budget_inr:5000,credit_inr:0,credit_date:null,usd_inr:88,in_usd:0.5,out_usd:3},st.data||{});
+  const from=M.credit_date&&M.credit_date<mStart?M.credit_date:mStart;
+  const r=await paceCloud.rpc('ai_usage_summary',{p_from:from});if(r.error)throw new Error(r.error.message);
+  const cost=x=>((+x.in_tok||0)/1e6*(+M.in_usd)+(+x.out_tok||0)/1e6*(+M.out_usd))*(+M.usd_inr);
+  const rows=(r.data||[]).map(x=>Object.assign({},x,{day:String(x.day).slice(0,10),inr:cost(x)}));
+  const sum=f=>rows.filter(f).reduce((a,x)=>a+x.inr,0);
+  const month=sum(x=>x.day>=mStart),todayS=sum(x=>x.day===today),sinceCredit=M.credit_date?sum(x=>x.day>=M.credit_date):0;
+  const d=+today.slice(8,10),dim=new Date(+today.slice(0,4),+today.slice(5,7),0).getDate();
+  return{M,rows,today,mStart,month,todayS,proj:month/d*dim,creditLeft:+M.credit_inr>0?+M.credit_inr-sinceCredit:null,sinceCredit};
+};
+/* once per session on the admin app: a banner when the budget or the credit is running out */
+PM.creditCheck=async function(){
+  try{const D=await PM.meterData(),M=D.M,pct=+M.budget_inr>0?D.month/M.budget_inr:0;
+    const low=D.creditLeft!=null&&D.creditLeft<Math.max(300,+M.credit_inr*0.15);
+    if(pct<0.8&&!low)return;
+    const key='pace-meter-hide-'+D.today;try{if(localStorage.getItem(key))return}catch(_){}
+    const b=document.createElement('div');b.className='pm-mbar';
+    b.innerHTML=`<span>💳 ${low?`Gemini credit is running low: about <b>${mtRs(Math.max(0,D.creditLeft))}</b> left.`:`AI use this month is <b>${mtRs(D.month)}</b>, ${Math.round(pct*100)}% of your ${mtRs(+M.budget_inr)} budget.`}</span><button data-go>Open meter</button><button data-x aria-label="Hide">✕</button>`;
+    b.onclick=e=>{if(e.target.closest('[data-x]')){try{localStorage.setItem(key,'1')}catch(_){}return b.remove()}
+      if(e.target.closest('[data-go]')){b.remove();if(typeof UI!=='undefined'&&typeof render==='function'){UI.tab='aimeter';const v=document.getElementById('view');if(v)v.dataset.pm='';render()}}};
+    document.body.appendChild(b)}catch(_){}
+};
+PM.aimeter=async function(el){
+  el.innerHTML='<p class="muted">Loading…</p>';
+  let D;try{D=await PM.meterData()}catch(e){el.innerHTML=`<div class="card"><h2 style="margin:0 0 6px">💳 AI credit meter</h2><p style="color:var(--coral)">${E(e.message||e)}</p></div>`;return}
+  const M=D.M,pct=+M.budget_inr>0?Math.min(1,D.month/M.budget_inr):0,over=+M.budget_inr>0&&D.month>+M.budget_inr;
+  const pp=await paceCloud.from('pace_test_submissions').select('id',{count:'exact',head:true}).eq('status','done').gte('graded_at',D.mStart+'T00:00:00+05:30');
+  const papers=pp.count||0,checkCost=D.rows.filter(x=>x.day>=D.mStart&&x.action==='paper check').reduce((a,x)=>a+x.inr,0);
+  const days=[];for(let i=13;i>=0;i--)days.push(mtDay(Date.now()-i*864e5));
+  const perDay=days.map(d=>({d,v:D.rows.filter(x=>x.day===d).reduce((a,x)=>a+x.inr,0)})),top=Math.max(1,...perDay.map(x=>x.v));
+  const uses={};D.rows.filter(x=>x.day>=D.mStart).forEach(x=>{const u=uses[x.action]=uses[x.action]||{inr:0,calls:0};u.inr+=x.inr;u.calls+=+x.calls||0});
+  const U=Object.entries(uses).sort((a,b)=>b[1].inr-a[1].inr);
+  const col=over||pct>=0.9?'#E11D48':pct>=0.7?'#D97706':'#16A34A';
+  const credit=D.creditLeft==null?'':`<div class="pm-st"><b style="color:${D.creditLeft<Math.max(300,+M.credit_inr*0.15)?'#E11D48':'inherit'}">${mtRs(Math.max(0,D.creditLeft))}</b><small>credit left (estimate)<br>of ${mtRs(+M.credit_inr)} added ${E(new Date(M.credit_date+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'}))}</small></div>`;
+  el.innerHTML=`<div class="card"><h2 style="margin:0 0 4px">💳 AI credit meter</h2>
+    <p class="muted" style="margin:0 0 12px;font-size:13px">An estimate from the app's own Gemini use (paper checking, answer keys, marks sheets, practice questions, exam notices). Your exact balance is in Google AI Studio → Billing.</p>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap"><b style="font-size:15px">This month: ${mtRs(D.month)}${+M.budget_inr>0?` <span class="muted" style="font-weight:500">of ${mtRs(+M.budget_inr)} budget</span>`:''}</b><span class="muted" style="font-size:13px">Today ${mtRs(D.todayS)}</span></div>
+    ${+M.budget_inr>0?`<div class="pm-mtr"><i style="width:${Math.max(2,pct*100)}%;background:${col}"></i></div><p class="muted" style="font-size:12.5px;margin:4px 0 0">${over?'⚠ Over budget this month.':`${Math.round(pct*100)}% used`} · At this rate the month ends near <b style="color:var(--text)">${mtRs(D.proj)}</b>.</p>`:''}
+    <div class="pm-stats" style="margin-top:12px">${credit}<div class="pm-st"><b>${papers}</b><small>papers checked this month</small></div><div class="pm-st"><b>${papers&&checkCost?mtRs(checkCost/papers):'—'}</b><small>average per paper</small></div></div>
+    <div class="pm-sec">Last 14 days</div>
+    <div class="pm-mdays">${perDay.map(x=>`<div title="${E(x.d)}: ${mtRs(x.v)}"><i style="height:${x.v?Math.max(4,x.v/top*100):0}%"></i><small>${+x.d.slice(8,10)}</small></div>`).join('')}</div>
+    <div class="pm-sec">What used it this month</div>
+    ${U.map(([k,u])=>`<div class="pm-row"><span style="flex:1;text-transform:capitalize">${E(k)}</span><small class="muted" style="width:80px;text-align:right">${u.calls} call${u.calls===1?'':'s'}</small><b style="width:70px;text-align:right">${mtRs(u.inr)}</b></div>`).join('')||'<p class="muted">No AI use recorded yet this month. Use starts being counted after the update.</p>'}
+    <details style="margin-top:14px;border-top:1px solid var(--line);padding-top:10px" ${+M.credit_inr>0?'':'open'}><summary style="font-weight:800;cursor:pointer">⚙️ Budget, credit and prices</summary>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:10px">
+        <label style="font-size:12.5px">Monthly budget (₹)<input id="mtB" type="number" min="0" inputmode="decimal" value="${E(M.budget_inr)}" style="width:100%;box-sizing:border-box"></label>
+        <label style="font-size:12.5px">Credit you added (₹)<input id="mtC" type="number" min="0" inputmode="decimal" value="${E(+M.credit_inr||'')}" placeholder="e.g. 2000" style="width:100%;box-sizing:border-box"></label>
+        <label style="font-size:12.5px">Date you added it<input id="mtD" type="date" value="${E(M.credit_date||'')}" style="width:100%;box-sizing:border-box"></label>
+        <label style="font-size:12.5px">1 US$ in ₹<input id="mtX" type="number" min="1" step="0.01" inputmode="decimal" value="${E(M.usd_inr)}" style="width:100%;box-sizing:border-box"></label>
+        <label style="font-size:12.5px">$ per 1M input tokens<input id="mtI" type="number" min="0" step="0.01" inputmode="decimal" value="${E(M.in_usd)}" style="width:100%;box-sizing:border-box"></label>
+        <label style="font-size:12.5px">$ per 1M output tokens<input id="mtO" type="number" min="0" step="0.01" inputmode="decimal" value="${E(M.out_usd)}" style="width:100%;box-sizing:border-box"></label>
+      </div>
+      <p class="muted" style="font-size:12px;margin:6px 0 0">When you buy more credit, enter your balance after buying and today's date, so "credit left" starts again from there. Prices are Gemini 3 Flash list prices; change them if Google changes its prices.</p>
+      <button class="btn primary" id="mtS" style="margin-top:10px;min-height:42px">Save</button><span class="muted" id="mtM" style="font-size:12.5px;margin-left:8px"></span></details></div>`;
+  el.querySelector('#mtS').onclick=async()=>{const g=id=>el.querySelector(id).value,m=el.querySelector('#mtM');
+    const v={budget_inr:+g('#mtB')||0,credit_inr:+g('#mtC')||0,credit_date:g('#mtD')||null,usd_inr:+g('#mtX')||88,in_usd:+g('#mtI')||0,out_usd:+g('#mtO')||0,updated_at:new Date().toISOString()};
+    if(v.credit_inr>0&&!v.credit_date){m.textContent='Also enter the date you added the credit.';return}
+    const r=await paceCloud.from('pace_ai_meter').update(v).eq('id',1);if(r.error){m.textContent=r.error.message;return}
+    toast('Saved ✓');PM.aimeter(el)};
+};
+
 /* ===== admin menu pages ===== */
 if(typeof NAV_ITEMS!=='undefined'&&typeof render==='function'&&!/[?&](teacher|student)=1/.test(location.search)){
   const add=(id,label,ic)=>{if(!NAV_ITEMS.some(x=>x.id===id))NAV_ITEMS.splice(Math.max(0,NAV_ITEMS.findIndex(x=>x.id==='leave')),0,{id,label,ic})};
-  add('results','Results','🏅');add('upload','Upload answer sheets','📤');add('announce','Announcements','📢');add('review','Review Queue','🧐');add('attend','Attendance','📷');add('tcal','Test Calendar','🗓️');add('doubts','Doubts','❓');
+  add('results','Results','🏅');add('upload','Upload answer sheets','📤');add('announce','Announcements','📢');add('review','Review Queue','🧐');add('attend','Attendance','📷');add('tcal','Test Calendar','🗓️');add('doubts','Doubts','❓');add('aimeter','AI credit meter','💳');
   const prevR=render;
   render=function(){prevR.apply(this,arguments);
-    const pages={upload:PM.upload,results:PM.results,announce:PM.announce,review:PM.review,attend:PM.attendance,tcal:PM.calendar,doubts:PM.staffDoubts};const f=pages[UI.tab];if(!f)return;
+    if(!window.__mtChk&&UI.accessRole==='admin'&&ok()){window.__mtChk=1;setTimeout(()=>PM.creditCheck(),2500)}
+    const pages={aimeter:PM.aimeter,upload:PM.upload,results:PM.results,announce:PM.announce,review:PM.review,attend:PM.attendance,tcal:PM.calendar,doubts:PM.staffDoubts};const f=pages[UI.tab];if(!f)return;
     const v=document.getElementById('view');if(!v)return;
     if(UI.accessRole!=='admin'){v.innerHTML='<div class="card"><p class="muted">Admin only.</p></div>';return}
     if(!ok()){v.innerHTML='<div class="card"><p class="muted">Connect to the internet first.</p></div>';return}
