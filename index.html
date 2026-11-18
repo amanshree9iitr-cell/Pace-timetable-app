@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="light" style="color-scheme: light;"><head>
-<meta charset="UTF-8"><script>window.paceQ=function(q){var t=String(q==null?'':q).trim();return /^q/i.test(t)?t:'Q'+t};/* accept /#?teacher=1 and /#teacher=1 as well as /?teacher=1 */(function(){var m=location.hash.match(/^#\??((?:teacher|student)=1)$/);if(m&&!location.search)location.replace(location.pathname+"?"+m[1])})();</script>
+<meta charset="UTF-8"><script>window.paceBN=function(b){if(!b)return'Batch';var l=String(paceBN(b)||'Batch'),c=String(b.center||'').trim();return c&&l.toLowerCase().indexOf(c.toLowerCase())<0?c+' '+l:l};window.paceQ=function(q){var t=String(q==null?'':q).trim();return /^q/i.test(t)?t:'Q'+t};/* accept /#?teacher=1 and /#teacher=1 as well as /?teacher=1 */(function(){var m=location.hash.match(/^#\??((?:teacher|student)=1)$/);if(m&&!location.search)location.replace(location.pathname+"?"+m[1])})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png">
 
@@ -2027,7 +2027,7 @@ async function initPublicStudentView(){
   function fillBatches(){
     const center=centerSel.value;
     const batches=(snap.batches||[]).filter(b=>{const c=String(b.center||'').toUpperCase()==='VASAI'?'Vasai':String(b.center||'').toUpperCase()==='VIRAR'?'Virar':b.center;return c===center;});
-    batchSel.innerHTML='<option value="">Select batch</option>'+batches.map(b=>`<option value="${esc(b.id)}">${esc(b.label||b.name)}</option>`).join('');
+    batchSel.innerHTML='<option value="">Select batch</option>'+batches.map(b=>`<option value="${esc(b.id)}">${esc(paceBN(b))}</option>`).join('');
     batchSel.disabled=!center;results.innerHTML='';
   }
   function showClasses(){
@@ -2485,7 +2485,7 @@ function materials(v){
   const bo=STATE.batches.map(b=>`<option value="${b.id}">${esc(b.name)}</option>`).join(''),so=STATE.subjects.map(s=>`<option>${esc(s)}</option>`).join('');
   v.innerHTML=`<div class="grid2"><div class="card"><div class="cardhead"><h2>Batch materials</h2></div>
   <div class="row" style="margin-bottom:6px"><div class="field"><select id="mfb"><option value="">All batches</option>${bo}</select></div><div class="field"><select id="mfs"><option value="">All subjects</option>${so}</select></div></div>
-  ${all.length?all.map(m=>{const k=MK[m.kind]||MK.link,b=batchById(m.batchId);return `<div class="pm-row"><span class="pm-ic" style="--c:${k[1]}">${k[0]}</span><div><b>${esc(m.title)}</b><span>${k[2]}${b?' · '+esc(b.label):''}${m.subject?' · '+esc(m.subject):''}</span></div><a href="${esc(m.url)}" target="_blank" rel="noopener noreferrer" title="Open">↗</a><button class="icon" data-del="${m.id}" title="Delete">🗑️</button></div>`}).join(''):'<p class="muted" style="font-size:13px">No materials yet — add a link on the right.</p>'}</div>
+  ${all.length?all.map(m=>{const k=MK[m.kind]||MK.link,b=batchById(m.batchId);return `<div class="pm-row"><span class="pm-ic" style="--c:${k[1]}">${k[0]}</span><div><b>${esc(m.title)}</b><span>${k[2]}${b?' · '+esc(paceBN(b)):''}${m.subject?' · '+esc(m.subject):''}</span></div><a href="${esc(m.url)}" target="_blank" rel="noopener noreferrer" title="Open">↗</a><button class="icon" data-del="${m.id}" title="Delete">🗑️</button></div>`}).join(''):'<p class="muted" style="font-size:13px">No materials yet — add a link on the right.</p>'}</div>
   <div class="card"><div class="cardhead"><h2>Add material</h2></div><form id="mForm">
   <div class="field"><label>Title</label><input id="mt" required placeholder="e.g. DPP-1 Circular Motion"></div>
   <div class="field"><label>Link (Google Drive, YouTube, PDF URL…)</label><input id="mu" required placeholder="https://"></div>
@@ -3853,7 +3853,7 @@ PM.review=async function(el){
 
 /* ===== 7. QR attendance ===== */
 PM.attendance=async function(el,ctx){
-  const B=ctx.batches||[],bn=id=>{const b=B.find(x=>String(x.id)===String(id));return b?(b.label||b.name)+(b.center?' ('+b.center+')':''):'Batch'};
+  const B=ctx.batches||[],bn=id=>{const b=B.find(x=>String(x.id)===String(id));return b?paceBN(b):'Batch'};
   const today=istDay(),cls=(ctx.classes||[]).filter(c=>c&&c.date===today&&!c.isDoubt).sort((a,b)=>String(a.start).localeCompare(String(b.start)));
   const past=await paceCloud.from('pace_att_sessions').select('id,batch_id,class_label,class_date,created_at').order('created_at',{ascending:false}).limit(25);
   const ids=(past.data||[]).map(p=>p.id),cnt={};
@@ -3911,7 +3911,7 @@ PM.scan=async function(){
 
 /* ===== 8. test calendar ===== */
 PM.calendar=async function(el,ctx){
-  const B=ctx.batches||[],bn=id=>{const b=B.find(x=>String(x.id)===String(id));return b?(b.label||b.name)+(b.center?' ('+b.center+')':''):'Batch'};
+  const B=ctx.batches||[],bn=id=>{const b=B.find(x=>String(x.id)===String(id));return b?paceBN(b):'Batch'};
   const t=await paceCloud.from('pace_tests').select('*').order('created_at',{ascending:false}),from=istDay(-1),to=istDay(60),ev=[];
   (t.data||[]).forEach(x=>{const d=x.due_at?new Date(Date.parse(x.due_at)+5.5*3600e3).toISOString().slice(0,10):null;if(d&&d>=from&&d<=to)ev.push({d,b:x.batch_id,t:'📝 '+x.title+' (submit by '+new Date(x.due_at).toLocaleTimeString('en-IN',{timeStyle:'short'})+')'})});
   (ctx.classes||[]).forEach(c=>{if(c&&(c.isTest||c.testKind)&&c.date>=from&&c.date<=to)[c.batchId,c.secondBatchId].filter(Boolean).forEach(b=>ev.push({d:c.date,b,t:'🧪 '+(c.testKind==='major'?'Major Test':c.testKind==='topic'?'Topic-wise Test'+(c.twtName?' – '+c.twtName:''):(c.subject||'Test'))+' · '+String(c.start||'').slice(0,5)}))});
@@ -3943,7 +3943,7 @@ PM.studentDoubts=async function(el,user){
 };
 PM.staffDoubts=async function(el,ctx){
   el.innerHTML='<p class="muted">Loading doubts…</p>';
-  const B=ctx.batches||[],bn=id=>{const b=B.find(x=>String(x.id)===String(id));return b?(b.label||b.name):''};
+  const B=ctx.batches||[],bn=id=>{const b=B.find(x=>String(x.id)===String(id));return b?paceBN(b):''};
   const d=await paceCloud.from('pace_doubts').select('*').order('created_at',{ascending:false}).limit(80);
   let f=ctx.subject||'';
   const draw=()=>{const L=(d.data||[]).filter(x=>!f||x.subject===f).sort((a,b)=>(a.status==='open'?0:1)-(b.status==='open'?0:1));const subs=[...new Set((d.data||[]).map(x=>x.subject).filter(Boolean))];
@@ -4035,14 +4035,14 @@ const annSeen=()=>{try{return new Set(JSON.parse(localStorage.getItem('pace-ann-
 const annAgo=t=>{const m=Math.round((Date.now()-new Date(t))/6e4);return m<1?'just now':m<60?m+' min ago':m<1440?Math.round(m/60)+' h ago':new Date(t).toLocaleDateString('en-IN',{day:'numeric',month:'short'})};
 PM.announce=async function(el,ctx){
   el.innerHTML='<p class="muted">Loading…</p>';
-  const B=ctx.batches||[],bn=id=>{if(!id)return'Everyone';const b=B.find(x=>String(x.id)===String(id));return b?(b.label||b.name||'Batch'):'Batch'};
+  const B=ctx.batches||[],bn=id=>{if(!id)return'Everyone';const b=B.find(x=>String(x.id)===String(id));return b?(paceBN(b)):'Batch'};
   const d=await paceCloud.from('pace_announcements').select('*').order('created_at',{ascending:false}).limit(40);
   const L=d.data||[],now=Date.now();
   el.innerHTML=`<div class="card"><h2 style="margin:0 0 4px">📢 Announcements</h2><p class="muted" style="margin:0 0 10px;font-size:13px">Send a short message. It shows at the top of the student app and goes out as a phone alert.</p>
     ${d.error?`<p style="color:var(--coral)">${E(/pace_announcements/.test(d.error.message)?'Run announce.sql in Supabase first. ':'')+E(d.error.message)}</p>`:''}
     <textarea id="anT" rows="3" maxlength="500" placeholder="e.g. Tomorrow's Physics class is at 8:00 AM instead of 9:00 AM." style="width:100%;box-sizing:border-box"></textarea>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center">
-      <select id="anB" style="flex:1;min-width:150px"><option value="">Everyone (all batches)</option>${B.map(b=>`<option value="${E(b.id)}">${E(b.label||b.name||b.id)}</option>`).join('')}</select>
+      <select id="anB" style="flex:1;min-width:150px"><option value="">Everyone (all batches)</option>${B.map(b=>`<option value="${E(b.id)}">${E(paceBN(b))}</option>`).join('')}</select>
       <select id="anD" style="flex:1;min-width:130px"><option value="1">Show for 1 day</option><option value="3" selected>Show for 3 days</option><option value="7">Show for 7 days</option></select></div>
     <label style="display:flex;gap:8px;align-items:center;margin:10px 0 0;font-size:13px"><input type="checkbox" id="anP" style="width:auto" checked> Also show to parents</label>
     <button class="btn primary" id="anS" style="margin-top:10px;min-height:44px">📢 Send announcement</button><p class="muted" id="anM" style="font-size:12.5px;margin:6px 0 0"></p>
@@ -4098,7 +4098,7 @@ const filesToPayload=async files=>{const o={images:[]};
 
 PM.results=async function(el,ctx){
   el.innerHTML='<p class="muted">Loading results…</p>';
-  const B=ctx.batches||[],bn=id=>{const b=B.find(x=>String(x.id)===String(id));return b?(b.label||b.name||'Batch'):'Batch'};
+  const B=ctx.batches||[],bn=id=>{const b=B.find(x=>String(x.id)===String(id));return b?(paceBN(b)):'Batch'};
   const [t,s,dir,acc,rt,rm]=await Promise.all([paceCloud.from('pace_tests').select('id,title,subject,batch_id,max_marks,created_at'),
     paceCloud.from('pace_test_submissions').select('id,test_id,user_id,directory_id,student_name,score,max_marks,graded_at').eq('status','done').then(r=>r.error&&/directory_id/.test(r.error.message)?paceCloud.from('pace_test_submissions').select('id,test_id,user_id,student_name,score,max_marks,graded_at').eq('status','done'):r),
     paceCloud.from('pace_member_directory').select('id,role,name,email,batch_id'),paceCloud.from('pace_member_accounts').select('user_id,directory_id'),
@@ -4139,7 +4139,7 @@ PM.results=async function(el,ctx){
       <div id="rsF">${foundHTML()}</div>
       ${pd?studentView(pd):''}
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;align-items:center">${Object.keys(SRC).map(k=>`<button class="pe-chip${tab===k?' act':''}" data-tab2="${k}">${SRC[k][0]} ${SRC[k][1]} (${cnt(k)})</button>`).join('')}
-        <select id="rsB" style="margin-left:auto;min-width:130px"><option value="">All batches</option>${B.map(b=>`<option value="${E(b.id)}"${String(b.id)===fb?' selected':''}>${E(b.label||b.name||b.id)}</option>`).join('')}</select></div>
+        <select id="rsB" style="margin-left:auto;min-width:130px"><option value="">All batches</option>${B.map(b=>`<option value="${E(b.id)}"${String(b.id)===fb?' selected':''}>${E(paceBN(b))}</option>`).join('')}</select></div>
       ${L.map(testCard).join('')||`<p class="muted" style="margin-top:12px">${tab==='app'?'No checked app tests yet.':'Nothing here yet. Tap ➕ Add marks.'}</p>`}</div>`};
   draw();
   const again=()=>PM.results(el,ctx);
@@ -4167,7 +4167,7 @@ PM.addMarks=function(C,ex,done,inbox){
   const today=istDay(),b=modal(ex?'✏️ Edit marks':'➕ Add marks',`
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px">
       <label style="font-size:12.5px">Type<select id="amS" style="width:100%"><option value="offline">📝 Offline test</option><option value="external">🌐 External test</option></select></label>
-      <label style="font-size:12.5px">Batch<select id="amB" style="width:100%">${C.B.map(x=>`<option value="${E(x.id)}">${E(x.label||x.name||x.id)}</option>`).join('')}</select></label>
+      <label style="font-size:12.5px">Batch<select id="amB" style="width:100%">${C.B.map(x=>`<option value="${E(x.id)}">${E(paceBN(x))}</option>`).join('')}</select></label>
       <label style="font-size:12.5px;grid-column:1/-1">Test name<input id="amT" maxlength="150" placeholder="e.g. Major Test 3 (offline)" style="width:100%;box-sizing:border-box"></label>
       <label style="font-size:12.5px">Subject (optional)<input id="amSub" maxlength="60" placeholder="PCM" style="width:100%;box-sizing:border-box"></label>
       <label style="font-size:12.5px">Test date<input id="amD" type="date" value="${today}" style="width:100%;box-sizing:border-box"></label>
@@ -4264,7 +4264,7 @@ PM.upload=async function(el,ctx){
   if(t.error)throw t.error;
   const TS=(t.data||[]).filter(x=>x.answer_mode!=='tap'),STU=(dir.data||[]).filter(d=>(d.role||'student')==='student'),uidByDir={};
   (acc.data||[]).forEach(a=>{if(a.directory_id)uidByDir[a.directory_id]=a.user_id});
-  const B=(ctx.batches||[]).filter(b=>TS.some(x=>String(x.batch_id)===String(b.id))),bn=id=>{const b=(ctx.batches||[]).find(x=>String(x.id)===String(id));return b?(b.label||b.name||'Batch'):'Batch'};
+  const B=(ctx.batches||[]).filter(b=>TS.some(x=>String(x.batch_id)===String(b.id))),bn=id=>{const b=(ctx.batches||[]).find(x=>String(x.id)===String(id));return b?(paceBN(b)):'Batch'};
   let tid=pre.t&&TS.some(x=>x.id===pre.t)?pre.t:'',bid=tid?String(TS.find(x=>x.id===tid).batch_id):(pre.b||'');
   let q='',S=[];const files={},busy={};
   const test=()=>TS.find(x=>x.id===tid),roster=()=>STU.filter(d=>String(d.batch_id)===String(bid)).sort((a,c)=>String(a.name||'').localeCompare(String(c.name||'')));
@@ -4287,7 +4287,7 @@ PM.upload=async function(el,ctx){
   const draw=()=>{const TB=TS.filter(x=>String(x.batch_id)===String(bid));
     el.innerHTML=`<div class="card"><h2 style="margin:0 0 4px">📤 Upload answer sheets</h2><p class="muted" style="margin:0 0 12px;font-size:13px">For students who wrote the test on paper or have no phone. Choose the batch and the test, then add photos of each student's pages (or one PDF) and tap <b>Upload &amp; check</b>. You can go on to the next student while papers are being checked.</p>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px">
-        <label style="font-size:12.5px">Batch<select id="upB" style="width:100%"><option value="">Choose a batch…</option>${B.map(b=>`<option value="${E(b.id)}"${String(b.id)===String(bid)?' selected':''}>${E(b.label||b.name||b.id)}</option>`).join('')}</select></label>
+        <label style="font-size:12.5px">Batch<select id="upB" style="width:100%"><option value="">Choose a batch…</option>${B.map(b=>`<option value="${E(b.id)}"${String(b.id)===String(bid)?' selected':''}>${E(paceBN(b))}</option>`).join('')}</select></label>
         <label style="font-size:12.5px">Test<select id="upT" style="width:100%" ${bid?'':'disabled'}><option value="">${bid?(TB.length?'Choose a test…':'No photo tests for this batch'):'Choose the batch first'}</option>${TB.map(x=>`<option value="${E(x.id)}"${x.id===tid?' selected':''}>${E(x.title)}${x.is_open===false?' (closed)':''}</option>`).join('')}</select></label>
       </div>
       ${tid?`<input id="upQ" type="search" placeholder="🔍 Search a student…" value="${E(q)}" style="width:100%;box-sizing:border-box;margin-top:10px" autocomplete="off">`:''}
@@ -5219,7 +5219,7 @@ const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+Stri
 async function list(){
   const r=await paceCloud.from('pace_homework').select('id,batch_id,subject,title,due_date').order('due_date',{ascending:false}).limit(30);
   const L=$('hwList');if(!L)return;
-  const name=id=>{const b=B.find(x=>x.id===id);return b?(b.label||b.name):'Batch'};
+  const name=id=>{const b=B.find(x=>x.id===id);return b?paceBN(b):'Batch'};
   L.innerHTML=r.error?`<p class="muted">${esc(r.error.message)}</p>`:(r.data||[]).map(h=>`<div class="pm-row"><div><b>${esc(h.title)}</b><span>${esc(name(h.batch_id))}${h.subject?' · '+esc(h.subject):''} · due ${esc(fmtDateLong(h.due_date))}</span></div><button class="icon" data-del="${h.id}" title="Delete">🗑️</button></div>`).join('')||'<p class="muted" style="font-size:13px">Nothing assigned yet.</p>';
 }
 async function build(){
@@ -5232,7 +5232,7 @@ async function build(){
   const sec=document.createElement('section');sec.className='card';sec.id='peHw';sec.style.marginTop='16px';sc.after(sec);
   sec.innerHTML=`<div class="cardhead"><h2>Assign homework</h2></div>
   <form id="hwF" style="display:grid;gap:12px">
-   <div class="row"><div class="field"><label>Batch</label><select id="hwB" required>${B.map(b=>`<option value="${esc(b.id)}">${esc(b.label||b.name)} (${esc(b.center||'')})</option>`).join('')}</select></div>
+   <div class="row"><div class="field"><label>Batch</label><select id="hwB" required>${B.map(b=>`<option value="${esc(b.id)}">${esc(paceBN(b))}</option>`).join('')}</select></div>
    <div class="field"><label>Subject</label><input id="hwS" list="hwSL" placeholder="e.g. Physics"><datalist id="hwSL">${subs.map(s=>`<option value="${esc(s)}">`).join('')}</datalist></div></div>
    <div class="field"><label>Title</label><input id="hwT" required maxlength="200" placeholder="e.g. DPP-3 Circular Motion Q1–20"></div>
    <div class="field"><label>Details (optional)</label><textarea id="hwD" rows="3" maxlength="2000"></textarea></div>
@@ -5466,15 +5466,15 @@ async function paintTests0(host,ctx){
     paceCloud.from('pace_test_submissions').select('*')];
   if(!TE)qs.push(paceCloud.from('pace_member_directory').select('id,role,name,email,batch_id'),paceCloud.from('pace_member_accounts').select('user_id,directory_id'));
   const [t,s,dir,acc]=await Promise.all(qs);
-  const bl=ctx.batches||[],bn=id=>{const b=bl.find(x=>x.id===id);return b?(b.label||b.name):'Batch'};
+  const bl=ctx.batches||[],bn=id=>{const b=bl.find(x=>x.id===id);return b?paceBN(b):'Batch'};
   const D=Object.fromEntries(((dir&&dir.data)||[]).map(x=>[x.id,x])),uidByDir={},emailByUid={};
   ((acc&&acc.data)||[]).forEach(a=>{uidByDir[a.directory_id]=a.user_id;const d=D[a.directory_id];if(d&&d.role==='student')emailByUid[a.user_id]=d.email||''});
   const emailOf=u=>emailByUid[u.user_id]||'';
   const note=t.error?`<p style="color:var(--coral);font-size:13px">${esc(t.error.message)} — ${TE?'ask the administrator to run v3.sql':'connect Google (admin) first, and make sure the SQL files were run'}.</p>`:'';
   const by={};(s.data||[]).forEach(x=>(by[x.test_id]=by[x.test_id]||[]).push(x));
-  const opts=bl.map(b=>`<option value="${esc(b.id)}">${esc(b.label||b.name)}${b.center?' ('+esc(b.center)+')':''}</option>`).join('');
+  const opts=bl.map(b=>`<option value="${esc(b.id)}">${esc(paceBN(b))}</option>`).join('');
   host.innerHTML=`<div class="card" style="margin-bottom:16px"><div class="cardhead"><h2>${TE?'Assign an AI-checked test':'Create a test'}</h2></div>${note}${bl.length?'':`<p style="color:var(--coral);font-size:13px">${TE?'No batches yet — your timetable has not been published.':'No batches are loaded on this device yet. Tap “Restore cloud” in the top bar first, then come back here.'}</p>`}
-  <form id="tF" style="display:grid;gap:12px"><div class="field"><label>Batches <span class="muted" style="font-weight:400">(tap to choose one or more)</span></label><div id="tB" class="tb-pick">${bl.map(b=>`<label class="tb-c"><input type="checkbox" value="${esc(b.id)}"><span>${esc(b.label||b.name)}${b.short?' '+esc(b.short):''}${b.center?' · '+esc(b.center):''}</span></label>`).join('')}</div>${bl.length>1?'<div style="display:flex;gap:12px;margin-top:6px;font-size:12.5px"><a href="#" id="tBall">Select all</a><a href="#" id="tBnone">Clear</a></div>':''}<small class="muted" style="font-size:12px">Each selected batch gets its own copy of the test, with its own submissions and marks.</small></div><div class="row"><div class="field"><label>Subject</label><input id="tS" placeholder="e.g. Physics"></div><div class="field"><label>Max marks</label><input id="tM" type="number" min="1" value="100"></div></div>
+  <form id="tF" style="display:grid;gap:12px"><div class="field"><label>Batches <span class="muted" style="font-weight:400">(tap to choose one or more)</span></label><div id="tB" class="tb-pick">${bl.map(b=>`<label class="tb-c"><input type="checkbox" value="${esc(b.id)}"><span>${esc(paceBN(b))}${b.short?' '+esc(b.short):''}</span></label>`).join('')}</div>${bl.length>1?'<div style="display:flex;gap:12px;margin-top:6px;font-size:12.5px"><a href="#" id="tBall">Select all</a><a href="#" id="tBnone">Clear</a></div>':''}<small class="muted" style="font-size:12px">Each selected batch gets its own copy of the test, with its own submissions and marks.</small></div><div class="row"><div class="field"><label>Subject</label><input id="tS" placeholder="e.g. Physics"></div><div class="field"><label>Max marks</label><input id="tM" type="number" min="1" value="100"></div></div>
   <div class="field"><label>Title</label><input id="tT" required placeholder="e.g. Chemistry Unit Test 1"></div>
   <div class="field"><label>Question paper (paste from ChatGPT; students can read this)</label><textarea id="tQ" rows="7"></textarea><label style="margin-top:8px;font-size:12.5px">…or attach the question paper as a PDF</label><input type="file" id="tQF" accept="application/pdf"></div>
   <div class="field"><label>Marking scheme / model answers (students can NOT see this)</label><textarea id="tK" rows="7" placeholder="Paste the answer key with marks for each question"></textarea><label style="margin-top:8px;font-size:12.5px">…or attach the marking scheme as a PDF</label><input type="file" id="tKF" accept="application/pdf"></div>
@@ -5528,7 +5528,7 @@ async function paintTests0(host,ctx){
       const ov=document.createElement('div');ov.className='kv-ov';
       ov.innerHTML=`<div class="kv-box"><div class="kv-h"><b>📋 Copy “${esc(x.title)}” to other batches</b><button class="btn ghost" data-kx>✕</button></div>
         <p class="muted" style="margin:0 0 10px;font-size:13px">The question paper, the marking scheme and the checked answer key are copied. Students of the chosen batches see it as a new test.</p>
-        <div class="tb-pick">${bl.map(q=>`<label class="tb-c"><input type="checkbox" value="${esc(q.id)}"><span>${esc(q.label||q.name||q.id)}${have.has(String(q.id))?' <small class="muted">(already has it)</small>':''}</span></label>`).join('')}</div>
+        <div class="tb-pick">${bl.map(q=>`<label class="tb-c"><input type="checkbox" value="${esc(q.id)}"><span>${esc(paceBN(q))}${have.has(String(q.id))?' <small class="muted">(already has it)</small>':''}</span></label>`).join('')}</div>
         <div class="field" style="margin-top:12px"><label>Submit by (optional deadline)</label><input type="datetime-local" id="cpDue"></div>
         <button class="btn primary" data-cgo style="margin-top:12px;min-height:44px">Copy test</button><p class="muted" id="cpM" style="font-size:12.5px;margin:6px 0 0"></p></div>`;
       document.body.appendChild(ov);
