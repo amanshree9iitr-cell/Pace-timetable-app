@@ -3773,6 +3773,19 @@ window.peQuizBanner=async function(el,user){if(!el)return;try{
 .pm-mtr{height:12px;border-radius:99px;background:color-mix(in srgb,var(--text) 10%,var(--card));overflow:hidden;margin-top:8px}.pm-mtr i{display:block;height:100%;border-radius:99px}
 .pm-mdays{display:flex;gap:4px;align-items:flex-end;height:110px;padding-top:6px}.pm-mdays>div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;min-width:0}
 .pm-mdays i{display:block;width:100%;max-width:26px;border-radius:5px 5px 2px 2px;background:#6366F1}.pm-mdays small{font-size:10.5px;color:var(--text-muted);margin-top:3px}
+.om-ov{position:fixed;inset:0;z-index:100005;background:#0B1020;color:#fff;display:flex;flex-direction:column}
+.om-top{display:flex;align-items:center;gap:10px;padding:12px 14px;padding-top:max(12px,env(safe-area-inset-top))}.om-top b{flex:1;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.om-x{border:0;background:rgba(255,255,255,.12);color:#fff;border-radius:10px;min-width:40px;min-height:40px;font-size:18px;cursor:pointer}
+.om-stage{flex:1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;min-height:0}
+.om-stage video,.om-stage canvas{max-width:100%;max-height:100%;object-fit:contain;display:block}
+.om-guide{position:absolute;inset:6% 10%;pointer-events:none}.om-guide i{position:absolute;width:34px;height:34px;border:4px solid rgba(255,255,255,.75)}
+.om-guide i:nth-child(1){left:0;top:0;border-right:0;border-bottom:0}.om-guide i:nth-child(2){right:0;top:0;border-left:0;border-bottom:0}.om-guide i:nth-child(3){left:0;bottom:0;border-right:0;border-top:0}.om-guide i:nth-child(4){right:0;bottom:0;border-left:0;border-top:0}
+.om-ok .om-guide i{border-color:#22C55E}.om-shot:not([hidden])~.om-guide{display:none}
+.om-bar{display:flex;gap:8px;align-items:center;padding:10px 14px;padding-bottom:max(10px,env(safe-area-inset-bottom))}.om-st{flex:1;font-size:13.5px;opacity:.9}
+.om-btn{border:0;border-radius:12px;padding:11px 16px;font:inherit;font-weight:800;background:#4F46E5;color:#fff;cursor:pointer;min-height:44px;display:inline-flex;align-items:center;justify-content:center}.om-btn.ghost{background:rgba(255,255,255,.14)}.om-btn:disabled{opacity:.45}
+.om-rev{padding:0 14px 14px;padding-bottom:max(14px,env(safe-area-inset-bottom))}.om-rv{background:#fff;color:#111827;border-radius:14px;padding:12px}.om-rv select{padding:8px;border-radius:8px;border:1px solid #CBD5E1;font:inherit}
+.om-msg{color:#BE123C}
+.om-stage [hidden],.om-rev[hidden]{display:none!important}.om-rv .om-btn.ghost{background:#EEF2FF;color:#3730A3}
 .pm-mbar span{flex:1;min-width:0}
 .pm-mbar{position:fixed;left:12px;right:12px;top:12px;margin:0 auto;z-index:100003;display:flex;gap:10px;align-items:center;max-width:680px;background:#7C2D12;color:#fff;border-radius:14px;padding:10px 12px;box-shadow:0 10px 30px rgba(0,0,0,.3);font-size:14px}
 .pm-mbar button{border:0;border-radius:9px;padding:7px 10px;font:inherit;font-weight:800;cursor:pointer;background:#fff;color:#7C2D12;white-space:nowrap}.pm-mbar button[data-x]{background:transparent;color:#fff;padding:4px 6px}
@@ -3812,9 +3825,10 @@ PM.notSubmitted=function(x,L,D,uidByDir){
   const miss=roster.filter(d=>!done.has(uidByDir[d.id])&&!doneDir.has(String(d.id))).sort((a,b)=>String(a.name).localeCompare(String(b.name))),can=miss.filter(d=>uidByDir[d.id]);
   const b=modal('🙋 Not submitted: '+E(x.title),`<p class="muted" style="margin-top:0">${miss.length} of ${roster.length} students have not submitted.${x.due_at?' Deadline: '+E(new Date(x.due_at).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'})):''}</p>
     ${miss.map(d=>`<div class="pm-row"><span style="flex:1">${E(d.name||d.email||'Student')}</span>${uidByDir[d.id]?'':'<span class="pm-tag">not signed in to the app</span>'}</div>`).join('')||'<p>🎉 Everyone has submitted!</p>'}
-    ${miss.length&&x.answer_mode!=='tap'?`<button class="btn ghost" id="pmUpl" style="margin-top:10px">📤 Upload paper answer sheets for these students</button>`:''}
+    ${miss.length&&!['tap','omr'].includes(x.answer_mode)?`<button class="btn ghost" id="pmUpl" style="margin-top:10px">📤 Upload paper answer sheets for these students</button>`:''}${miss.length&&x.answer_mode==='omr'?`<button class="btn ghost" id="pmOmr" style="margin-top:10px">📷 Scan OMR sheets</button>`:''}
     ${can.length?`<label style="display:flex;gap:8px;align-items:center;margin:12px 0 0;font-size:13px"><input type="checkbox" id="pmPar" style="width:auto"> Also notify their parents</label><button class="btn primary" id="pmRem" style="margin-top:10px">🔔 Send reminder to ${can.length} student${can.length>1?'s':''}</button><p class="muted" id="pmRemM" style="font-size:12.5px"></p>`:''}`);
   const ul=b.querySelector('#pmUpl');if(ul)ul.onclick=()=>PM.goUpload(x.batch_id,x.id);
+  const uo=b.querySelector('#pmOmr');if(uo)uo.onclick=()=>PM.goOmr(x.batch_id,x.id);
   const r=b.querySelector('#pmRem');if(r)r.onclick=async()=>{r.disabled=true;r.textContent='Sending…';
     const q=await fn({notify:{user_ids:can.map(d=>uidByDir[d.id]),parents:b.querySelector('#pmPar').checked,title:'📝 Reminder: '+x.title,body:'Please submit your answer sheet in the PACE app'+(x.due_at?' before '+new Date(x.due_at).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'}):'')+'.'}});
     r.textContent=q.error?'Try again':'Sent ✓';r.disabled=!q.error;b.querySelector('#pmRemM').textContent=q.error?await em(q.error):`Delivered to ${q.data.sent} phone(s). Students without alerts turned on will see it when they open the app.`};
@@ -4262,7 +4276,7 @@ PM.upload=async function(el,ctx){
   const [t,dir,acc]=await Promise.all([paceCloud.from('pace_tests').select('*').order('created_at',{ascending:false}),
     paceCloud.from('pace_member_directory').select('id,role,name,email,batch_id'),paceCloud.from('pace_member_accounts').select('user_id,directory_id')]);
   if(t.error)throw t.error;
-  const TS=(t.data||[]).filter(x=>x.answer_mode!=='tap'),STU=(dir.data||[]).filter(d=>(d.role||'student')==='student'),uidByDir={};
+  const TS=(t.data||[]).filter(x=>!['tap','omr'].includes(x.answer_mode)),STU=(dir.data||[]).filter(d=>(d.role||'student')==='student'),uidByDir={};
   (acc.data||[]).forEach(a=>{if(a.directory_id)uidByDir[a.directory_id]=a.user_id});
   const B=(ctx.batches||[]).filter(b=>TS.some(x=>String(x.batch_id)===String(b.id))),bn=id=>{const b=(ctx.batches||[]).find(x=>String(x.id)===String(id));return b?(paceBN(b)):'Batch'};
   let tid=pre.t&&TS.some(x=>x.id===pre.t)?pre.t:'',bid=tid?String(TS.find(x=>x.id===tid).batch_id):(pre.b||'');
@@ -4395,14 +4409,265 @@ PM.aimeter=async function(el){
     toast('Saved ✓');PM.aimeter(el)};
 };
 
+/* ===== OMR engine: sheet layout, printable PDF, and reading a photo of a filled sheet (no AI) ===== */
+const OMR=(()=>{
+  const PW=210,PH=297,MK=[[14,14],[196,14],[14,283],[196,283]],MS=8,OR=[27,14],ORS=4;
+  /* where every bubble is, in mm from the top-left corner of the A4 page */
+  function layout(p){
+    const L={roll:[],qs:[],heads:[]};
+    for(let r=0;r<5;r++){const row=[];for(let c=0;c<10;c++)row.push({x:131+c*6.1,y:36+r*6.2,r:2.2,t:String(c)});L.roll.push(row)}
+    if(p&&p.type==='jee'){
+      [[1,20],[26,45],[51,70]].forEach(([a,b],c)=>{const x0=15+c*62;L.heads.push({x:x0,y:74,t:`Section ${c+1}: Q${a} - Q${b} (MCQ)`});
+        for(let q=a;q<=b;q++){const y=79+(q-a)*4.9;L.qs.push({q:String(q),type:'mcq',lx:x0+7.5,y,opts:'ABCD'.split('').map((t,i)=>({x:x0+11+i*5.6,y,r:2,t}))})}});
+      L.heads.push({x:15,y:178,t:'Numerical answers: write the number in the boxes, then fill ONE bubble per column (- only if negative)'});
+      [21,22,23,24,25,46,47,48,49,50,71,72,73,74,75].forEach((q,i)=>{const bx=14+(i%8)*22.5,top=181+Math.floor(i/8)*49.5,cols=[[{x:bx+2.6,y:top+13,r:1.5,t:'-'}]];
+        for(let c=1;c<5;c++){const col=[];for(let d=0;d<10;d++)col.push({x:bx+2.6+c*4.2,y:top+13+d*3.6,r:1.5,t:String(d)});cols.push(col)}
+        L.qs.push({q:String(q),type:'num',bx,top,cols})});
+    }else{
+      const n=Math.max(1,Math.min(200,Math.round(+((p&&p.n)||180))));
+      for(let q=1;q<=n;q++){const c=Math.floor((q-1)/40),y=76+((q-1)%40)*5,x0=15+c*37.5;
+        L.qs.push({q:String(q),type:'mcq',lx:x0+7.5,y,opts:'ABCD'.split('').map((t,i)=>({x:x0+11+i*5.6,y,r:2,t}))})}
+    }
+    return L;
+  }
+  const count=p=>layout(p).qs.length;
+  const maxMarks=p=>layout(p).qs.reduce((a,q)=>a+(q.type==='num'?+(p.num_pos??p.pos??4):+(p.pos??4)),0);
+
+  /* the printable sheet (PDF, one A4 page) */
+  async function sheetPdf(PDFLib,p,info){
+    const {PDFDocument,rgb,StandardFonts}=PDFLib,doc=await PDFDocument.create(),pg=doc.addPage([595.28,841.89]),k=72/25.4;
+    const f=await doc.embedFont(StandardFonts.Helvetica),fb=await doc.embedFont(StandardFonts.HelveticaBold);
+    const X=x=>x*k,Y=y=>(PH-y)*k,blk=rgb(0,0,0),gr=rgb(.45,.47,.55),lt=rgb(.7,.72,.78),ink=rgb(.06,.12,.3);
+    const clean=s=>String(s||'').replace(/[^\x20-\x7E]/g,'').slice(0,120);
+    const txt=(s,x,y,o={})=>{s=clean(s);if(!s)return;const ft=o.b?fb:f,sz=o.s||8,w=ft.widthOfTextAtSize(s,sz);pg.drawText(s,{x:X(x)-(o.c?w/2:o.r?w:0),y:Y(y),size:sz,font:ft,color:o.col||ink})};
+    const bub=(b)=>{pg.drawEllipse({x:X(b.x),y:Y(b.y),xScale:b.r*k,yScale:b.r*k,borderColor:gr,borderWidth:.6});txt(b.t,b.x,b.y+0.62*b.r*0.9,{s:b.r>1.8?5:4,c:1,col:lt})};
+    for(const [x,y] of MK)pg.drawRectangle({x:X(x-MS/2),y:Y(y+MS/2),width:MS*k,height:MS*k,color:blk});
+    pg.drawRectangle({x:X(OR[0]-ORS/2),y:Y(OR[1]+ORS/2),width:ORS*k,height:ORS*k,color:blk});
+    txt('PACE IIT & MEDICAL - OMR ANSWER SHEET',32,16,{b:1,s:11});
+    txt(info&&info.title,32,23,{s:9});
+    txt(info&&info.batch?'Batch: '+info.batch:'',32,29,{s:8,col:gr});
+    txt('Name: ______________________________________',22,40,{s:9});
+    txt('Date: ________________',22,48,{s:9});
+    ['Use a dark blue or black ball pen. Fill the bubble completely.','Fill only ONE bubble per question. Do not fold, staple or write near the black squares.',
+     'Write your roll number in the boxes and fill the matching bubble in each row.'].forEach((s,i)=>txt(s,22,56+i*4.2,{s:6.6,col:gr}));
+    txt('ROLL NO.',118,29,{b:1,s:8});
+    L0(p).roll[0].forEach(b=>txt(b.t,b.x,31.5,{s:6,c:1,col:gr}));
+    L0(p).roll.forEach((row,r)=>{pg.drawRectangle({x:X(118),y:Y(row[0].y+2.6),width:7*k,height:5.2*k,borderColor:gr,borderWidth:.6});row.forEach(bub)});
+    const Lp=L0(p);
+    Lp.heads.forEach(h=>txt(h.t,h.x,h.y,{b:1,s:7}));
+    Lp.qs.forEach(q=>{
+      if(q.type==='mcq'){txt(q.q,q.lx,q.y+1.1,{s:6.6,r:1,b:1});q.opts.forEach(bub);if(+q.q%5===0)pg.drawLine({start:{x:X(q.lx-6),y:Y(q.y+2.5)},end:{x:X(q.opts[3].x+3),y:Y(q.y+2.5)},thickness:.35,color:lt})}
+      else{pg.drawRectangle({x:X(q.bx),y:Y(q.top+47),width:21.6*k,height:47*k,borderColor:lt,borderWidth:.5});txt('Q'+q.q,q.bx+1,q.top+3.6,{b:1,s:7});
+        q.cols.forEach((col,c)=>{pg.drawRectangle({x:X(col[0].x-1.9),y:Y(q.top+9.6),width:3.8*k,height:4.4*k,borderColor:gr,borderWidth:.5});col.forEach(bub)})}
+    });
+    txt('Do not write in this area. Scan with the PACE app.',105,291,{s:6,c:1,col:lt});
+    return await doc.save();
+  }
+  let _L=null,_Lk='';const L0=p=>{const key=JSON.stringify(p||{});if(_Lk!==key){_L=layout(p);_Lk=key}return _L};
+
+  /* ---------- reading a photo ---------- */
+  function gray(img){const d=img.data,n=img.width*img.height,g=new Uint8ClampedArray(n);for(let i=0,j=0;i<n;i++,j+=4)g[i]=(d[j]*77+d[j+1]*150+d[j+2]*29)>>8;return g}
+  function integral(g,w,h){const I=new Float64Array((w+1)*(h+1));for(let y=0;y<h;y++){let s=0;for(let x=0;x<w;x++){s+=g[y*w+x];I[(y+1)*(w+1)+x+1]=I[y*(w+1)+x+1]+s}}return I}
+  /* the four black corner squares */
+  function findMarkers(g,w,h){
+    const I=integral(g,w,h),R=Math.max(8,Math.round(Math.max(w,h)/14)),dark=new Uint8Array(w*h);
+    for(let y=0;y<h;y++){const y0=Math.max(0,y-R),y1=Math.min(h,y+R+1);for(let x=0;x<w;x++){const x0=Math.max(0,x-R),x1=Math.min(w,x+R+1);
+      const m=(I[y1*(w+1)+x1]-I[y0*(w+1)+x1]-I[y1*(w+1)+x0]+I[y0*(w+1)+x0])/((x1-x0)*(y1-y0));const v=g[y*w+x];if(v<m*0.62&&v<150)dark[y*w+x]=1}}
+    const lab=new Int32Array(w*h),C=[],st=new Int32Array(w*h);let id=0;
+    for(let i=0;i<w*h;i++){if(!dark[i]||lab[i])continue;id++;let sp=0,n=0,sx=0,sy=0,mnx=w,mny=h,mxx=0,mxy=0;st[sp++]=i;lab[i]=id;
+      while(sp){const j=st[--sp],x=j%w,y=(j-x)/w;n++;sx+=x;sy+=y;if(x<mnx)mnx=x;if(x>mxx)mxx=x;if(y<mny)mny=y;if(y>mxy)mxy=y;
+        if(x>0&&dark[j-1]&&!lab[j-1]){lab[j-1]=id;st[sp++]=j-1}if(x<w-1&&dark[j+1]&&!lab[j+1]){lab[j+1]=id;st[sp++]=j+1}
+        if(y>0&&dark[j-w]&&!lab[j-w]){lab[j-w]=id;st[sp++]=j-w}if(y<h-1&&dark[j+w]&&!lab[j+w]){lab[j+w]=id;st[sp++]=j+w}}
+      const bw=mxx-mnx+1,bh=mxy-mny+1,S=Math.min(w,h);
+      if(bw<S*0.012||bh<S*0.012||bw>S*0.12||bh>S*0.12)continue;const ar=bw/bh;if(ar<0.55||ar>1.8)continue;if(n/(bw*bh)<0.7)continue;
+      C.push({x:sx/n,y:sy/n,s:Math.sqrt(n),n})}
+    if(C.length<4)return null;
+    const cx=w/2,cy=h/2,pick=(fx,fy)=>{let b=null,bv=-1e18;for(const c of C){const v=(c.x-cx)*fx+(c.y-cy)*fy;if(v>bv){bv=v;b=c}}return b};
+    const P=[pick(-1,-1),pick(1,-1),pick(-1,1),pick(1,1)];
+    if(new Set(P).size<4)return null;
+    const sz=P.map(c=>c.s),mx=Math.max(...sz),mn=Math.min(...sz);if(mx>mn*2.2)return null;
+    return P;
+  }
+  /* perspective map from sheet mm to photo pixels */
+  function homography(src,dst){const A=[],B=[];for(let i=0;i<4;i++){const [x,y]=src[i],[u,v]=dst[i];A.push([x,y,1,0,0,0,-u*x,-u*y]);B.push(u);A.push([0,0,0,x,y,1,-v*x,-v*y]);B.push(v)}
+    for(let c=0;c<8;c++){let p=c;for(let r=c+1;r<8;r++)if(Math.abs(A[r][c])>Math.abs(A[p][c]))p=r;[A[c],A[p]]=[A[p],A[c]];[B[c],B[p]]=[B[p],B[c]];if(Math.abs(A[c][c])<1e-12)return null;
+      for(let r=0;r<8;r++){if(r===c)continue;const f=A[r][c]/A[c][c];for(let k=c;k<8;k++)A[r][k]-=f*A[c][k];B[r]-=f*B[c]}}
+    const h=B.map((b,i)=>b/A[i][i]);return (x,y)=>{const z=h[6]*x+h[7]*y+1;return[(h[0]*x+h[1]*y+h[2])/z,(h[3]*x+h[4]*y+h[5])/z]}}
+  function scanImage(img,p){
+    const w=img.width,h=img.height,g=gray(img),M=findMarkers(g,w,h);
+    if(!M)return{ok:false,error:'Could not find the 4 black corner squares. Fit the whole sheet in the frame, in good light.'};
+    const mean=(x,y,r)=>{let s=0,n=0;const R=Math.max(1,r),x0=Math.max(0,Math.floor(x-R)),x1=Math.min(w-1,Math.ceil(x+R)),y0=Math.max(0,Math.floor(y-R)),y1=Math.min(h-1,Math.ceil(y+R));
+      for(let yy=y0;yy<=y1;yy++)for(let xx=x0;xx<=x1;xx++){if((xx-x)*(xx-x)+(yy-y)*(yy-y)<=R*R){s+=g[yy*w+xx];n++}}return n?s/n:255};
+    /* upside-down sheet: the photo's top-left square is the sheet's bottom-right one */
+    const tryMap=(rot)=>{const src=rot?MK.slice().reverse():MK;const H=homography(src,M.map(c=>[c.x,c.y]));if(!H)return null;
+      const [ox,oy]=H(OR[0],OR[1]),[bx,by]=H(OR[0],OR[1]+12);
+      const sc=Math.hypot(...(()=>{const a=H(50,100),b=H(51,100);return[b[0]-a[0],b[1]-a[1]]})());
+      return mean(ox,oy,sc*1.2)<mean(bx,by,sc*1.2)*0.6?{H,sc}:null};
+    const T=tryMap(false)||tryMap(true);
+    if(!T)return{ok:false,error:'The sheet looks upside down or the corner squares are hidden. Hold it straight and try again.'};
+    const {H}=T,L=layout(p);
+    /* paper brightness per area (handles shadows) */
+    const GX=6,GY=8,wm=[];for(let j=0;j<=GY;j++){const row=[];for(let i=0;i<=GX;i++){const vals=[];const cx=10+i*(PW-20)/GX,cy=10+j*(PH-20)/GY;
+      for(let a=-6;a<=6;a+=2)for(let b=-6;b<=6;b+=2){const [u,v]=H(cx+a,cy+b);if(u>=0&&v>=0&&u<w&&v<h)vals.push(g[(v|0)*w+(u|0)])}
+      vals.sort((a,b)=>a-b);row.push(vals.length?vals[Math.floor(vals.length*0.85)]:200)}wm.push(row)}
+    const white=(x,y)=>{const fx=Math.max(0,Math.min(GX,(x-10)/((PW-20)/GX))),fy=Math.max(0,Math.min(GY,(y-10)/((PH-20)/GY))),i=Math.min(GX-1,Math.floor(fx)),j=Math.min(GY-1,Math.floor(fy)),a=fx-i,b=fy-j;
+      return Math.max(60,wm[j][i]*(1-a)*(1-b)+wm[j][i+1]*a*(1-b)+wm[j+1][i]*(1-a)*b+wm[j+1][i+1]*a*b)};
+    const dk=b=>{const [u,v]=H(b.x,b.y),[u2,v2]=H(b.x+b.r,b.y),rp=Math.hypot(u2-u,v2-v);b.px=u;b.py=v;b.rp=rp;b.d=Math.max(0,1-mean(u,v,rp*0.62)/white(b.x,b.y));return b.d};
+    const all=[];L.roll.forEach(r=>r.forEach(b=>all.push(dk(b))));L.qs.forEach(q=>(q.type==='mcq'?q.opts:q.cols.flat()).forEach(b=>all.push(dk(b))));
+    /* fill threshold: split the bubbles into empty and filled */
+    const v=all.slice().sort((a,b)=>a-b);let T0=0.3;
+    if(v[v.length-1]<0.2)T0=1;else{let best=-1,mid=0.3;for(let t=0.12;t<=0.6;t+=0.01){let n0=0,s0=0,n1=0,s1=0;for(const x of v){if(x<t){n0++;s0+=x}else{n1++;s1+=x}}if(!n0||!n1)continue;const m0=s0/n0,m1=s1/n1,b=n0*n1*(m1-m0)*(m1-m0);if(b>best+1e-9){best=b;mid=(m0+m1)/2}}T0=Math.max(0.22,Math.min(0.5,mid))}   // halfway between empty and filled
+    const faint=T0*0.72;
+    const pickOne=bs=>{const f=bs.filter(b=>b.d>=T0);if(f.length===1)return{v:f[0].t,s:'ok',b:f};if(f.length>1){const s=f.slice().sort((a,b)=>b.d-a.d);if(s[0].d-s[1].d>0.25&&s[1].d<T0+0.08)return{v:s[0].t,s:'ok',b:[s[0]]};return{v:'*',s:'multi',b:f}}
+      const m=bs.reduce((a,b)=>b.d>a.d?b:a);return m.d>=faint?{v:m.t,s:'faint',b:[m]}:{v:'',s:'blank',b:[]}};
+    const rollParts=L.roll.map(pickOne),roll=rollParts.map(x=>x.v&&x.v!=='*'?x.v:'?').join('');
+    const answers={},flags={},marks=[];
+    rollParts.forEach(x=>x.b.forEach(b=>marks.push({b,s:x.s})));
+    for(const q of L.qs){
+      if(q.type==='mcq'){const r=pickOne(q.opts);answers[q.q]=r.v;if(r.s!=='ok'&&r.s!=='blank')flags[q.q]=r.s;r.b.forEach(b=>marks.push({b,s:r.s}))}
+      else{const sg=q.cols[0][0].d>=T0,ds=q.cols.slice(1).map(pickOne);let bad=ds.some(x=>x.s==='multi'),fa=ds.some(x=>x.s==='faint');
+        const digits=ds.map(x=>x.v).join('');ds.forEach(x=>x.b.forEach(b=>marks.push({b,s:x.s})));if(sg)marks.push({b:q.cols[0][0],s:'ok'});
+        const val=bad?'*':digits?(sg?'-':'')+String(+digits):'';answers[q.q]=val;if(bad)flags[q.q]='multi';else if(fa)flags[q.q]='faint';
+        if(!bad&&ds.some((x,i)=>!x.v&&ds.slice(0,i).some(y=>y.v)&&ds.slice(i+1).some(y=>y.v)))flags[q.q]='gap'}   // an empty column between digits
+    }
+    return{ok:true,roll,rollOk:!/\?/.test(roll),answers,flags,marks,threshold:T0,corners:M,map:H};
+  }
+  /* quick check on a small video frame: is a sheet in view? */
+  function seen(img){const g=gray(img);return!!findMarkers(g,img.width,img.height)}
+  return{layout,count,maxMarks,sheetPdf,scanImage,seen,PW,PH};
+})();
+PM.OMR=OMR;
+
+/* ===== 19. OMR tests: print the sheet, set roll numbers, scan sheets with the camera ===== */
+const OMRP=x=>Object.assign({type:'jee',n:180,pos:4,neg:1,num_pos:4,num_neg:0},x&&x.omr||{});
+PM.omrSheet=async function(x,bname){
+  try{toast('Making the OMR sheet…');await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js');
+    const bytes=await OMR.sheetPdf(window.PDFLib,OMRP(x),{title:x.title,batch:bname||''});
+    const u=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'})),a=document.createElement('a');
+    a.href=u;a.download=('OMR-'+String(x.title||'test').replace(/[^A-Za-z0-9]+/g,'-')+'.pdf').slice(0,80);document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000);
+    toast('OMR sheet ready ✓ Print one copy per student.')}catch(e){toast('Could not make the sheet: '+(e.message||e),1)}
+};
+PM.goOmr=(b,t)=>{window.__pmOmr={b:b||'',t:t||''};document.querySelectorAll('.pm-ov').forEach(o=>o.remove());
+  if(typeof UI==='undefined'||typeof render!=='function')return;UI.tab='omr';const v=document.getElementById('view');if(v)v.dataset.pm='';render();try{scrollTo(0,0)}catch(_){}};
+PM.omr=async function(el,ctx){
+  const pre=window.__pmOmr||{};window.__pmOmr=null;
+  el.innerHTML='<p class="muted">Loading…</p>';
+  const [t,dir,acc]=await Promise.all([paceCloud.from('pace_tests').select('*').eq('answer_mode','omr').order('created_at',{ascending:false}),
+    paceCloud.from('pace_member_directory').select('*'),paceCloud.from('pace_member_accounts').select('user_id,directory_id')]);
+  if(t.error)throw t.error;
+  const TS=t.data||[],STU=(dir.data||[]).filter(d=>(d.role||'student')==='student'),uidByDir={};(acc.data||[]).forEach(a=>{if(a.directory_id)uidByDir[a.directory_id]=a.user_id});
+  const hasRoll=STU.length&&Object.prototype.hasOwnProperty.call(STU[0],'roll_no');
+  const BB=ctx.batches||[],bn=id=>{const b=BB.find(x=>String(x.id)===String(id));return b?paceBN(b):'Batch'},B=BB.filter(b=>TS.some(x=>String(x.batch_id)===String(b.id)));
+  let tid=pre.t&&TS.some(x=>x.id===pre.t)?pre.t:'',bid=tid?String(TS.find(x=>x.id===tid).batch_id):(pre.b||(B.length===1?String(B[0].id):''));
+  if(!tid&&bid){const f=TS.find(x=>String(x.batch_id)===bid);if(f)tid=f.id}
+  let S=[],KEY=null,edits={};
+  const test=()=>TS.find(x=>x.id===tid),roster=()=>STU.filter(d=>String(d.batch_id)===String(bid)).sort((a,c)=>String(a.name||'').localeCompare(String(c.name||'')));
+  const subOf=d=>S.find(u=>(u.directory_id&&String(u.directory_id)===String(d.id))||(uidByDir[d.id]&&u.user_id===uidByDir[d.id]));
+  const load=async()=>{S=[];KEY=null;if(!tid)return;const r=await paceCloud.from('pace_test_submissions').select('id,user_id,directory_id,score,max_marks,status,result,annotated_path').eq('test_id',tid);S=r.data||[];
+    const k=await fn({view_key:tid});KEY=!k.error&&k.data&&k.data.items?k.data.items:[]};
+  const pdesc=p=>p.type==='jee'?`JEE Main pattern · 75 questions (60 MCQ + 15 numerical)`:`${p.n} MCQ questions`;
+  const draw=()=>{const x=test(),TB=TS.filter(z=>String(z.batch_id)===String(bid)),p=x&&OMRP(x),R=roster();
+    el.innerHTML=`<div class="card"><h2 style="margin:0 0 4px">🧾 OMR scanner</h2><p class="muted" style="margin:0 0 12px;font-size:13px">For offline tests written on the PACE OMR sheet. Print the sheet, give each student a roll number, then scan the filled sheets with the camera. Marks are counted against the answer key straight away. No AI credit is used for scanning.</p>
+      ${hasRoll?'':'<p style="color:var(--coral)">Run omr.sql in Supabase first (SQL Editor) to turn on roll numbers.</p>'}
+      ${TS.length?'':'<p class="muted">No OMR tests yet. Create one in <b>Tests (AI check)</b> and choose <b>🧾 OMR sheet</b> as the way students answer.</p>'}
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px">
+        <label style="font-size:12.5px">Batch<select id="omB" style="width:100%"><option value="">Choose a batch…</option>${B.map(b=>`<option value="${E(b.id)}"${String(b.id)===String(bid)?' selected':''}>${E(paceBN(b))}</option>`).join('')}</select></label>
+        <label style="font-size:12.5px">OMR test<select id="omT" style="width:100%" ${bid?'':'disabled'}><option value="">${TB.length?'Choose a test…':'No OMR tests for this batch'}</option>${TB.map(z=>`<option value="${E(z.id)}"${z.id===tid?' selected':''}>${E(z.title)}</option>`).join('')}</select></label></div>
+      ${x?`<div class="pm-card" style="margin-top:12px"><b>${E(x.title)}</b><div class="muted" style="font-size:13px;margin-top:3px">${E(pdesc(p))} · MCQ +${p.pos} / −${p.neg}${p.type==='jee'?` · numerical +${p.num_pos} / −${p.num_neg}`:''} · out of ${x.max_marks}</div>
+        <div style="font-size:13px;margin-top:6px">${KEY&&KEY.length?`🔑 Answer key ready: ${KEY.length} questions`:'<span style="color:var(--coral)">🔑 No answer key yet. Open Tests (AI check) → 🔑 Answer key → Prepare the answer key now.</span>'}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn ghost" data-print>🖨️ Print OMR sheet</button><button class="btn primary" data-scan ${KEY&&KEY.length&&hasRoll?'':'disabled'} style="min-height:44px">📷 Scan sheets</button></div></div>
+      <div class="pm-sec" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span style="flex:1">Students and roll numbers (${S.filter(u=>u.status==='done').length} of ${R.length} scanned)</span>${hasRoll?`<button class="btn ghost" data-auto style="font-size:12.5px">Number A–Z</button><button class="btn ghost" data-saveroll style="font-size:12.5px">💾 Save roll numbers</button>`:''}</div>
+      <p class="muted" style="font-size:12px;margin:0 0 6px">Roll numbers are 5 digits and must be different within a batch. Tell each student their number before the test.</p>
+      ${R.map(d=>{const u=subOf(d),rv=edits[d.id]!=null?edits[d.id]:(d.roll_no||'');return`<div class="pm-row" style="gap:8px"><span style="flex:1;min-width:120px"><b>${E(d.name||d.email||'Student')}</b>${uidByDir[d.id]?'':' <span class="pm-tag">no app</span>'}<br><small class="muted">${u&&u.status==='done'?`✅ ${E(u.score)}/${E(u.max_marks)}${u.annotated_path?` · <a href="#" data-open="${E(u.annotated_path)}">Sheet ↗</a>`:''}`:'Not scanned yet'}</small></span>
+        ${hasRoll?`<input class="pm-in" data-roll="${E(d.id)}" value="${E(rv)}" inputmode="numeric" maxlength="5" placeholder="roll" style="width:84px">`:''}</div>`}).join('')||'<p class="muted">This batch has no students in Students &amp; Parents Access.</p>'}`:''}</div>`};
+  await load();draw();
+  const R5=v=>String(v||'').replace(/\D/g,'').slice(0,5);
+  el.onchange=async e=>{const x=e.target;
+    if(x.id==='omB'){bid=x.value;const f=TS.find(z=>String(z.batch_id)===bid);tid=f?f.id:'';edits={};el.innerHTML='<p class="muted">Loading…</p>';await load();return draw()}
+    if(x.id==='omT'){tid=x.value;el.innerHTML='<p class="muted">Loading…</p>';await load();return draw()}};
+  el.oninput=e=>{const r=e.target.dataset&&e.target.dataset.roll;if(r!=null)edits[r]=R5(e.target.value)};
+  el.onclick=async e=>{const b=e.target.closest('button,a');if(!b)return;
+    if(b.dataset.open!=null){e.preventDefault();return openFile(b.dataset.open)}
+    if(b.dataset.print!=null)return PM.omrSheet(test(),bn(bid));
+    if(b.dataset.auto!=null){if(!confirm('Give every student in this batch a new roll number in A–Z order (00001, 00002…)? Tell students their new numbers.'))return;roster().forEach((d,i)=>edits[d.id]=String(i+1).padStart(5,'0'));return draw()}
+    if(b.dataset.saveroll!=null){const ch=Object.entries(edits).filter(([id,v])=>{const d=STU.find(z=>String(z.id)===String(id));return d&&String(d.roll_no||'')!==v});
+      if(!ch.length)return toast('Nothing changed');const vals=ch.map(c=>c[1]).filter(Boolean);
+      if(new Set(vals).size!==vals.length)return toast('Two students have the same roll number. Fix it first.',1);
+      b.disabled=true;b.textContent='Saving…';
+      for(const [id] of ch){await paceCloud.from('pace_member_directory').update({roll_no:null}).eq('id',id)}       // clear first so swaps do not clash
+      for(const [id,v] of ch){if(!v)continue;const r=await paceCloud.from('pace_member_directory').update({roll_no:v.padStart(5,'0')}).eq('id',id);
+        if(r.error){b.disabled=false;b.textContent='💾 Save roll numbers';return toast(/duplicate|unique/i.test(r.error.message)?'That roll number is already used in this batch.':r.error.message,1)}
+        const d=STU.find(z=>String(z.id)===String(id));if(d)d.roll_no=v.padStart(5,'0')}
+      ch.forEach(([id,v])=>{if(!v){const d=STU.find(z=>String(z.id)===String(id));if(d)d.roll_no=null}});edits={};toast('Roll numbers saved ✓');return draw()}
+    if(b.dataset.scan!=null){const miss=roster().filter(d=>!(edits[d.id]!=null?edits[d.id]:d.roll_no)).length;
+      if(Object.keys(edits).length)return toast('Save the roll numbers first.',1);
+      if(miss&&!confirm(`${miss} student${miss>1?'s have':' has'} no roll number. Their sheets will need the student chosen by hand. Scan anyway?`))return;
+      return PM.omrCamera({test:test(),roster:roster(),subOf,key:KEY,done:async()=>{await load();draw()}})}};
+};
+
+/* full-screen camera: find the sheet, read it, show what was read, save */
+PM.omrCamera=function(C){
+  const p=OMRP(C.test),L=OMR.layout(p),ov=document.createElement('div');ov.className='om-ov';
+  ov.innerHTML=`<div class="om-top"><b>📷 ${E(C.test.title)}</b><button class="om-x" data-close aria-label="Close">✕</button></div>
+    <div class="om-stage"><video playsinline muted autoplay></video><canvas class="om-shot" hidden></canvas><div class="om-guide"><i></i><i></i><i></i><i></i></div></div>
+    <div class="om-bar"><span class="om-st">Starting the camera…</span><label class="om-btn ghost">🖼️ Photo<input type="file" accept="image/*" data-file hidden></label><button class="om-btn" data-cap disabled>Capture</button></div>
+    <div class="om-rev" hidden></div>`;
+  document.body.appendChild(ov);
+  const v=ov.querySelector('video'),st=ov.querySelector('.om-st'),cap=ov.querySelector('[data-cap]'),rev=ov.querySelector('.om-rev'),shot=ov.querySelector('.om-shot');
+  let stream=null,timer=0,seenN=0,busy=false,closed=false,saved=0;
+  const small=document.createElement('canvas');
+  const stop=()=>{clearInterval(timer);timer=0;if(stream)stream.getTracks().forEach(t=>t.stop());stream=null};
+  const close=()=>{closed=true;stop();ov.remove();if(saved&&C.done)C.done()};
+  const watch=()=>{clearInterval(timer);seenN=0;timer=setInterval(()=>{if(busy||!v.videoWidth)return;const k=480/Math.max(v.videoWidth,v.videoHeight);small.width=Math.round(v.videoWidth*k);small.height=Math.round(v.videoHeight*k);
+    const x=small.getContext('2d',{willReadFrequently:true});x.drawImage(v,0,0,small.width,small.height);const ok=OMR.seen(x.getImageData(0,0,small.width,small.height));
+    seenN=ok?seenN+1:0;ov.classList.toggle('om-ok',ok);st.textContent=ok?(seenN>=3?'Reading…':'Sheet found ✓ Hold still'):'Fit the whole sheet inside the frame, with all 4 black squares';
+    if(seenN>=3)grab(v,v.videoWidth,v.videoHeight)},350)};
+  const start=async()=>{try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:2560},height:{ideal:1920}},audio:false});if(closed)return stop();v.srcObject=stream;await v.play();cap.disabled=false;watch()}
+    catch(e){st.textContent='Camera not available here. Use 🖼️ Photo to pick a picture of the sheet.'}};
+  const grab=(src,w,h)=>{busy=true;const k=Math.min(1,1600/Math.max(w,h));shot.width=Math.round(w*k);shot.height=Math.round(h*k);const x=shot.getContext('2d',{willReadFrequently:true});x.drawImage(src,0,0,shot.width,shot.height);
+    const R=OMR.scanImage(x.getImageData(0,0,shot.width,shot.height),p);
+    if(!R.ok){busy=false;seenN=0;st.textContent='⚠ '+R.error;return}
+    clearInterval(timer);timer=0;review(R)};
+  /* preview marks with the same rules as the server */
+  const preview=R=>{if(!C.key||!C.key.length)return null;const by={};C.key.forEach(k=>{const n=String(k.q).toUpperCase().replace(/^(\s*(QUESTION|QUES|QUE|Q)\s*[.:#-]?\s*)+/,'').replace(/[^0-9A-Z]/g,'');if(/^\d+$/.test(n)&&!by[+n])by[+n]=k});
+    const useOrder=C.key.length===L.qs.length&&L.qs.filter(q=>by[q.q]).length<L.qs.length*0.9;let s=0,c=0,w=0;
+    L.qs.forEach((q,i)=>{const k=useOrder?C.key[i]:by[q.q],a=R.answers[q.q];if(!k||!a||a==='*')return;const want=String(k.answer||'').trim();if(!want)return;
+      const num=q.type==='num',good=num?Math.abs(+a-parseFloat(want))<0.011:a===want.toUpperCase().replace(/[^A-D]/g,'').slice(0,1);
+      if(good){s+=num?+p.num_pos:+p.pos;c++}else{s-=num?+p.num_neg:+p.neg;w++}});return{s,c,w}};
+  const review=R=>{shot.hidden=false;v.hidden=true;ov.classList.remove('om-ok');
+    const x=shot.getContext('2d');x.lineWidth=3;R.marks.forEach(m=>{x.strokeStyle=m.s==='ok'?'#16A34A':m.s==='multi'?'#E11D48':'#F59E0B';x.beginPath();x.arc(m.b.px,m.b.py,Math.max(5,m.b.rp*1.3),0,7);x.stroke()});
+    const match=R.rollOk?C.roster.find(d=>String(d.roll_no||'')===R.roll):null,att=L.qs.filter(q=>R.answers[q.q]&&R.answers[q.q]!=='*').length,fl=Object.entries(R.flags),pv=preview(R);
+    const desc={multi:'two or more bubbles filled, not counted',faint:'light mark, please check',gap:'empty column between digits'};
+    rev.hidden=false;rev.innerHTML=`<div class="om-rv">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span style="font-size:13px">Roll no. <b style="font-size:18px;letter-spacing:2px">${E(R.roll)}</b></span>
+        <select data-who style="flex:1;min-width:180px"><option value="">${match?'':'⚠ No student with this roll number. Choose…'}</option>${C.roster.map(d=>`<option value="${E(d.id)}"${match&&match.id===d.id?' selected':''}>${E(d.name||'Student')}${d.roll_no?' · '+E(d.roll_no):''}${C.subOf(d)&&C.subOf(d).status==='done'?' · already scanned':''}</option>`).join('')}</select></div>
+      <div style="margin-top:8px;font-size:14px">${att} of ${L.qs.length} answered${pv?` · <b>${pv.s} / ${C.test.max_marks}</b> (${pv.c} right, ${pv.w} wrong)`:''}</div>
+      ${fl.length?`<div style="margin-top:6px;font-size:12.5px;color:#B45309">${fl.slice(0,8).map(([q,f])=>`Q${E(q)}: ${E(desc[f]||f)}`).join(' · ')}${fl.length>8?` · +${fl.length-8} more`:''}</div>`:''}
+      <div style="display:flex;gap:8px;margin-top:10px"><button class="om-btn ghost" data-again>↻ Scan again</button><button class="om-btn" data-save style="flex:1">✓ Save and scan next</button></div><p class="om-msg" style="font-size:12.5px;margin:6px 0 0"></p></div>`;
+    st.textContent='Check the coloured circles: green = read, red = not counted, orange = check';
+    rev.querySelector('[data-again]').onclick=()=>again();
+    rev.querySelector('[data-save]').onclick=async e=>{const b=e.target,who=rev.querySelector('[data-who]').value,m=rev.querySelector('.om-msg');if(!who){m.textContent='Choose the student first.';return}
+      const d=C.roster.find(z=>String(z.id)===String(who)),old=d&&C.subOf(d),now=C.savedNow=C.savedNow||new Set();
+      if(((old&&old.status==='done')||now.has(String(who)))&&!confirm(`${d?d.name:'This student'} already has a scanned sheet${old&&old.status==='done'?` (${old.score}/${old.max_marks})`:''}. Replace it?`))return;
+      b.disabled=true;b.textContent='Saving…';
+      const j=document.createElement('canvas'),k2=Math.min(1,1400/Math.max(shot.width,shot.height));j.width=Math.round(shot.width*k2);j.height=Math.round(shot.height*k2);j.getContext('2d').drawImage(shot,0,0,j.width,j.height);
+      const r=await fn({omr_submit:{test_id:C.test.id,directory_id:who,roll:R.roll,answers:R.answers,flags:R.flags,questions:L.qs.map(q=>({q:q.q,type:q.type})),image:j.toDataURL('image/jpeg',0.72).split(',')[1]}});
+      if(r.error){b.disabled=false;b.textContent='✓ Save and scan next';m.textContent=await em(r.error);return}
+      saved++;now.add(String(who));toast(`Saved ✓ ${d?d.name:'Student'}: ${r.data.score}/${r.data.max}`);again()}};
+  const again=()=>{rev.hidden=true;rev.innerHTML='';shot.hidden=true;v.hidden=false;busy=false;if(stream)watch();else st.textContent='Use 🖼️ Photo to pick the next sheet.'};
+  ov.addEventListener('click',e=>{if(e.target.closest('[data-close]'))return close();if(e.target.closest('[data-cap]')&&v.videoWidth&&!busy)grab(v,v.videoWidth,v.videoHeight)});
+  ov.querySelector('[data-file]').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;const u=URL.createObjectURL(f),im=new Image();im.src=u;try{await im.decode();clearInterval(timer);grab(im,im.naturalWidth,im.naturalHeight)}catch(_){st.textContent='Could not open that photo.'}URL.revokeObjectURL(u)};
+  start();
+};
+
 /* ===== admin menu pages ===== */
 if(typeof NAV_ITEMS!=='undefined'&&typeof render==='function'&&!/[?&](teacher|student)=1/.test(location.search)){
   const add=(id,label,ic)=>{if(!NAV_ITEMS.some(x=>x.id===id))NAV_ITEMS.splice(Math.max(0,NAV_ITEMS.findIndex(x=>x.id==='leave')),0,{id,label,ic})};
-  add('results','Results','🏅');add('upload','Upload answer sheets','📤');add('announce','Announcements','📢');add('review','Review Queue','🧐');add('attend','Attendance','📷');add('tcal','Test Calendar','🗓️');add('doubts','Doubts','❓');add('aimeter','AI credit meter','💳');
+  add('results','Results','🏅');add('upload','Upload answer sheets','📤');add('announce','Announcements','📢');add('review','Review Queue','🧐');add('attend','Attendance','📷');add('tcal','Test Calendar','🗓️');add('doubts','Doubts','❓');add('omr','OMR scanner','🧾');add('aimeter','AI credit meter','💳');
   const prevR=render;
   render=function(){prevR.apply(this,arguments);
     if(!window.__mtChk&&UI.accessRole==='admin'&&ok()){window.__mtChk=1;setTimeout(()=>PM.creditCheck(),2500)}
-    const pages={aimeter:PM.aimeter,upload:PM.upload,results:PM.results,announce:PM.announce,review:PM.review,attend:PM.attendance,tcal:PM.calendar,doubts:PM.staffDoubts};const f=pages[UI.tab];if(!f)return;
+    const pages={omr:PM.omr,aimeter:PM.aimeter,upload:PM.upload,results:PM.results,announce:PM.announce,review:PM.review,attend:PM.attendance,tcal:PM.calendar,doubts:PM.staffDoubts};const f=pages[UI.tab];if(!f)return;
     const v=document.getElementById('view');if(!v)return;
     if(UI.accessRole!=='admin'){v.innerHTML='<div class="card"><p class="muted">Admin only.</p></div>';return}
     if(!ok()){v.innerHTML='<div class="card"><p class="muted">Connect to the internet first.</p></div>';return}
@@ -5346,9 +5611,11 @@ window.peTests=async function(box,user,role){
     const u=S[x.id];let st='';
     if(u&&u.status==='done'){const r=u.result||{};
       const nm=(r.questions||[]).filter(q=>q.status==='wrong'||q.status==='partial'||q.status==='blank').length;
-      st=`<div style="margin-top:10px"><b style="font-size:18px">${u.score} / ${u.max_marks}</b> <span class="muted">· checked by AI, your teacher may review it</span>${window.pePraise?pePraise(u.score,u.max_marks):''}${nm?`<button class="btn ghost" data-tab="mist" style="margin:2px 0 4px">🎯 Practise ${nm} mistake${nm>1?'s':''}</button>`:''}<div data-top="${x.id}"></div><div class="sx-b">${u.annotated_path?`<button class="btn primary" data-ck="${esc(u.annotated_path)}">📄 Open my checked paper</button>`:''}<button class="btn ghost" data-rsub="${esc(x.id)}">📤 Submit a new answer sheet</button></div><p class="muted" data-m="${x.id}" style="font-size:13px;margin:0"></p>${r.overall_feedback?`<p style="margin:6px 0">${esc(r.overall_feedback)}</p>`:''}${(r.questions||[]).map(q=>`<div style="font-size:13px;padding:6px 0;border-top:1px solid var(--line)"><b>${esc(paceQ(q.q))}</b> · <b style="color:${q.status==='correct'?'#15803D':q.status==='blank'?'var(--text-muted)':'#BE123C'}">${esc(q.marks)}/${esc(q.max)}</b> — ${esc(q.feedback||'')}${(q.errors||[]).length?`<div style="color:#BE123C;margin-top:3px">${q.errors.map((e,i)=>'⭕ '+esc(e.note||'')).join('<br>')}</div>`:''}${q.missing?`<div style="color:#BE123C;margin-top:3px">Missing: ${esc(q.missing)}</div>`:''}${q.correct_answer?`<details style="margin-top:4px"><summary style="cursor:pointer;color:#15803D;font-weight:600">Correct answer</summary><div style="white-space:pre-wrap;margin-top:4px;color:#15803D">${esc(q.correct_answer)}</div></details>`:''}</div>`).join('')}${(r.unreadable||[]).length?`<p class="muted" style="font-size:12.5px">Could not read: Q${esc(r.unreadable.join(', Q'))}. Write clearly and scan in good light.</p>`:''}${K[x.id]?`<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--ink-2)">Marking scheme</summary><pre style="white-space:pre-wrap;font:13px/1.5 Inter,sans-serif;margin:8px 0 0">${esc(K[x.id])}</pre></details>`:''}${KF[x.id]?`<div><button class="btn ghost" data-sp="${esc(KF[x.id])}" style="margin-top:8px">📄 Marking scheme (PDF)</button></div>`:''}</div>`}
+      const omr=x.answer_mode==='omr';
+      st=`<div style="margin-top:10px"><b style="font-size:18px">${u.score} / ${u.max_marks}</b> <span class="muted">· ${omr?'from your scanned OMR sheet':'checked by AI, your teacher may review it'}</span>${window.pePraise?pePraise(u.score,u.max_marks):''}${nm?`<button class="btn ghost" data-tab="mist" style="margin:2px 0 4px">🎯 Practise ${nm} mistake${nm>1?'s':''}</button>`:''}<div data-top="${x.id}"></div><div class="sx-b">${u.annotated_path?`<button class="btn primary" data-ck="${esc(u.annotated_path)}">${omr?'🧾 Open my OMR sheet':'📄 Open my checked paper'}</button>`:''}${omr?'':`<button class="btn ghost" data-rsub="${esc(x.id)}">📤 Submit a new answer sheet</button>`}</div><p class="muted" data-m="${x.id}" style="font-size:13px;margin:0"></p>${r.overall_feedback?`<p style="margin:6px 0">${esc(r.overall_feedback)}</p>`:''}${(r.questions||[]).map(q=>`<div style="font-size:13px;padding:6px 0;border-top:1px solid var(--line)"><b>${esc(paceQ(q.q))}</b> · <b style="color:${q.status==='correct'?'#15803D':q.status==='blank'?'var(--text-muted)':'#BE123C'}">${esc(q.marks)}/${esc(q.max)}</b> — ${esc(q.feedback||'')}${(q.errors||[]).length?`<div style="color:#BE123C;margin-top:3px">${q.errors.map((e,i)=>'⭕ '+esc(e.note||'')).join('<br>')}</div>`:''}${q.missing?`<div style="color:#BE123C;margin-top:3px">Missing: ${esc(q.missing)}</div>`:''}${q.correct_answer?`<details style="margin-top:4px"><summary style="cursor:pointer;color:#15803D;font-weight:600">Correct answer</summary><div style="white-space:pre-wrap;margin-top:4px;color:#15803D">${esc(q.correct_answer)}</div></details>`:''}</div>`).join('')}${(r.unreadable||[]).length?`<p class="muted" style="font-size:12.5px">Could not read: Q${esc(r.unreadable.join(', Q'))}. Write clearly and scan in good light.</p>`:''}${K[x.id]?`<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--ink-2)">Marking scheme</summary><pre style="white-space:pre-wrap;font:13px/1.5 Inter,sans-serif;margin:8px 0 0">${esc(K[x.id])}</pre></details>`:''}${KF[x.id]?`<div><button class="btn ghost" data-sp="${esc(KF[x.id])}" style="margin-top:8px">📄 Marking scheme (PDF)</button></div>`:''}</div>`}
     else if(u&&u.status==='checking')st='<p class="muted" style="margin-top:10px">⏳ Your answers are being checked. Tap Tests again in a minute.</p>';
     else if(u&&u.status==='uploaded')st=`<div style="margin-top:10px"><p style="margin:0 0 8px">✓ Your answer sheet was received.</p><button class="btn primary" data-chk2="${esc(u.id)}">Check my answers now</button><p class="muted" data-m="${x.id}" style="font-size:13px;margin:6px 0 0"></p></div>`;
+    else if(x.answer_mode==='omr')st='<p class="muted" style="margin-top:10px">🧾 Offline OMR test: write it in class on the OMR sheet, with your roll number filled in. Your marks appear here after your sheet is scanned.</p>';
     else if(x.due_at&&Date.now()>Date.parse(x.due_at))st='<p style="margin-top:10px;color:#BE123C;font-weight:700">⏰ The deadline has passed — submissions are closed.</p>';
     else if(x.answer_mode==='tap')st=`<div style="margin-top:10px"><button class="btn primary" data-tap="${x.id}">✍️ Answer on screen</button><div data-tapbox="${x.id}"></div></div>`;
     else st=`${u&&u.status==='error'?`<p style="color:var(--coral);font-size:13px">Last attempt failed: ${esc(u.error||'')}. You can upload again.</p>`:''}<div style="margin-top:10px;display:grid;gap:8px"><p class="muted" style="font-size:12.5px;margin:0">Add a photo of <b>each page</b> of your answers, in order. You can add pages one by one.</p>
@@ -5356,7 +5623,7 @@ window.peTests=async function(box,user,role){
       <div class="tp-pages" data-pages="${x.id}">${tpPages(x.id)}</div>
       <button class="btn primary" data-go="${x.id}"${(window.__tp[x.id]||[]).length?'':' disabled'}>${tpLabel(x.id)}</button><p class="muted" data-m="${x.id}" style="font-size:13px;margin:0"></p></div>`;
     const dueL=x.due_at&&!(u&&u.status==='done')?`<span class="pm-due">⏰ Submit by ${esc(new Date(x.due_at).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}))}</span>`:'';
-    return `<div class="card" style="margin-bottom:12px"><b>${esc(x.title)}</b><div class="muted" style="font-size:12.5px">${esc(x.subject||'')} · ${x.max_marks} marks${x.answer_mode==='tap'?' · ✍️ answer on screen':''}</div>${dueL}${x.question_text?`<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--ink-2)">Question paper</summary><pre style="white-space:pre-wrap;font:13px/1.5 Inter,sans-serif;margin:8px 0 0">${esc(x.question_text)}</pre></details>`:''}${x.question_file?`<div><button class="btn ghost" data-qp="${esc(x.question_file)}" style="margin-top:8px">📄 Question paper (PDF)</button></div>`:''}${st}</div>`;
+    return `<div class="card" style="margin-bottom:12px"><b>${esc(x.title)}</b><div class="muted" style="font-size:12.5px">${esc(x.subject||'')} · ${x.max_marks} marks${x.answer_mode==='tap'?' · ✍️ answer on screen':''}${x.answer_mode==='omr'?' · 🧾 OMR sheet':''}</div>${x.answer_mode==='omr'?'':dueL}${x.question_text?`<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--ink-2)">Question paper</summary><pre style="white-space:pre-wrap;font:13px/1.5 Inter,sans-serif;margin:8px 0 0">${esc(x.question_text)}</pre></details>`:''}${x.question_file?`<div><button class="btn ghost" data-qp="${esc(x.question_file)}" style="margin-top:8px">📄 Question paper (PDF)</button></div>`:''}${st}</div>`;
   };
   box.innerHTML=(t.data||[]).map(card).join('')||'<div class="card"><p class="muted" style="margin:0">No tests right now.</p></div>';
   if(window.peProgress)peProgress(user).then(h=>{if(!box.isConnected||box.querySelector('.pr-card'))return;const d=document.createElement('div');d.innerHTML=h;box.prepend(d)}).catch(()=>{});
@@ -5479,27 +5746,41 @@ async function paintTests0(host,ctx){
   <div class="field"><label>Question paper (paste from ChatGPT; students can read this)</label><textarea id="tQ" rows="7"></textarea><label style="margin-top:8px;font-size:12.5px">…or attach the question paper as a PDF</label><input type="file" id="tQF" accept="application/pdf"></div>
   <div class="field"><label>Marking scheme / model answers (students can NOT see this)</label><textarea id="tK" rows="7" placeholder="Paste the answer key with marks for each question"></textarea><label style="margin-top:8px;font-size:12.5px">…or attach the marking scheme as a PDF</label><input type="file" id="tKF" accept="application/pdf"></div>
   <label style="display:flex;gap:8px;align-items:center;font-size:13px"><input type="checkbox" id="tR" style="width:auto"> Show the marking scheme to students after their answers are checked</label>
-  ${TE?'':`<div class="pm-grid2"><div class="field"><label>How students answer</label><select id="tA"><option value="photo">📷 Photo of answer sheet (AI checks)</option><option value="tap">✍️ Tap answers on screen (MCQ / numerical, instant, no AI cost)</option></select></div>
-  <div class="field"><label>Submit by (optional deadline)</label><input type="datetime-local" id="tDue"></div></div>`}
+  ${TE?'':`<div class="pm-grid2"><div class="field"><label>How students answer</label><select id="tA"><option value="photo">📷 Photo of answer sheet (AI checks)</option><option value="tap">✍️ Tap answers on screen (MCQ / numerical, instant, no AI cost)</option><option value="omr">🧾 OMR sheet: printed, scanned with the camera (no AI cost)</option></select></div>
+  <div class="field"><label>Submit by (optional deadline)</label><input type="datetime-local" id="tDue"></div></div>
+  <div id="tOmr" hidden style="border:1px solid var(--line);border-radius:12px;padding:12px"><b style="font-size:13.5px">🧾 OMR sheet settings</b>
+    <div class="pm-grid2" style="margin-top:8px"><div class="field"><label>Pattern</label><select id="tOP"><option value="jee">JEE Main: 75 questions (60 MCQ + 15 numerical)</option><option value="neet">NEET: 180 MCQ</option><option value="mcq">Custom: MCQ only</option></select></div>
+    <div class="field" id="tONw" hidden><label>Number of questions (up to 200)</label><input id="tON" type="number" min="1" max="200" value="50"></div></div>
+    <div class="pm-grid2"><div class="field"><label>MCQ marks: right / wrong</label><div style="display:flex;gap:6px;align-items:center">+<input id="tOp" type="number" step="0.5" value="4" style="width:70px">/ −<input id="tOn" type="number" step="0.5" min="0" value="1" style="width:70px"></div></div>
+    <div class="field" id="tONm"><label>Numerical marks: right / wrong</label><div style="display:flex;gap:6px;align-items:center">+<input id="tOq" type="number" step="0.5" value="4" style="width:70px">/ −<input id="tOw" type="number" step="0.5" min="0" value="0" style="width:70px"></div></div></div>
+    <p class="muted" style="font-size:12px;margin:4px 0 0">Attach the marking scheme (answer key) PDF above; the question paper is optional for OMR tests. Max marks are filled in for you.</p></div>`}
   <button class="btn primary" type="submit">Create test</button></form></div>
   <div class="card"><div class="cardhead"><h2>Tests &amp; results</h2></div>
   ${bl.length?`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 10px"><select id="xB" style="width:auto;flex:0 1 220px">${opts}</select><button class="btn ghost" id="xBatch" type="button">⬇ Download batch marks (Excel)</button></div>`:''}
-  ${(t.data||[]).map(x=>{const L=by[x.id]||[];return `<div style="padding:10px 0;border-bottom:1px solid var(--line)"><b>${esc(x.title)}</b> <span class="muted" style="font-size:12.5px">${esc(bn(x.batch_id))} · ${x.max_marks} marks · ${L.length} submitted${x.answer_mode==='tap'?' · ✍️ tap answers':''}${x.due_at?' · ⏰ by '+esc(new Date(x.due_at).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'})):''}</span><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"><button class="btn ghost" data-tg="${x.id}" data-o="${x.is_open?1:0}">${x.is_open?'Close test':'Reopen test'}</button><button class="btn ghost" data-xl="${x.id}">⬇ Excel</button><button class="btn ghost" data-key="${x.id}">🔑 Answer key</button>${L.length?`<button class="btn ghost" data-ana="${x.id}">📊 Analysis</button>`:''}${TE?'':`<button class="btn ghost" data-nos="${x.id}">🙋 Not submitted</button><button class="btn ghost" data-cpy="${x.id}">📋 Copy to batch</button>${x.answer_mode!=='tap'&&window.PM&&PM.goUpload?`<button class="btn ghost" data-aup="${x.id}">📤 Upload sheets</button>`:''}`}${x.answer_mode==='tap'?`<button class="btn ghost" data-bk="${x.id}">↻ Prepare answers</button>`:''}${L.length?`<button class="btn ghost" data-rca="${x.id}">↻ Re-check all (${L.length})</button>`:''}<button class="btn ghost" data-dt="${x.id}">Delete</button></div><details data-tid="${x.id}"${T.open===x.id?' open':''} style="margin-top:8px"><summary style="cursor:pointer;color:var(--ink-2);font-weight:600">Results (${L.length})</summary>${L.map(u=>`<div style="padding:8px 0;border-top:1px solid var(--line);font-size:13px"><b>${esc(u.student_name||'Student')}</b> · ${u.status==='done'?u.score+' / '+u.max_marks:u.status}${u.error?` <span style="color:var(--coral)">${esc(u.error)}</span>`:''} <button class="btn ghost" data-sheet="${esc(u.file_path)}">Sheet ↗</button>${u.annotated_path?` <button class="btn ghost" data-ck="${esc(u.annotated_path)}">Checked paper ↗</button>`:''} ${u.result&&u.result.needs_review?'<span class="pill" style="background:color-mix(in srgb,#E8890C 18%,transparent);color:#B45309">⚠ Please review</span> ':''}${u.result&&u.result.review_note?`<div style="color:#B45309;font-size:12.5px;margin:4px 0">⚠ ${esc(u.result.review_note)}</div>`:''}${u.result&&u.result.dup_with?`<div style="color:#BE123C;font-size:12.5px;margin:4px 0">⚠ Same answers as ${u.result.dup_with.map(d=>esc(d.name)+' ('+d.pct+'%)').join(', ')}</div>`:''}${u.status==='done'?`<button class="btn ghost" data-edm="${u.id}">✏️ Edit marks</button> `:''}${u.file_path==='typed'?'':`<button class="btn ghost" data-chk="${u.id}">${u.status==='done'?'↻ Re-check':'Check now'}</button>`} <button class="btn ghost" data-rs="${u.id}">Reset</button>${u.result?`<div class="muted" style="margin-top:4px">${esc(u.result.overall_feedback||'')}</div>${(u.result.questions||[]).map(q=>`<div>${esc(paceQ(q.q))}: ${esc(q.marks)}/${esc(q.max)} — ${esc(q.feedback||'')}</div>`).join('')}`:''}</div>`).join('')||'<p class="muted" style="font-size:13px">No submissions yet.</p>'}</details></div>`}).join('')||'<p class="muted">No tests yet.</p>'}</div>`;
+  ${(t.data||[]).map(x=>{const L=by[x.id]||[];return `<div style="padding:10px 0;border-bottom:1px solid var(--line)"><b>${esc(x.title)}</b> <span class="muted" style="font-size:12.5px">${esc(bn(x.batch_id))} · ${x.max_marks} marks · ${L.length} submitted${x.answer_mode==='tap'?' · ✍️ tap answers':''}${x.answer_mode==='omr'?' · 🧾 OMR':''}${x.due_at?' · ⏰ by '+esc(new Date(x.due_at).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'})):''}</span><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"><button class="btn ghost" data-tg="${x.id}" data-o="${x.is_open?1:0}">${x.is_open?'Close test':'Reopen test'}</button><button class="btn ghost" data-xl="${x.id}">⬇ Excel</button><button class="btn ghost" data-key="${x.id}">🔑 Answer key</button>${L.length?`<button class="btn ghost" data-ana="${x.id}">📊 Analysis</button>`:''}${TE?'':`<button class="btn ghost" data-nos="${x.id}">🙋 Not submitted</button><button class="btn ghost" data-cpy="${x.id}">📋 Copy to batch</button>${!['tap','omr'].includes(x.answer_mode)&&window.PM&&PM.goUpload?`<button class="btn ghost" data-aup="${x.id}">📤 Upload sheets</button>`:''}${x.answer_mode==='omr'&&window.PM&&PM.goOmr?`<button class="btn ghost" data-omrs="${x.id}">📷 Scan OMR sheets</button><button class="btn ghost" data-omrp="${x.id}">🖨️ OMR sheet</button>`:''}`}${x.answer_mode==='tap'?`<button class="btn ghost" data-bk="${x.id}">↻ Prepare answers</button>`:''}${L.length&&x.answer_mode!=='omr'?`<button class="btn ghost" data-rca="${x.id}">↻ Re-check all (${L.length})</button>`:''}<button class="btn ghost" data-dt="${x.id}">Delete</button></div><details data-tid="${x.id}"${T.open===x.id?' open':''} style="margin-top:8px"><summary style="cursor:pointer;color:var(--ink-2);font-weight:600">Results (${L.length})</summary>${L.map(u=>`<div style="padding:8px 0;border-top:1px solid var(--line);font-size:13px"><b>${esc(u.student_name||'Student')}</b> · ${u.status==='done'?u.score+' / '+u.max_marks:u.status}${u.error?` <span style="color:var(--coral)">${esc(u.error)}</span>`:''} <button class="btn ghost" data-sheet="${esc(u.file_path)}">Sheet ↗</button>${u.annotated_path?` <button class="btn ghost" data-ck="${esc(u.annotated_path)}">Checked paper ↗</button>`:''} ${u.result&&u.result.needs_review?'<span class="pill" style="background:color-mix(in srgb,#E8890C 18%,transparent);color:#B45309">⚠ Please review</span> ':''}${u.result&&u.result.review_note?`<div style="color:#B45309;font-size:12.5px;margin:4px 0">⚠ ${esc(u.result.review_note)}</div>`:''}${u.result&&u.result.dup_with?`<div style="color:#BE123C;font-size:12.5px;margin:4px 0">⚠ Same answers as ${u.result.dup_with.map(d=>esc(d.name)+' ('+d.pct+'%)').join(', ')}</div>`:''}${u.status==='done'&&x.answer_mode!=='omr'?`<button class="btn ghost" data-edm="${u.id}">✏️ Edit marks</button> `:''}${u.file_path==='typed'||x.answer_mode==='omr'?'':`<button class="btn ghost" data-chk="${u.id}">${u.status==='done'?'↻ Re-check':'Check now'}</button>`} <button class="btn ghost" data-rs="${u.id}">Reset</button>${u.result?`<div class="muted" style="margin-top:4px">${esc(u.result.overall_feedback||'')}</div>${(u.result.questions||[]).map(q=>`<div>${esc(paceQ(q.q))}: ${esc(q.marks)}/${esc(q.max)} — ${esc(q.feedback||'')}</div>`).join('')}`:''}</div>`).join('')||'<p class="muted" style="font-size:13px">No submissions yet.</p>'}</details></div>`}).join('')||'<p class="muted">No tests yet.</p>'}</div>`;
   const pick=v=>host.querySelectorAll('#tB input').forEach(c=>{c.checked=v;c.closest('.tb-c').classList.toggle('on',v)});
   if($('tBall'))$('tBall').onclick=e=>{e.preventDefault();pick(true)};if($('tBnone'))$('tBnone').onclick=e=>{e.preventDefault();pick(false)};
   host.querySelectorAll('#tB input').forEach(c=>c.onchange=()=>c.closest('.tb-c').classList.toggle('on',c.checked));
   if(bl.length===1)pick(true);
+  /* OMR test settings: pattern, marking, max marks filled in */
+  const omrSet=()=>{if(!$('tA')||$('tA').value!=='omr')return null;const pt=$('tOP').value,n=Math.max(1,Math.min(200,Math.round(+$('tON').value||50)));
+    return{type:pt==='jee'?'jee':'mcq',n:pt==='neet'?180:pt==='mcq'?n:75,pos:+$('tOp').value||4,neg:Math.abs(+$('tOn').value||0),num_pos:+$('tOq').value||4,num_neg:Math.abs(+$('tOw').value||0)}};
+  const omrUi=()=>{if(!$('tA')||!$('tOmr'))return;const on=$('tA').value==='omr';$('tOmr').hidden=!on;if(!on)return;$('tONw').hidden=$('tOP').value!=='mcq';$('tONm').hidden=$('tOP').value!=='jee';
+    if(window.PM&&PM.OMR)$('tM').value=PM.OMR.maxMarks(omrSet())};
+  if($('tA')&&$('tOmr')){['tA','tOP'].forEach(id=>$(id).addEventListener('change',omrUi));['tON','tOp','tOq'].forEach(id=>$(id).addEventListener('input',omrUi))}
   $('tF').onsubmit=async e=>{e.preventDefault();
     const qf=$('tQF').files[0],kf=$('tKF').files[0],qt=$('tQ').value.trim(),kt=$('tK').value.trim();
     const sel=[...host.querySelectorAll('#tB input:checked')].map(c=>c.value);
     if(!sel.length)return tip('Choose at least one batch');
-    if(!qt&&!qf)return tip('Add the question paper as text or as a PDF');
+    const om=omrSet();
+    if(om&&!kt&&!kf)return tip('Attach the marking scheme (answer key) for the OMR test');
+    if(!qt&&!qf&&!om)return tip('Add the question paper as text or as a PDF');
     for(const f of [qf,kf])if(f&&(f.size>10*MB||!/\.pdf$/i.test(f.name)))return tip('Attachments must be PDF files up to 10 MB');
     const btn=$('tF').querySelector('button[type=submit]');btn.disabled=true;
     const done=[];
     for(let i=0;i<sel.length;i++){
     if(sel.length>1)btn.textContent=`Creating ${i+1} of ${sel.length}…`;
-    const f0={batch_id:sel[i],title:$('tT').value.trim(),subject:$('tS').value.trim(),max_marks:+$('tM').value||100,question_text:qt,reveal_key:$('tR').checked,...(TE?{}:{...($('tA').value==='tap'?{answer_mode:'tap'}:{}),...($('tDue').value?{due_at:new Date($('tDue').value).toISOString()}:{})})};
+    const f0={batch_id:sel[i],title:$('tT').value.trim(),subject:$('tS').value.trim(),max_marks:+$('tM').value||100,question_text:qt,reveal_key:$('tR').checked,...(TE?{}:{...($('tA').value==='tap'?{answer_mode:'tap'}:om?{answer_mode:'omr',omr:om}:{}),...($('tDue').value?{due_at:new Date($('tDue').value).toISOString()}:{})})};
     const fail=m=>{btn.disabled=false;btn.textContent='Create test';tip((done.length?'Created for '+done.map(bn).join(', ')+'. ':'')+'Stopped at '+bn(sel[i])+': '+m)};
     let id;
     if(TE){const a=await paceCloud.rpc('teacher_create_test',{p_batch:f0.batch_id,p_title:f0.title,p_subject:f0.subject,p_max:f0.max_marks,p_question:qt,p_reveal:f0.reveal_key});if(a.error)return fail(a.error.message);id=a.data}
@@ -5523,6 +5804,8 @@ async function paintTests0(host,ctx){
     const dt=b.closest('details');if(dt)T.open=dt.dataset.tid;
     const again=()=>paintTests(host,ctx);
     if(b.dataset.aup){const x=(t.data||[]).find(z=>String(z.id)===b.dataset.aup);if(x)PM.goUpload(x.batch_id,x.id);return}
+    if(b.dataset.omrs){const x=(t.data||[]).find(z=>String(z.id)===b.dataset.omrs);if(x)PM.goOmr(x.batch_id,x.id);return}
+    if(b.dataset.omrp){const x=(t.data||[]).find(z=>String(z.id)===b.dataset.omrp);if(x)PM.omrSheet(x,bn(x.batch_id));return}
     if(b.dataset.cpy){const x=(t.data||[]).find(z=>String(z.id)===b.dataset.cpy);if(!x)return;
       const have=new Set((t.data||[]).filter(z=>z.title===x.title).map(z=>String(z.batch_id)));
       const ov=document.createElement('div');ov.className='kv-ov';
