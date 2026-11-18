@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="light" style="color-scheme: light;"><head>
-<meta charset="UTF-8"><script>window.paceBN=function(b){if(!b)return'Batch';var l=String(paceBN(b)||'Batch'),c=String(b.center||'').trim();return c&&l.toLowerCase().indexOf(c.toLowerCase())<0?c+' '+l:l};window.paceQ=function(q){var t=String(q==null?'':q).trim();return /^q/i.test(t)?t:'Q'+t};/* accept /#?teacher=1 and /#teacher=1 as well as /?teacher=1 */(function(){var m=location.hash.match(/^#\??((?:teacher|student)=1)$/);if(m&&!location.search)location.replace(location.pathname+"?"+m[1])})();</script>
+<meta charset="UTF-8"><script>window.paceBN=function(b){if(!b)return'Batch';var l=String(b.label||b.name||b.id||'Batch'),c=String(b.center||'').trim();return c&&l.toLowerCase().indexOf(c.toLowerCase())<0?c+' '+l:l};window.paceQ=function(q){var t=String(q==null?'':q).trim();return /^q/i.test(t)?t:'Q'+t};/* accept /#?teacher=1 and /#teacher=1 as well as /?teacher=1 */(function(){var m=location.hash.match(/^#\??((?:teacher|student)=1)$/);if(m&&!location.search)location.replace(location.pathname+"?"+m[1])})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png">
 
