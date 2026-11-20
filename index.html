@@ -326,7 +326,7 @@ table{border-collapse:separate!important;border-spacing:0!important;width:100%}t
       <h1 id="pagetitle">Teachers &amp; Batches</h1>
       <div class="topbar-right">
         <span class="today" id="todaylabel">Sunday, 20th Sep 2026</span>
-        <span id="saveflag"><span class="dot" style="background: var(--amber);"></span><span id="saveflagtext">Saving…</span></span><span id="cloudstatus" style="font-size:11px">Local only</span><button class="btn ghost" id="googleLogin" type="button" style="padding:6px 9px;font-size:11px">Connect Google</button><button class="btn ghost" id="cloudUpload" type="button" style="padding:6px 9px;font-size:11px;display:none">Back up to cloud</button><button class="btn ghost" id="cloudDownload" type="button" style="padding:6px 9px;font-size:11px;display:none">Restore cloud</button><span class="role-pill" id="accessBadge">Admin</span><select id="roleSelect" style="width:auto;padding:5px 7px;font-size:11px"><option value="admin">Admin</option><option value="teacher">Teacher</option></select><select id="teacherSelectTop" style="width:auto;padding:5px 7px;font-size:11px;display:none"></select><span class="role-pill" id="accessBadge">Admin</span>
+        <span id="saveflag"><span class="dot" style="background: var(--amber);"></span><span id="saveflagtext">Saving…</span></span><span id="cloudstatus" style="font-size:11px">Local only</span><button class="btn ghost" id="googleLogin" type="button" style="padding:6px 9px;font-size:11px">Connect Google</button><button class="btn ghost" id="cloudUpload" type="button" style="padding:6px 9px;font-size:11px;display:none">🔄 Sync now</button><button class="btn ghost" id="cloudDownload" type="button" style="padding:6px 9px;font-size:11px;display:none">Restore cloud</button><span class="role-pill" id="accessBadge">Admin</span><select id="roleSelect" style="width:auto;padding:5px 7px;font-size:11px"><option value="admin">Admin</option><option value="teacher">Teacher</option></select><select id="teacherSelectTop" style="width:auto;padding:5px 7px;font-size:11px;display:none"></select><span class="role-pill" id="accessBadge">Admin</span>
       </div>
     </div>
     <div id="view"></div>
@@ -651,7 +651,7 @@ function setSaveFlag(mode){
 }
 async function persist(newState){
   setSaveFlag('saving');
-  try{ STATE=newState; localStorage.setItem('pace-timetable-state-v6',JSON.stringify(newState)); render(); setSaveFlag('synced'); queueCloudSave(); }
+  try{ STATE=newState; localStorage.setItem('pace-timetable-state-v6',JSON.stringify(newState)); try{localStorage.setItem('pace-cloud-dirty','1')}catch(_){} render(); setSaveFlag('synced'); queueCloudSave(); }
   catch(e){ console.error(e); render(); setSaveFlag('error'); toast('Could not save'); }
 }
 
@@ -1828,12 +1828,85 @@ async function cloudRead(){
  if(error)throw error;
  return data;
 }
+/* ===== Multi-device sync =====
+   Every admin device keeps its own copy. Before saving, a device checks whether another device saved first;
+   if so, the two are merged item by item (by id), so an older device can never wipe newer changes. */
+const SYNC_NOBASE={},SYNC_BASE='pace-cloud-base',SYNC_REV='pace-cloud-rev',SYNC_DIRTY='pace-cloud-dirty';
+let cloudSyncing=false,cloudStarted=false;
+function syncSame(a,b){return a===b||JSON.stringify(a===undefined?null:a)===JSON.stringify(b===undefined?null:b)}
+function syncIsObj(v){return!!v&&typeof v==='object'&&!Array.isArray(v)}
+function syncIdArr(v){if(!Array.isArray(v)||!v.every(x=>syncIsObj(x)&&x.id!=null))return false;return new Set(v.map(x=>String(x.id))).size===v.length}
+function syncMerge(b,m,t,pref){
+ if(syncSame(m,t))return m;
+ const nb=b===SYNC_NOBASE;
+ if(nb){if(m===undefined)return t;if(t===undefined)return m}
+ else{if(syncSame(b,m))return t;if(syncSame(b,t))return m}
+ if(syncIdArr(m)&&syncIdArr(t)){const bp=new Map((!nb&&syncIdArr(b)?b:[]).map(x=>[String(x.id),x])),mp=new Map(m.map(x=>[String(x.id),x])),tp=new Map(t.map(x=>[String(x.id),x]));
+  const ids=m.map(x=>String(x.id));t.forEach(x=>{const k=String(x.id);if(!mp.has(k))ids.push(k)});
+  const out=[];ids.forEach(k=>{const v=syncMerge(nb?SYNC_NOBASE:bp.get(k),mp.get(k),tp.get(k),pref);if(v!==undefined)out.push(v)});return out}
+ if(syncIsObj(m)&&syncIsObj(t)){const bo=!nb&&syncIsObj(b)?b:{},out={};
+  new Set([...Object.keys(m),...Object.keys(t)]).forEach(k=>{if(k==='_rev')return;const v=syncMerge(nb?SYNC_NOBASE:bo[k],m[k],t[k],pref);if(v!==undefined)out[k]=v});return out}
+ return pref==='t'?t:m;
+}
+function syncLS(k,v){try{if(v==null)localStorage.removeItem(k);else localStorage.setItem(k,v)}catch(_){if(k===SYNC_BASE)try{localStorage.removeItem(k)}catch(_){}}}
+function syncGet(k){try{return localStorage.getItem(k)}catch(_){return null}}
+function syncBase(){try{const s=syncGet(SYNC_BASE);return s?JSON.parse(s):null}catch(_){return null}}
+function syncEmpty(s){return!s||(!(s.batches||[]).length&&!(s.classes||[]).length)}
+function syncKeep(s){syncLS(SYNC_BASE,JSON.stringify(s));syncLS(SYNC_REV,String(+((s&&s._rev)||0)))}
+function syncAdopt(cs,msg){STATE=cs;try{localStorage.setItem('pace-timetable-state-v6',JSON.stringify(cs))}catch(_){}syncKeep(cs);syncLS(SYNC_DIRTY,null);
+ cloudEnabled=true;syncLS('pace-cloud-enabled','yes');render();cloudStatus('Synced on all devices ✓');if(msg)toast(msg)}
+function syncUiBusy(){const a=document.activeElement;if(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))return true;
+ return[...document.querySelectorAll('.open,.pm-ov')].some(e=>{try{return getComputedStyle(e).position==='fixed'&&e.id!=='sidebar'}catch(_){return false}})}
+/* first time a device syncs: if it differs from the cloud copy, ask once which one is the latest */
+async function cloudFirstSync(){
+ const row=await cloudRead(),cs=row&&row.state;
+ if(syncEmpty(cs)){if(!syncEmpty(STATE)){syncLS(SYNC_REV,String(+((cs&&cs._rev)||0)));syncLS(SYNC_DIRTY,'1');cloudEnabled=true;syncLS('pace-cloud-enabled','yes');await cloudWrite()}return}
+ const strip=s=>{const o=Object.assign({},s);delete o._rev;return o};
+ if(syncEmpty(STATE)||syncSame(strip(STATE),strip(cs)))return syncAdopt(cs,'');
+ if(confirm('This device’s timetable is different from the cloud copy.\n\nOK = use the CLOUD copy (the latest changes from your other devices).\nCancel = keep THIS device’s timetable and send it to all devices.\n\nYou only choose once. After this, all your devices stay in sync by themselves.')){
+  syncLS('pace-timetable-before-sync',JSON.stringify(STATE));return syncAdopt(cs,'🔄 Loaded the latest timetable from the cloud')}
+ syncLS(SYNC_REV,String(+(cs._rev||0)));syncLS(SYNC_BASE,null);syncLS(SYNC_DIRTY,'1');cloudEnabled=true;syncLS('pace-cloud-enabled','yes');await cloudWrite();
+}
+/* check the cloud: bring in changes made on another device (cheap check of the version number only) */
+async function cloudPull(force){
+ if(!cloudUser||!paceCloud||cloudSyncing||cloudBusy)return;if(!force&&document.hidden)return;
+ cloudSyncing=true;
+ try{
+  if(syncGet(SYNC_REV)==null){await cloudFirstSync();return}
+  const {data,error}=await paceCloud.from('pace_app_state').select('rev:state->>_rev').eq('id','main').maybeSingle();
+  if(error)throw error;if(!data)return;
+  if(!cloudEnabled){cloudEnabled=true;syncLS('pace-cloud-enabled','yes')}
+  const cRev=+(data.rev||0),dirty=syncGet(SYNC_DIRTY)==='1';
+  if(dirty){if(!cloudEnabled){cloudEnabled=true;syncLS('pace-cloud-enabled','yes')}queueCloudSave();return}
+  if(cRev===+syncGet(SYNC_REV))return;
+  if(!force&&syncUiBusy())return; /* the admin is typing or has a form open: try again in a few seconds */
+  const row=await cloudRead();if(row&&row.state&&!syncEmpty(row.state))syncAdopt(row.state,'🔄 Timetable updated from your other device');
+ }catch(e){console.warn('cloud pull',e)}
+ finally{cloudSyncing=false}
+}
 async function cloudWrite(){
  if(!cloudEnabled||!cloudUser||cloudBusy){cloudPending=true;return;}
- cloudBusy=true;cloudStatus('Uploading schedule…');
+ if(syncGet(SYNC_REV)==null){cloudPending=false;return cloudPull(true);}
+ cloudBusy=true;cloudStatus('Syncing schedule…');
  try{
-  const {error}=await paceCloud.from('pace_app_state').upsert({id:'main',state:STATE,updated_by:cloudUser.id},{onConflict:'id'});
-  if(error)throw error;
+  let saved=false,merged=false;
+  for(let attempt=0;attempt<4&&!saved;attempt++){
+   const row=await cloudRead(),cs=row&&row.state,cRev=+((cs&&cs._rev)||0);
+   if(cs&&!syncEmpty(cs)&&cRev!==+syncGet(SYNC_REV)){ /* another device saved after this one last synced: merge */
+    const base=syncBase();STATE=syncMerge(base||SYNC_NOBASE,STATE,cs,'m');merged=true;
+    try{localStorage.setItem('pace-timetable-state-v6',JSON.stringify(STATE))}catch(_){}}
+   const cur=STATE,next=Object.assign({},cur,{_rev:cRev+1});let res;
+   if(!row)res=await paceCloud.from('pace_app_state').insert({id:'main',state:next,updated_by:cloudUser.id}).select('id');
+   else{let q=paceCloud.from('pace_app_state').update({state:next,updated_by:cloudUser.id,updated_at:new Date().toISOString()}).eq('id','main');
+    q=cs&&cs._rev!=null?q.eq('state->>_rev',String(cs._rev)):q.is('state->>_rev',null);res=await q.select('id')}
+   if(res.error){if(attempt<3&&/duplicate|conflict/i.test(res.error.message))continue;throw res.error}
+   if(!res.data||!res.data.length)continue; /* someone saved at the same moment: merge again */
+   saved=true;syncKeep(next);
+   if(STATE===cur){STATE=next;syncLS(SYNC_DIRTY,null);try{localStorage.setItem('pace-timetable-state-v6',JSON.stringify(STATE))}catch(_){}}
+   else cloudPending=true; /* the admin changed something while this was saving */
+  }
+  if(!saved)throw new Error('The cloud was busy. Will try again.');
+  if(merged){try{render()}catch(_){}toast('🔄 Merged with changes from your other device')}
   // Publish a student-safe snapshot to a separate read-only table.
   const publicSnapshot={teachers:STATE.teachers||[],batches:STATE.batches||[],classes:STATE.classes||[],holidays:STATE.holidays||[],weeklyPattern:STATE.weeklyPattern||[]};
   const {error:pubError}=await paceCloud.from('pace_public_timetable').upsert({id:'main',payload:publicSnapshot,updated_at:new Date().toISOString()},{onConflict:'id'});
@@ -1862,7 +1935,7 @@ async function cloudWrite(){
     const {error:teacherPublishError}=await paceCloud.from('pace_teacher_timetables').upsert(teacherRows,{onConflict:'user_id'});
     if(teacherPublishError)throw teacherPublishError;
   }
-  cloudStatus('Cloud backed up ✓');
+  cloudStatus('Synced on all devices ✓');
  }catch(e){cloudStatus('Cloud error — local saved');console.error('Cloud backup:',e);}
  finally{cloudBusy=false;if(cloudPending){cloudPending=false;queueCloudSave();}}
 }
@@ -1875,8 +1948,10 @@ async function connectCloud(){
 }
 async function uploadCloud(){
  if(!cloudUser)return;
- if(!confirm('Back up THIS device’s full timetable to the cloud? This replaces the previous cloud copy.'))return;
- cloudEnabled=true;localStorage.setItem('pace-cloud-enabled','yes');await cloudWrite();
+ /* "Sync now": safe on any device - it merges, it never wipes changes made on another device */
+ cloudEnabled=true;localStorage.setItem('pace-cloud-enabled','yes');
+ if(syncGet(SYNC_REV)==null)return cloudPull(true);
+ syncLS(SYNC_DIRTY,'1');await cloudWrite();
 }
 async function downloadCloud(){
  if(!cloudUser)return;
@@ -1884,9 +1959,7 @@ async function downloadCloud(){
   const row=await cloudRead();if(!row?.state){alert('No cloud timetable found. Choose Back up to cloud first.');return;}
   if(!confirm('Restore the cloud timetable? This REPLACES the timetable currently saved on this device.'))return;
   clearTimeout(cloudTimer);cloudEnabled=false;
-  STATE=row.state;
-  localStorage.setItem('pace-timetable-state-v6',JSON.stringify(STATE));
-  render();cloudEnabled=true;localStorage.setItem('pace-cloud-enabled','yes');cloudStatus('Cloud restored ✓');
+  syncAdopt(row.state,'');cloudStatus('Cloud restored ✓');
  }catch(e){cloudStatus('Cloud restore failed');alert('Could not restore: '+e.message);}
 }
 async function initCloud(){
@@ -1898,8 +1971,14 @@ async function initCloud(){
  async function applySession(session){
   const u=session?.user;
   if(u && u.email?.toLowerCase()===PACE_GOOGLE_EMAIL){
-   cloudUser=u;cloudEnabled=localStorage.getItem('pace-cloud-enabled')==='yes';cloudControls();cloudStatus(cloudEnabled?'Google connected — auto backup on':'Google connected — choose Restore or Back up');
-   // Never silently overwrite the device or cloud on sign-in.
+   const first=!cloudUser;cloudUser=u;cloudEnabled=localStorage.getItem('pace-cloud-enabled')==='yes'&&syncGet(SYNC_REV)!=null;cloudControls();cloudStatus('Google connected — syncing…');
+   // Never silently overwrite: a device that differs from the cloud is asked once; after that changes are merged.
+   if(first)setTimeout(()=>cloudPull(true),400);
+   if(!cloudStarted){cloudStarted=true;
+    setInterval(()=>cloudPull(false),20000);
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)cloudPull(false)});
+    window.addEventListener('focus',()=>cloudPull(false));
+    window.addEventListener('online',()=>cloudPull(false))}
   }else{
    cloudUser=null;cloudEnabled=false;cloudControls();
    cloudStatus(u?'Wrong Google account — disconnect':'Local only');
@@ -2874,7 +2953,7 @@ async function publishAll(){
   const m=$('pubMsg'),b=$('pubGo');if(!m||!b)return;
   const say=(t,bad)=>{m.style.color=bad?'var(--coral)':'var(--text-muted)';m.textContent=t};
   if(typeof cloudUser==='undefined'||!cloudUser)return say('Connect Google (admin) in the top bar first.',1);
-  if(!cloudEnabled)return say('Turn on cloud backup first: tap “Back up to cloud” in the top bar once, then come back here.',1);
+  if(!cloudEnabled)return say('Turn on cloud backup first: tap “Sync now” in the top bar once, then come back here.',1);
   if(!STATE.classes.length&&!confirm('This device has no classes. Publishing will REPLACE the cloud copy with an empty timetable. Continue?'))return;
   b.disabled=true;say('Publishing…');
   const wait=async()=>{for(let i=0;i<40&&cloudBusy;i++)await new Promise(r=>setTimeout(r,250))};
@@ -4120,7 +4199,7 @@ PM.results=async function(el,ctx){
   const B=ctx.batches||[],bn=id=>{const b=B.find(x=>String(x.id)===String(id));return b?(paceBN(b)):'Batch'};
   const [t,s,dir,acc,rt,rm]=await Promise.all([paceCloud.from('pace_tests').select('id,title,subject,batch_id,max_marks,created_at'),
     paceCloud.from('pace_test_submissions').select('id,test_id,user_id,directory_id,student_name,score,max_marks,graded_at').eq('status','done').then(r=>r.error&&/directory_id/.test(r.error.message)?paceCloud.from('pace_test_submissions').select('id,test_id,user_id,student_name,score,max_marks,graded_at').eq('status','done'):r),
-    paceCloud.from('pace_member_directory').select('id,role,name,email,batch_id'),paceCloud.from('pace_member_accounts').select('user_id,directory_id'),
+    paceCloud.from('pace_member_directory').select('*'),paceCloud.from('pace_member_accounts').select('user_id,directory_id'),
     paceCloud.from('pace_results_tests').select('*').order('test_date',{ascending:false}),paceCloud.from('pace_results_marks').select('*').limit(20000)]);
   const ib=await paceCloud.from('pace_results_inbox').select('id,sender,subject,received_at,body,files').eq('status','pending').order('received_at',{ascending:false}).limit(20),INB=ib.error?[]:(ib.data||[]);
   const need=(rt.error&&/pace_results/.test(rt.error.message))?'Run results.sql in Supabase first. ':'';
@@ -4137,14 +4216,29 @@ PM.results=async function(el,ctx){
     .sort((a,b)=>String(b.date).localeCompare(String(a.date)));
   const stat=x=>{const R=x.rows.filter(r=>!r.absent&&r.score!=null);if(!R.length)return{n:0};const top=R.slice().sort((a,b)=>b.score-a.score)[0];
     return{n:R.length,hi:top.score,topper:top.name,av:Math.round(R.reduce((a,r)=>a+r.score,0)/R.length*10)/10}};
-  let tab='app',fb='',q='',pick='';
+  let tab='app',fb='',q='',pick=window.__pmRes||'';window.__pmRes=null;
   const testCard=x=>{const st=stat(x);return`<div class="pm-card"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b style="font-size:15px">${E(x.title)}</b><span class="pm-tag">${E(bn(x.batch_id))}</span>${x.subject?`<span class="muted">${E(x.subject)}</span>`:''}<small class="muted" style="margin-left:auto">${E(fmtD(x.date))}</small></div>
     <div class="muted" style="margin-top:6px;font-size:13px">${st.n?`👥 ${st.n} student${st.n>1?'s':''} · 🏆 Highest <b style="color:var(--text)">${num(st.hi)}/${num(x.max)}</b> (${E(st.topper)}) · 📊 Average <b style="color:var(--text)">${num(st.av)}</b>`:'No marks yet.'}</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn ghost" data-view="${x.id}">View marks</button>${x.source!=='app'?`<button class="btn ghost" data-edit="${x.id}">✏️ Edit</button><button class="btn ghost" data-del="${x.id}">🗑 Delete</button>`:''}</div></div>`};
-  const studentView=d=>{const L=ALL.map(x=>({x,r:x.rows.find(r=>r.dir===d.id)})).filter(o=>o.r),P=L.filter(o=>!o.r.absent&&o.r.score!=null&&o.x.max).map(o=>o.r.score/o.x.max*100);
-    return`<div class="pm-card" style="border-left:4px solid #6366F1"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b style="font-size:16px">${E(d.name)}</b><span class="pm-tag">${E(bn(d.batch_id))}</span><small class="muted">${E(d.email||'')}</small><button class="btn ghost" data-clr style="margin-left:auto">✕ Close</button></div>
-      <p class="muted" style="margin:6px 0 4px;font-size:13px">${L.length} test${L.length===1?'':'s'}${P.length?` · average ${Math.round(P.reduce((a,b)=>a+b,0)/P.length)}%`:''}</p>
-      ${['app','offline','external'].map(k=>{const K=L.filter(o=>o.x.source===k);return K.length?`<div class="pm-sec">${SRC[k][0]} ${SRC[k][1]}</div>`+K.map(o=>{const st=stat(o.x);return`<div class="pm-row"><span style="flex:1">${E(o.x.title)}<br><small class="muted">${E(fmtD(o.x.date))} · highest ${num(st.hi)} · average ${num(st.av)}</small></span><b>${o.r.absent?'Absent':num(o.r.score)+'/'+num(o.x.max)}</b><span class="muted" style="width:44px;text-align:right">${o.r.absent||o.r.score==null?'':pct(o.r.score,o.x.max)+'%'}</span></div>`}).join(''):''}).join('')||'<p class="muted">No results for this student yet.</p>'}</div>`};
+  /* one student's full report: every test (app, offline, external), rank in each test, average, trend, rank in the batch */
+  const rankIn=(x,r)=>{if(r.absent||r.score==null)return null;const R=x.rows.filter(z=>!z.absent&&z.score!=null);return{rk:1+R.filter(z=>z.score>r.score).length,of:R.length}};
+  const avgPct=id=>{const P=ALL.map(x=>{const r=x.rows.find(z=>z.dir===id);return r&&!r.absent&&r.score!=null&&x.max?r.score/x.max*100:null}).filter(v=>v!=null);return P.length?P.reduce((a,b)=>a+b,0)/P.length:null};
+  const reportOf=d=>{const L=ALL.map(x=>({x,r:x.rows.find(r=>r.dir===d.id)})).filter(o=>o.r);
+    const P=L.filter(o=>!o.r.absent&&o.r.score!=null&&o.x.max).map(o=>({o,p:o.r.score/o.x.max*100}));
+    const mates=STU.filter(z=>String(z.batch_id)===String(d.batch_id)).map(z=>({id:z.id,a:avgPct(z.id)})).filter(z=>z.a!=null).sort((a,b)=>b.a-a.a);
+    const me=mates.findIndex(z=>z.id===d.id);
+    return{L,P,avg:P.length?P.reduce((a,b)=>a+b.p,0)/P.length:null,best:P.length?Math.max(...P.map(z=>z.p)):null,absent:L.filter(o=>o.r.absent).length,brank:me>=0?{rk:me+1,of:mates.length}:null}};
+  const studentView=d=>{const R=reportOf(d),L=R.L,T=R.P.slice().sort((a,b)=>String(a.o.x.date).localeCompare(String(b.o.x.date))).slice(-12);
+    const last=T.length>1?Math.round(T[T.length-1].p-T[T.length-2].p):null;
+    return`<div class="pm-card" style="border-left:4px solid #6366F1"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b style="font-size:17px">📋 ${E(d.name)}</b><span class="pm-tag">${E(bn(d.batch_id))}</span>${d.roll_no?`<span class="pm-tag">Roll ${E(d.roll_no)}</span>`:''}<small class="muted">${E(d.email||'')}</small><span style="margin-left:auto;display:flex;gap:6px"><button class="btn ghost" data-csv="${E(d.id)}">⬇ Excel</button><button class="btn ghost" data-clr>✕ Close</button></span></div>
+      <div class="pm-stats" style="margin-top:10px"><div class="pm-st"><b>${L.length}</b><small>tests${R.absent?` (${R.absent} absent)`:''}</small></div><div class="pm-st"><b>${R.avg!=null?Math.round(R.avg)+'%':'—'}</b><small>average</small></div><div class="pm-st"><b>${R.best!=null?Math.round(R.best)+'%':'—'}</b><small>best</small></div><div class="pm-st"><b>${R.brank?'#'+R.brank.rk:'—'}</b><small>${R.brank?`rank in batch of ${R.brank.of}`:'rank in batch'}</small></div></div>
+      ${T.length>1?`<div class="pm-sec">Trend (last ${T.length} tests)${last!=null?` <small class="muted" style="font-weight:600">· ${last>=0?'▲ up '+last:'▼ down '+Math.abs(last)} points since the previous test</small>`:''}</div>
+        <div class="pm-mdays" style="height:90px">${T.map(z=>`<div title="${E(z.o.x.title)}: ${Math.round(z.p)}%"><i style="height:${Math.max(3,z.p)}%;background:${z.p>=75?'#16A34A':z.p>=40?'#6366F1':'#E11D48'}"></i><small>${Math.round(z.p)}</small></div>`).join('')}</div>`:''}
+      ${['app','offline','external'].map(k=>{const K=L.filter(o=>o.x.source===k);return K.length?`<div class="pm-sec">${SRC[k][0]} ${SRC[k][1]}</div>`+K.map(o=>{const st=stat(o.x),rk=rankIn(o.x,o.r);return`<div class="pm-row"><span style="flex:1;min-width:0">${E(o.x.title)}<br><small class="muted">${E(fmtD(o.x.date))}${o.x.subject?' · '+E(o.x.subject):''} · highest ${num(st.hi)} · average ${num(st.av)}${rk?` · <b style="color:var(--text)">rank ${rk.rk}/${rk.of}</b>`:''}</small></span><b style="white-space:nowrap">${o.r.absent?'Absent':num(o.r.score)+'/'+num(o.x.max)}</b><span class="muted" style="width:44px;text-align:right">${o.r.absent||o.r.score==null?'':pct(o.r.score,o.x.max)+'%'}</span></div>`}).join(''):''}).join('')||'<p class="muted">No results for this student yet.</p>'}</div>`};
+  const reportCsv=d=>{const R=reportOf(d),q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+    const rows=[['Student',d.name],['Batch',bn(d.batch_id)],['Average %',R.avg!=null?Math.round(R.avg):''],['Rank in batch',R.brank?R.brank.rk+' of '+R.brank.of:''],[],['Date','Test','Type','Subject','Marks','Out of','%','Rank','Highest','Average']];
+    R.L.forEach(o=>{const st=stat(o.x),rk=rankIn(o.x,o.r);rows.push([o.x.date,o.x.title,SRC[o.x.source][1],o.x.subject||'',o.r.absent?'Absent':o.r.score,o.x.max,o.r.absent||o.r.score==null?'':pct(o.r.score,o.x.max),rk?rk.rk+'/'+rk.of:'',st.hi,st.av])});
+    const u=URL.createObjectURL(new Blob(['﻿'+rows.map(r=>r.map(q).join(',')).join('\n')],{type:'text/csv'})),a=document.createElement('a');a.href=u;a.download=('Report-'+String(d.name||'student').replace(/[^A-Za-z0-9]+/g,'-')+'.csv');document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000)};
   const foundHTML=()=>{const qq=q.trim().toLowerCase();if(qq.length<2)return'';const F=STU.filter(d=>String(d.name||'').toLowerCase().includes(qq)||String(d.email||'').toLowerCase().includes(qq)).slice(0,8);
     return F.map(d=>`<button class="pm-row" data-pick="${E(d.id)}" style="width:100%;background:none;border:0;border-bottom:1px solid var(--line);text-align:left;font:inherit;color:inherit;cursor:pointer"><span style="flex:1"><b>${E(d.name)}</b> <small class="muted">${E(d.email||'')}</small></span><span class="pm-tag">${E(bn(d.batch_id))}</span></button>`).join('')||'<p class="muted" style="margin:6px 0">No student found.</p>'};
   const draw=()=>{const L=ALL.filter(x=>x.source===tab&&(!fb||String(x.batch_id)===fb)),cnt=k=>ALL.filter(x=>x.source===k&&(!fb||String(x.batch_id)===fb)).length;
@@ -4168,6 +4262,7 @@ PM.results=async function(el,ctx){
     if(b.dataset.tab2){tab=b.dataset.tab2;return draw()}
     if(b.dataset.pick){pick=b.dataset.pick;q='';return draw()}
     if(b.dataset.clr!==undefined){pick='';return draw()}
+    if(b.dataset.csv){const d=STU.find(z=>String(z.id)===b.dataset.csv);if(d)reportCsv(d);return}
     if(b.dataset.add!==undefined)return PM.addMarks({B,STU,uidByDir,name:ctx.name},null,again);
     if(b.dataset.inb)return PM.addMarks({B,STU,uidByDir,name:ctx.name},null,again,INB.find(m=>m.id===b.dataset.inb));
     if(b.dataset.ign){if(!confirm('Ignore this email? It will be removed from this list (it stays in Gmail).'))return;b.disabled=true;const r=await paceCloud.from('pace_results_inbox').update({status:'ignored'}).eq('id',b.dataset.ign);if(r.error){b.disabled=false;return toast(r.error.message,1)}return again()}
@@ -4345,6 +4440,20 @@ PM.upload=async function(el,ctx){
     if(a.dataset.chk&&d)return check(d,a.dataset.chk);
     if(a.dataset.up&&d)return up(d)};
 };
+
+/* ===== quick student search (Tests page): opens that student's full report in Results ===== */
+PM.goResults=id=>{window.__pmRes=id;document.querySelectorAll('.pm-ov').forEach(o=>o.remove());
+  if(typeof UI==='undefined'||typeof render!=='function')return;UI.tab='results';const v=document.getElementById('view');if(v)v.dataset.pm='';render();try{scrollTo(0,0)}catch(_){}};
+PM.studentFinder=function(el){if(!el||!ok())return;
+  el.innerHTML=`<input type="search" placeholder="🔍 Student report: type a name to see all their marks…" autocomplete="off" style="width:100%;box-sizing:border-box"><div></div>`;
+  const inp=el.querySelector('input'),out=el.querySelector('div');let STU=null;
+  const B=(typeof STATE!=='undefined'&&STATE.batches)||[],bn=id=>{const b=B.find(x=>String(x.id)===String(id));return b?paceBN(b):''};
+  inp.oninput=async()=>{const qq=inp.value.trim().toLowerCase();if(qq.length<2){out.innerHTML='';return}
+    if(!STU){const r=await paceCloud.from('pace_member_directory').select('id,role,name,email,batch_id');STU=(r.data||[]).filter(d=>(d.role||'student')==='student')}
+    const now=inp.value.trim().toLowerCase();if(now!==qq)return;
+    const F=STU.filter(d=>String(d.name||'').toLowerCase().includes(qq)||String(d.email||'').toLowerCase().includes(qq)).slice(0,8);
+    out.innerHTML=F.map(d=>`<button class="pm-row" data-rep="${E(d.id)}" style="width:100%;background:none;border:0;border-bottom:1px solid var(--line);text-align:left;font:inherit;color:inherit;cursor:pointer"><span style="flex:1"><b>${E(d.name)}</b> <small class="muted">${E(d.email||'')}</small></span><span class="pm-tag">${E(bn(d.batch_id))}</span></button>`).join('')||'<p class="muted" style="margin:6px 0">No student found.</p>'};
+  out.onclick=e=>{const b=e.target.closest('[data-rep]');if(b)PM.goResults(b.dataset.rep)}};
 
 /* ===== 18. AI credit meter (Gemini spend estimate) ===== */
 const mtDay=(t=Date.now())=>new Date(t+5.5*3600e3).toISOString().slice(0,10);
@@ -5433,7 +5542,7 @@ async function publishTeachers(){
 /* never "restore" an EMPTY cloud copy over a device (it would erase that device too) */
 const odl=downloadCloud;
 downloadCloud=async function(){
-  try{const row=await cloudRead();if(row&&row.state&&!(row.state.batches||[]).length&&!(row.state.classes||[]).length){alert('The cloud copy is EMPTY, so restoring would erase this device as well. Do NOT restore. Open the admin app on the device that still has your timetable and tap “Back up to cloud” there.');return}}catch(_){}
+  try{const row=await cloudRead();if(row&&row.state&&!(row.state.batches||[]).length&&!(row.state.classes||[]).length){alert('The cloud copy is EMPTY, so restoring would erase this device as well. Do NOT restore. Open the admin app on the device that still has your timetable and tap “Sync now” there.');return}}catch(_){}
   return odl.apply(this,arguments);
 };
 setInterval(()=>{const b=document.getElementById('cloudDownload');if(b&&b.onclick!==downloadCloud)b.onclick=downloadCloud},1500);
@@ -5448,8 +5557,8 @@ function syncBanner(){
   const empty=admin&&!STATE.batches.length&&!STATE.classes.length,off=admin&&!empty&&typeof cloudEnabled!=='undefined'&&!cloudEnabled,mode=empty?'empty':off?'off':'';
   b.style.display=mode?'block':'none';
   if(b.dataset.mode!==mode){b.dataset.mode=mode;
-    b.innerHTML=mode==='empty'?'⚠ <b>This device has no timetable loaded yet.</b> Tap <b>Restore cloud</b> once to load it. Do <u>not</u> tap Back up on this device. <button class="btn ghost" id="peRestoreBtn" type="button" style="margin-top:6px">Restore cloud</button>'
-      :mode==='off'?'⚠ <b>Teachers are not receiving your changes from this device.</b> Backup is switched off in this browser. If this device has the latest timetable, tap the button once. <button class="btn ghost" id="peSyncBtn" type="button" style="margin-top:6px">Back up to cloud</button>':''}
+    b.innerHTML=mode==='empty'?'⚠ <b>This device has no timetable loaded yet.</b> Tap <b>Restore cloud</b> once to load it. <button class="btn ghost" id="peRestoreBtn" type="button" style="margin-top:6px">Restore cloud</button>'
+      :mode==='off'?'⚠ <b>This device is not synced yet.</b> Tap the button once. It is safe: changes made on your other devices are kept. <button class="btn ghost" id="peSyncBtn" type="button" style="margin-top:6px">🔄 Sync now</button>':''}
 }
 setInterval(()=>{try{syncBanner()}catch(_){}},3000);
 render=function(){prev.apply(this,arguments);if(UI.tab==='members'&&UI.accessRole==='admin'){paintM();mLoad()}try{syncBanner()}catch(_){}};
@@ -5763,9 +5872,10 @@ async function paintTests0(host,ctx){
     <div class="field" id="tONm"><label>Numerical marks: right / wrong</label><div style="display:flex;gap:6px;align-items:center">+<input id="tOq" type="number" step="0.5" value="4" style="width:70px">/ −<input id="tOw" type="number" step="0.5" min="0" value="0" style="width:70px"></div></div></div>
     <p class="muted" style="font-size:12px;margin:4px 0 0">Attach the marking scheme (answer key) PDF above; the question paper is optional for OMR tests. Max marks are filled in for you.</p></div>`}
   <button class="btn primary" type="submit">Create test</button></form></div>
-  <div class="card"><div class="cardhead"><h2>Tests &amp; results</h2></div>
+  <div class="card"><div class="cardhead"><h2>Tests &amp; results</h2></div>${TE?'':'<div id="tStuF" style="margin:0 0 12px"></div>'}
   ${bl.length?`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 10px"><select id="xB" style="width:auto;flex:0 1 220px">${opts}</select><button class="btn ghost" id="xBatch" type="button">⬇ Download batch marks (Excel)</button></div>`:''}
   ${paperGroups(t.data||[]).map(G=>(G.length>1?`<details class="tg-grp" open><summary><b class="tg-t">📄 ${esc(G[0].title)}</b><span class="muted" style="font-size:12.5px"> · ${G.length} batches · ${G.reduce((a,z)=>a+(by[z.id]||[]).length,0)} submitted · ${G[0].max_marks} marks${G[0].answer_mode==='omr'?' · 🧾 OMR':G[0].answer_mode==='tap'?' · ✍️ tap answers':''}</span><span class="tg-chips">${G.map(z=>`<span class="pm-tag">${esc(bn(z.batch_id))} · ${(by[z.id]||[]).length}</span>`).join('')}</span></summary><div class="tg-body">`:'')+G.map(x=>{const L=by[x.id]||[],grp=G.length>1;return `<div class="${grp?'tg-row':''}" style="padding:10px 0;border-bottom:1px solid var(--line)">${grp?`<b class="tg-batch">🎓 ${esc(bn(x.batch_id))}</b> <span class="muted" style="font-size:12.5px">`:`<b>${esc(x.title)}</b> <span class="muted" style="font-size:12.5px">${esc(bn(x.batch_id))} · `}${x.max_marks} marks · ${L.length} submitted${x.answer_mode==='tap'?' · ✍️ tap answers':''}${x.answer_mode==='omr'?' · 🧾 OMR':''}${x.due_at?' · ⏰ by '+esc(new Date(x.due_at).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'})):''}</span><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"><button class="btn ghost" data-tg="${x.id}" data-o="${x.is_open?1:0}">${x.is_open?'Close test':'Reopen test'}</button><button class="btn ghost" data-xl="${x.id}">⬇ Excel</button><button class="btn ghost" data-key="${x.id}">🔑 Answer key</button>${L.length?`<button class="btn ghost" data-ana="${x.id}">📊 Analysis</button>`:''}${TE?'':`<button class="btn ghost" data-nos="${x.id}">🙋 Not submitted</button><button class="btn ghost" data-cpy="${x.id}">📋 Copy to batch</button>${!['tap','omr'].includes(x.answer_mode)&&window.PM&&PM.goUpload?`<button class="btn ghost" data-aup="${x.id}">📤 Upload sheets</button>`:''}${x.answer_mode==='omr'&&window.PM&&PM.goOmr?`<button class="btn ghost" data-omrs="${x.id}">📷 Scan OMR sheets</button><button class="btn ghost" data-omrp="${x.id}">🖨️ OMR sheet</button>`:''}`}${x.answer_mode==='tap'?`<button class="btn ghost" data-bk="${x.id}">↻ Prepare answers</button>`:''}${L.length&&x.answer_mode!=='omr'?`<button class="btn ghost" data-rca="${x.id}">↻ Re-check all (${L.length})</button>`:''}<button class="btn ghost" data-dt="${x.id}">Delete</button></div><details data-tid="${x.id}"${T.open===x.id?' open':''} style="margin-top:8px"><summary style="cursor:pointer;color:var(--ink-2);font-weight:600">Results (${L.length})</summary>${L.map(u=>`<div style="padding:8px 0;border-top:1px solid var(--line);font-size:13px"><b>${esc(u.student_name||'Student')}</b> · ${u.status==='done'?u.score+' / '+u.max_marks:u.status}${u.error?` <span style="color:var(--coral)">${esc(u.error)}</span>`:''} <button class="btn ghost" data-sheet="${esc(u.file_path)}">Sheet ↗</button>${u.annotated_path?` <button class="btn ghost" data-ck="${esc(u.annotated_path)}">Checked paper ↗</button>`:''} ${u.result&&u.result.needs_review?'<span class="pill" style="background:color-mix(in srgb,#E8890C 18%,transparent);color:#B45309">⚠ Please review</span> ':''}${u.result&&u.result.review_note?`<div style="color:#B45309;font-size:12.5px;margin:4px 0">⚠ ${esc(u.result.review_note)}</div>`:''}${u.result&&u.result.dup_with?`<div style="color:#BE123C;font-size:12.5px;margin:4px 0">⚠ Same answers as ${u.result.dup_with.map(d=>esc(d.name)+' ('+d.pct+'%)').join(', ')}</div>`:''}${u.status==='done'&&x.answer_mode!=='omr'?`<button class="btn ghost" data-edm="${u.id}">✏️ Edit marks</button> `:''}${u.file_path==='typed'||x.answer_mode==='omr'?'':`<button class="btn ghost" data-chk="${u.id}">${u.status==='done'?'↻ Re-check':'Check now'}</button>`} <button class="btn ghost" data-rs="${u.id}">Reset</button>${u.result?`<div class="muted" style="margin-top:4px">${esc(u.result.overall_feedback||'')}</div>${(u.result.questions||[]).map(q=>`<div>${esc(paceQ(q.q))}: ${esc(q.marks)}/${esc(q.max)} — ${esc(q.feedback||'')}</div>`).join('')}`:''}</div>`).join('')||'<p class="muted" style="font-size:13px">No submissions yet.</p>'}</details></div>`}).join('')+(G.length>1?'</div></details>':'')).join('')||'<p class="muted">No tests yet.</p>'}</div>`;
+  if(!TE&&window.PM&&PM.studentFinder)PM.studentFinder(host.querySelector('#tStuF'));
   const pick=v=>host.querySelectorAll('#tB input').forEach(c=>{c.checked=v;c.closest('.tb-c').classList.toggle('on',v)});
   if($('tBall'))$('tBall').onclick=e=>{e.preventDefault();pick(true)};if($('tBnone'))$('tBnone').onclick=e=>{e.preventDefault();pick(false)};
   host.querySelectorAll('#tB input').forEach(c=>c.onchange=()=>c.closest('.tb-c').classList.toggle('on',c.checked));
