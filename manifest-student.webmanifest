@@ -1,0 +1,22 @@
+{
+  "name": "PACE Student",
+  "short_name": "PACE Student",
+  "id": "./?app=student",
+  "start_url": "./?app=student",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#3640C6",
+  "theme_color": "#3640C6",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -4203,27 +4203,6 @@ const bestMatch=(name,roster,used)=>{const a=nrm(name);if(!a.length)return'';let
     for(const x of a)if(b.some(y=>y===x||(x.length>=3&&(y.startsWith(x)||x.startsWith(y)))||(x.length===1&&y[0]===x)))hit++;
     const sc=hit/Math.max(a.length,b.length)+(a[0]===b[0]?0.15:0);if(sc>bs){bs=sc;best=d.id}}
   return bs>=0.6?best:''};
-/* match the whole sheet to the students at once: a first name alone ("Riya") matches the full name on the sheet ("Riya Sharma" or "SHARMA RIYA");
-   if two students could be the same name, nothing is guessed - the row is left for the admin to choose */
-const nmTok=(x,y)=>x===y||(x.length>=3&&y.length>=3&&(y.startsWith(x)||x.startsWith(y)))||(x.length===1&&y[0]===x)||(y.length===1&&x[0]===y);
-const nmScore=(a,b)=>{let hb=0,ha=0;for(const y of b)if(a.some(x=>nmTok(x,y)))hb++;for(const x of a)if(b.some(y=>nmTok(x,y)))ha++;
-  return hb?hb/b.length*0.7+ha/a.length*0.3+(nmTok(a[0],b[0])?0.05:0):0};
-const matchAll=(list,R)=>{const A=list.map(r=>nrm(r.name)),Bn=R.map(d=>nrm(d.name)),S=A.map(a=>Bn.map(b=>a.length&&b.length?nmScore(a,b):0));
-  const out=list.map(()=>''),note=list.map(()=>''),pairs=[],uR=new Set(),uS=new Set();
-  S.forEach((row,i)=>row.forEach((v,j)=>{if(v>=0.7)pairs.push([v,i,j])}));pairs.sort((x,y)=>y[0]-x[0]);
-  for(const [v,i,j] of pairs){if(uR.has(i)||uS.has(j))continue;
-    const rivS=R.map((d,k)=>k).filter(k=>k!==j&&!uS.has(k)&&Math.abs(S[i][k]-v)<0.02),rivR=list.map((x,k)=>k).filter(k=>k!==i&&!uR.has(k)&&Math.abs(S[k][j]-v)<0.02);
-    if(rivS.length){uR.add(i);const nm=[j,...rivS].map(k=>R[k].name),same=nm.every(x=>nrm(x).join(' ')===nrm(nm[0]).join(' '));note[i]=same?nm.length+' students are called '+nm[0]+' - choose the right one. (Tip: add their surname or initial in Students & Parents Access, e.g. "'+nm[0]+' G".)':'Could be '+nm.slice(0,3).join(' or ')+' - choose the right student.';continue}
-    if(rivR.length){uS.add(j);[i,...rivR].forEach(k=>{if(!out[k])note[k]='Two names on the sheet look like '+R[j].name+' - choose the right student.'});continue}
-    out[i]=R[j].id;uR.add(i);uS.add(j)}
-  return{out,note}};
-/* which class a batch is (from its name) and which year-batch is 11th / 12th now: 2026-28 = 11th, 2025-27 = 12th (moves on by itself every April) */
-const clsOf=b=>{const t=String(b&&(b.label||b.name)||'')+' '+(typeof paceBN==='function'?paceBN(b):'');return /\bXII\b|\b12\s*(th)?\b/i.test(t)?12:/\bXI\b|\b11\s*(th)?\b/i.test(t)?11:0};
-const sessionStart=()=>{const d=new Date(Date.now()+5.5*3600e3);return d.getUTCMonth()>=3?d.getUTCFullYear():d.getUTCFullYear()-1};
-const yearLabel=c=>{const s=sessionStart()-(c===12?1:0);return s+'-'+String(s+2).slice(2)};
-const clsFromText=t=>{t=String(t||'');const S=sessionStart();let m,re=/(20\d\d)\s*[-–\/]\s*(?:20)?(\d\d)\b/g;
-  while((m=re.exec(t))){const y=+m[1];if(y===S)return 11;if(y===S-1)return 12}
-  return /\bXII\b|\b12th\b/i.test(t)?12:/\bXI\b|\b11th\b/i.test(t)?11:0};
 const toJpg=(file,max=1800)=>new Promise((res,rej)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{const k=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);res(c.toDataURL('image/jpeg',0.85).split(',')[1])};im.onerror=()=>{URL.revokeObjectURL(u);rej(new Error('Could not read that photo'))};im.src=u});
 const toB64=file=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]);r.onerror=()=>rej(new Error('Could not read the file'));r.readAsDataURL(file)});
 const filesToPayload=async files=>{const o={images:[]};
@@ -4321,7 +4300,7 @@ PM.addMarks=function(C,ex,done,inbox){
   const today=istDay(),b=modal(ex?'✏️ Edit marks':'➕ Add marks',`
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px">
       <label style="font-size:12.5px">Type<select id="amS" style="width:100%"><option value="offline">📝 Offline test</option><option value="external">🌐 External test</option></select></label>
-      <label style="font-size:12.5px">Batch<select id="amB" style="width:100%">${ex?'':[12,11].filter(c=>C.B.some(x=>clsOf(x)===c)).map(c=>`<option value="grp:${c}">All ${c===12?'XII (12th)':'XI (11th)'} batches · ${yearLabel(c)}</option>`).join('')}${C.B.map(x=>`<option value="${E(x.id)}">${E(paceBN(x))}</option>`).join('')}</select></label>
+      <label style="font-size:12.5px">Batch<select id="amB" style="width:100%">${C.B.map(x=>`<option value="${E(x.id)}">${E(paceBN(x))}</option>`).join('')}</select></label>
       <label style="font-size:12.5px;grid-column:1/-1">Test name<input id="amT" maxlength="150" placeholder="e.g. Major Test 3 (offline)" style="width:100%;box-sizing:border-box"></label>
       <label style="font-size:12.5px">Subject (optional)<input id="amSub" maxlength="60" placeholder="PCM" style="width:100%;box-sizing:border-box"></label>
       <label style="font-size:12.5px">Test date<input id="amD" type="date" value="${today}" style="width:100%;box-sizing:border-box"></label>
@@ -4335,25 +4314,22 @@ PM.addMarks=function(C,ex,done,inbox){
     <div id="amTab"></div>`);
   const $=s=>b.querySelector(s);let rows=null;
   if(inbox){$('#amS').value='external';$('#amT').value=String(inbox.subject||'').replace(/^\s*((re|fwd?)\s*:\s*)+/i,'').slice(0,150);if(inbox.received_at)$('#amD').value=new Date(+new Date(inbox.received_at)+5.5*3600e3).toISOString().slice(0,10);
-    const n=(inbox.files||[]).length;$('#amF').insertAdjacentHTML('beforebegin',`<p style="margin:0 0 8px;font-size:13px">📥 <b>From the email:</b> ${n?(inbox.files||[]).map(f=>E(f.name)).join(', '):'the email text'}. Choose the batch above, then tap Read marks.</p>`);$('#amF').style.display='none';
-    const gc=clsFromText([inbox.subject,inbox.body,(inbox.files||[]).map(f=>f.name).join(' ')].join(' '));if(gc&&$(`#amB option[value="grp:${gc}"]`))$('#amB').value='grp:'+gc}
+    const n=(inbox.files||[]).length;$('#amF').insertAdjacentHTML('beforebegin',`<p style="margin:0 0 8px;font-size:13px">📥 <b>From the email:</b> ${n?(inbox.files||[]).map(f=>E(f.name)).join(', '):'the email text'}. Choose the batch above, then tap Read marks.</p>`);$('#amF').style.display='none'}
   if(ex){$('#amS').value=ex.source;$('#amB').value=ex.batch_id;$('#amT').value=ex.title;$('#amSub').value=ex.subject||'';$('#amD').value=String(ex.date).slice(0,10);$('#amM').value=ex.max;
     rows=ex.rows.map(r=>({name:r.name,dir:r.dir,marks:r.score==null?'':r.score,absent:r.absent}));}
-  const grpOf=()=>{const v=String($('#amB').value);return /^grp:/.test(v)?+v.slice(4):0},bnOf=id=>{const x=C.B.find(z=>String(z.id)===String(id));return x?paceBN(x):''};
-  const roster=()=>{const g=grpOf(),v=String($('#amB').value);
-    return (g?C.STU.filter(d=>{const x=C.B.find(z=>String(z.id)===String(d.batch_id));return x&&clsOf(x)===g}):C.STU.filter(d=>String(d.batch_id)===v)).slice().sort((a,b)=>String(a.name).localeCompare(String(b.name)))};
+  const roster=()=>C.STU.filter(d=>String(d.batch_id)===String($('#amB').value));
   const table=()=>{const R=roster(),un=rows.filter(r=>!r.dir&&(r.marks!==''||r.absent)).length;
     $('#amTab').innerHTML=`<div class="pm-sec">Check the marks (${rows.length} rows)</div>
       ${un?`<p class="pm-tag" style="display:block;margin:0 0 8px">⚠ ${un} name${un>1?'s are':' is'} not linked to a student. Choose the student from the list, or they will not see this result.</p>`:''}
-      <div style="overflow-x:auto">${rows.map((r,i)=>`<div class="pm-row" data-i="${i}" style="gap:6px"><span style="flex:1;min-width:120px"><select data-f="dir" style="width:100%;${r.dir?'':'border-color:#E8890C'}"><option value="">— not in list —</option>${R.map(d=>`<option value="${E(d.id)}"${d.id===r.dir?' selected':''}>${E(d.name)}${grpOf()?' · '+E(bnOf(d.batch_id)):''}</option>`).join('')}</select>${r.note&&!r.dir?`<small style="display:block;color:#B45309">${E(r.note)}</small>`:''}${r.name&&(!r.dir||nrm((R.find(d=>d.id===r.dir)||{}).name).join(' ')!==nrm(r.name).join(' '))?`<small class="muted">Sheet says: ${E(r.name)}${r.roll?' · '+E(r.roll):''}</small>`:''}</span>
+      <div style="overflow-x:auto">${rows.map((r,i)=>`<div class="pm-row" data-i="${i}" style="gap:6px"><span style="flex:1;min-width:120px"><select data-f="dir" style="width:100%;${r.dir?'':'border-color:#E8890C'}"><option value="">— not in list —</option>${R.map(d=>`<option value="${E(d.id)}"${d.id===r.dir?' selected':''}>${E(d.name)}</option>`).join('')}</select>${r.name&&(!r.dir||nrm((R.find(d=>d.id===r.dir)||{}).name).join(' ')!==nrm(r.name).join(' '))?`<small class="muted">Sheet says: ${E(r.name)}${r.roll?' · '+E(r.roll):''}</small>`:''}</span>
         <input class="pm-in" data-f="marks" type="number" step="0.25" inputmode="decimal" value="${E(r.marks)}" ${r.absent?'disabled':''} placeholder="marks"><label style="font-size:12px;display:flex;gap:4px;align-items:center;white-space:nowrap"><input type="checkbox" data-f="absent" style="width:auto" ${r.absent?'checked':''}>AB</label><button class="btn ghost" data-rm style="padding:4px 8px">✕</button></div>`).join('')}</div>
       <button class="btn ghost" id="amAddRow" style="margin-top:8px">➕ Add a row</button>
       <label style="display:flex;gap:8px;align-items:center;margin:12px 0 0;font-size:13px"><input type="checkbox" id="amN" style="width:auto" ${ex?'':'checked'}> Send a phone alert to these students and their parents</label>
       <button class="btn primary" id="amSave" style="margin-top:10px;min-height:44px">💾 Save marks</button><p class="muted" id="amSM" style="font-size:12.5px"></p>`};
-  const fill=list=>{const R=roster(),M=matchAll(list,R);rows=list.map((r,i)=>({name:r.name,roll:r.roll||'',dir:M.out[i],note:M.note[i],marks:r.marks==null?'':r.marks,absent:!!r.absent}));table()};
+  const fill=list=>{const R=roster(),used=new Set();rows=list.map(r=>{const d=bestMatch(r.name,R,used);if(d)used.add(d);return{name:r.name,roll:r.roll||'',dir:d,marks:r.marks==null?'':r.marks,absent:!!r.absent}});table()};
   if(rows)table();
   b.addEventListener('change',e=>{const row=e.target.closest('[data-i]'),f=e.target.dataset.f;
-    if(e.target.id==='amB'&&rows){const M=matchAll(rows,roster());rows.forEach((r,i)=>{r.dir=M.out[i];r.note=M.note[i]});return table()}
+    if(e.target.id==='amB'&&rows){rows.forEach(r=>r.dir='');const R=roster(),used=new Set();rows.forEach(r=>{r.dir=bestMatch(r.name,R,used);if(r.dir)used.add(r.dir)});return table()}
     if(!row||!f)return;const r=rows[+row.dataset.i];
     if(f==='dir'){r.dir=e.target.value;if(!r.name){const d=C.STU.find(z=>z.id===r.dir);r.name=d?d.name:''}table()}
     else if(f==='absent'){r.absent=e.target.checked;if(r.absent)r.marks='';table()}});
@@ -4377,20 +4353,11 @@ PM.addMarks=function(C,ex,done,inbox){
     if(t.id==='amSave'){const m=$('#amSM'),title=$('#amT').value.trim(),max=+$('#amM').value,batch=$('#amB').value;
       const keep=rows.filter(r=>r.absent||String(r.marks).trim()!=='').map(r=>{const d=C.STU.find(z=>z.id===r.dir);return{directory_id:r.dir||null,student_name:(d?d.name:r.name||'').trim()||'Student',score:r.absent?null:+r.marks,absent:!!r.absent}});
       if(!title)return m.textContent='Write the test name.';if(!(max>0))return m.textContent='Write the maximum marks.';if(!batch)return m.textContent='Choose the batch.';
-      if(grpOf()){const un=keep.filter(k=>!k.directory_id);if(un.length)return m.textContent=`${un.length} row${un.length>1?'s are':' is'} not linked to a student (${un.slice(0,3).map(k=>k.student_name).join(', ')}${un.length>3?'…':''}). With "All batches" every row must be linked - choose the student, or tap ✕ to remove the row.`;}
       if(!keep.length)return m.textContent='Enter marks for at least one student.';
       const over=keep.find(k=>!k.absent&&(isNaN(k.score)||k.score>max));if(over)return m.textContent=`${over.student_name}: marks ${isNaN(over.score)?'are not a number':'are more than the maximum ('+max+')'}.`;
       const dup=keep.map(k=>k.directory_id).filter(Boolean);if(new Set(dup).size!==dup.length)return m.textContent='The same student is chosen in two rows. Fix that first.';
       t.disabled=true;t.textContent='Saving…';
       const head={title,batch_id:batch,subject:$('#amSub').value.trim()||null,test_date:$('#amD').value||today,max_marks:max,source:$('#amS').value};
-      if(grpOf()){const by={};keep.forEach(k=>{const d=C.STU.find(z=>z.id===k.directory_id);(by[d.batch_id]=by[d.batch_id]||[]).push(k)});let r=null;
-        for(const [bid,list] of Object.entries(by)){r=await paceCloud.from('pace_results_tests').insert(Object.assign({},head,{batch_id:bid})).select('id').single();if(r.error)break;
-          r=await paceCloud.from('pace_results_marks').insert(list.map(k=>Object.assign({rt_id:r.data.id},k)));if(r.error)break}
-        if(r&&r.error){t.disabled=false;t.textContent='💾 Save marks';m.textContent=(/pace_results/.test(r.error.message)?'Run results.sql in Supabase first. ':'')+r.error.message;return}
-        const ids=keep.map(k=>C.uidByDir[k.directory_id]).filter(Boolean);
-        if($('#amN').checked&&ids.length)fn({notify:{user_ids:ids,parents:true,title:'🏅 Result: '+title,body:'Marks are out. Open the PACE app > Results to see your score.'}}).catch(()=>{});
-        if(inbox)await paceCloud.from('pace_results_inbox').update({status:'done'}).eq('id',inbox.id);
-        b.closest('.pm-ov').remove();toast(`Saved ✓ ${keep.length} students in ${Object.keys(by).length} batch${Object.keys(by).length>1?'es':''}`);if(done)done();return}
       let id=ex&&ex.id,r;
       if(id){r=await paceCloud.from('pace_results_tests').update(head).eq('id',id);if(!r.error)r=await paceCloud.from('pace_results_marks').delete().eq('rt_id',id)}
       else{r=await paceCloud.from('pace_results_tests').insert(head).select('id').single();if(!r.error)id=r.data.id}
