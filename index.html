@@ -2569,7 +2569,8 @@ function materials(v){
   <div class="field"><label>Title</label><input id="mt" required placeholder="e.g. DPP-1 Circular Motion"></div>
   <div class="field"><label>Link (Google Drive, YouTube, PDF URL…)</label><input id="mu" required placeholder="https://"></div>
   <div class="row"><div class="field"><label>Type</label><select id="mk"><option value="pdf">PDF</option><option value="doc">Document</option><option value="link">Link</option></select></div><div class="field"><label>Batch</label><select id="mb"><option value="">All</option>${bo}</select></div></div>
-  <div class="field"><label>Subject</label><select id="ms"><option value="">—</option>${so}</select></div><button class="btn primary" type="submit">+ Add material</button></form></div></div>`;
+  <div class="field"><label>Subject</label><select id="ms"><option value="">—</option>${so}</select></div><button class="btn primary" type="submit">+ Add material</button></form></div></div><div id="libAdm" style="margin-top:16px"></div>`;
+  if(window.PLIB)PLIB.admin(v.querySelector('#libAdm'),(STATE.batches||[]).map(b=>({id:b.id,name:typeof paceBN==='function'?paceBN(b):b.name})));
   $('#mfb').value=M.batch;$('#mfs').value=M.subject;
   $('#mfb').onchange=e=>{M.batch=e.target.value;render()};$('#mfs').onchange=e=>{M.subject=e.target.value;render()};
   v.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>mut(ns=>{ns.materials=(ns.materials||[]).filter(m=>m.id!==b.dataset.del)}));
@@ -3272,7 +3273,8 @@ const PCH=window.PCH={rows:[],loaded:false,
     Object.entries(o.weekly||{}).forEach(([b,days])=>Object.values(days||{}).forEach(sl=>(sl||[]).forEach(x=>x&&x.teacherId&&add(b,x.teacherId,x.subject,null))));
     if(o.self&&o.teachers&&o.teachers[0])(o.batches||[]).forEach(b=>add(b.id,o.teachers[0].id,'',null));
     const tSub={};pairs.forEach(p=>{if(p.subject&&!tSub[p.tid])tSub[p.tid]=p.subject});pairs.forEach(p=>{if(!p.subject&&tSub[p.tid])p.subject=tSub[p.tid]});
-    const P=[...pairs.values()].sort((a,b)=>String((B.get(a.b)||{}).label).localeCompare(String((B.get(b.b)||{}).label))||a.code.localeCompare(b.code));
+    const tName=p=>String((T.get(p.tid)||{}).name||p.code).toLowerCase(),bName=p=>String((B.get(p.b)||{}).label||'');
+    const P=[...pairs.values()].sort((a,b)=>tName(a).localeCompare(tName(b))||a.code.localeCompare(b.code)||bName(a).localeCompare(bName(b),'en',{numeric:true}));
     const nextOf=p=>p.list.filter(c=>c.date>t0||(c.date===t0&&c.end>hm)).sort((a,b)=>before(a,b)?-1:1)[0]||null;
     const draw=()=>{
       el.innerHTML=`<div class="ch-wrap"><h2>📖 ${o.self?'My Chapters':'Chapters'}</h2><p class="muted" style="margin:0;font-size:13px">Set the chapter being taught in each batch. Lecture numbers then count up automatically with every class, and restart at 1 for a new chapter.</p>`+
@@ -5333,13 +5335,13 @@ async function member(user,role){
   }
   function materials(){
     const M=P.materials||[],subs=[...new Set(M.map(m=>m.subject).filter(Boolean))],L=M.filter(m=>!sub||m.subject===sub);
-    return (subs.length?`<div class="pe-filter"><button class="pe-chip${sub?'':' act'}" data-sub="">All</button>${subs.map(s=>`<button class="pe-chip${sub===s?' act':''}" data-sub="${esc(s)}">${esc(s)}</button>`).join('')}</div>`:'')+
-    (L.length?L.map(m=>{const k=KIND[m.kind]||KIND.link;return `<div class="pm-row"><span class="pm-ic" style="--c:${k[1]}">${k[0]}</span><div><b>${esc(m.title)}</b><span>${esc(m.subject||'General')}</span></div>${safe(m.url)?`<a href="${esc(safe(m.url))}" target="_blank" rel="noopener noreferrer" title="Open">↗</a>`:''}</div>`}).join(''):'<div class="card"><p class="muted" style="margin:0">No study materials yet.</p></div>');
+    return '<div id="pgLib"></div>'+(subs.length?`<div class="pe-filter"><button class="pe-chip${sub?'':' act'}" data-sub="">All</button>${subs.map(s=>`<button class="pe-chip${sub===s?' act':''}" data-sub="${esc(s)}">${esc(s)}</button>`).join('')}</div>`:'')+
+    (L.length?L.map(m=>{const k=KIND[m.kind]||KIND.link;return `<div class="pm-row"><span class="pm-ic" style="--c:${k[1]}">${k[0]}</span><div><b>${esc(m.title)}</b><span>${esc(m.subject||'General')}</span></div>${safe(m.url)?`<a href="${esc(safe(m.url))}" target="_blank" rel="noopener noreferrer" title="Open">↗</a>`:''}</div>`}).join(''):'<div class="card" data-nomat><p class="muted" style="margin:0">No other study materials yet.</p></div>');
   }
   function paint(){
     const chip=(k,t)=>`<button class="pe-chip${tab===k?' act':''}" data-tab="${k}">${t}</button>`,tt0=tab==='tt';
     V.innerHTML=top+`<div class="pg-wrap">${tt0?hero():''}${tt0&&window.PM?'<div id="pgAN"></div>':''}${tt0&&window.PXN?'<div id="pgXN">'+PXN.html(user.id,FG)+'</div>':''}<div class="pe-filter pg-tabs">${chip('tt','📅 Timetable')}${chip('hw','📝 Homework'+(up.length?' <i class="pg-cnt">'+up.length+'</i>':''))}${chip('mat','📚 Materials')}${chip('tst','🧪 Tests')}${window.PM?chip('res','🏅 Results'):''}${isStu?chip('mist','🎯 Mistakes'):''}${isStu?chip('dbt','❓ Doubts'):''}${isStu?chip('fx','🧮 Formulas'):''}</div>${tt0?'<div id="pgNext">'+upNext()+'</div>'+installCard()+'<div id="pgNotif"></div>'+(isStu?'<div id="pgQB"></div><div id="pgDPP"></div><button class="btn ghost" id="pgScan" style="width:100%;margin:0 0 12px;min-height:44px;font-weight:800">📷 Scan attendance QR</button>':'<div id="pgWR"></div>'):''}<div id="pgDoubt">${doubtHTML()}</div>${tab==='hw'?homework():tab==='mat'?materials():tab==='tst'?'<div id="pgTests"></div>':tab==='mist'?'<div id="pgMist"></div>':tab==='dbt'?'<div id="pgDbt"></div>':tab==='res'?'<div id="pgRes"></div>':tab==='fx'?formulas():(isStu?fxTeaser():'')+timetable()}</div>`;
-    $('pgOut').onclick=signOut;if(tab==='tst'&&window.peTests)window.peTests($('pgTests'),user,role);if(tab==='mist'&&window.peMistakes)window.peMistakes($('pgMist'),user,role);if(tab==='res'&&window.PM)PM.myResults($('pgRes')).catch(e=>{$('pgRes').innerHTML='<p class="muted">'+esc(e.message||e)+'</p>'});if(tab==='dbt'&&window.PM)PM.studentDoubts($('pgDbt'),user).catch(e=>{$('pgDbt').innerHTML='<p class="muted">'+esc(e.message||e)+'</p>'});if(tab==='fx')typeset();window.__pgPop=t=>{tab=t;window.__pgTab=t;if(t==='fx'){fday=todayStr();fmode='day'}paint()};if(window.paceNav)paceNav.refresh();if(isStu&&window.peQuizBanner&&$('pgQB'))peQuizBanner($('pgQB'),user);if(window.PM){PM.annCard($('pgAN'));if(isStu){PM.dppCard($('pgDPP'),user);const sc=$('pgScan');if(sc)sc.onclick=()=>PM.scan()}else if($('pgWR'))PM.parentReport($('pgWR')).catch(()=>{})}if(window.PXN&&$('pgXN'))PXN.bind($('pgXN'),user.id);if(window.paceDiwali)setTimeout(()=>paceDiwali(String((P&&P.name)||'').trim().split(/\s+/)[0]),400);if(window.PNS&&$('pgNotif'))PNS.mount($('pgNotif'),{role,url:location.pathname});
+    $('pgOut').onclick=signOut;if(tab==='mat'&&window.PLIB&&role==='student')PLIB.student($('pgLib'),user);if(tab==='tst'&&window.peTests)window.peTests($('pgTests'),user,role);if(tab==='mist'&&window.peMistakes)window.peMistakes($('pgMist'),user,role);if(tab==='res'&&window.PM)PM.myResults($('pgRes')).catch(e=>{$('pgRes').innerHTML='<p class="muted">'+esc(e.message||e)+'</p>'});if(tab==='dbt'&&window.PM)PM.studentDoubts($('pgDbt'),user).catch(e=>{$('pgDbt').innerHTML='<p class="muted">'+esc(e.message||e)+'</p>'});if(tab==='fx')typeset();window.__pgPop=t=>{tab=t;window.__pgTab=t;if(t==='fx'){fday=todayStr();fmode='day'}paint()};if(window.paceNav)paceNav.refresh();if(isStu&&window.peQuizBanner&&$('pgQB'))peQuizBanner($('pgQB'),user);if(window.PM){PM.annCard($('pgAN'));if(isStu){PM.dppCard($('pgDPP'),user);const sc=$('pgScan');if(sc)sc.onclick=()=>PM.scan()}else if($('pgWR'))PM.parentReport($('pgWR')).catch(()=>{})}if(window.PXN&&$('pgXN'))PXN.bind($('pgXN'),user.id);if(window.paceDiwali)setTimeout(()=>paceDiwali(String((P&&P.name)||'').trim().split(/\s+/)[0]),400);if(window.PNS&&$('pgNotif'))PNS.mount($('pgNotif'),{role,url:location.pathname});
   }
   V.onclick=e=>{
     const d=e.target.closest('[data-d]'),w=e.target.closest('[data-w]'),k=e.target.closest('[data-tab]'),s=e.target.closest('[data-sub]'),fx=e.target.closest('[data-fx]');
@@ -6013,4 +6015,333 @@ if(!TEACHER){
 .pg-top .lg{box-shadow:0 0 0 2px rgba(255,255,255,.85)!important;border-radius:11px!important}
 #brand::before{content:""!important;background:#fff url(./icon-512.png) center/cover no-repeat!important;box-shadow:0 0 0 2px rgba(255,255,255,.85)}
 </style>
+<!-- ===== PACE NEET test library: papers students attempt inside the app (no downloads) ===== -->
+<style>
+.plib-home .cardhead{display:flex;align-items:center;gap:8px}
+.plib-search{width:100%;margin:4px 0 10px}
+.plib-ch{border:1px solid var(--line);border-radius:12px;margin:0 0 8px;background:var(--card);overflow:hidden}
+.plib-ch>summary{cursor:pointer;list-style:none;padding:11px 12px;display:flex;align-items:center;gap:10px;font-weight:700}
+.plib-ch>summary::-webkit-details-marker{display:none}
+.plib-ch>summary em{font-style:normal;font:700 11.5px Inter,sans-serif;color:var(--ink-2);background:color-mix(in srgb,var(--ink-2) 12%,transparent);border-radius:6px;padding:2px 6px;flex:none}
+.plib-ch>summary span{margin-left:auto;color:var(--text-muted);font-weight:500;font-size:12.5px;flex:none}
+.plib-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-top:1px solid var(--line)}
+.plib-row>div{flex:1;min-width:0}.plib-row b{display:block;font-size:14px;line-height:1.3}
+.plib-row>div>span{display:block;color:var(--text-muted);font-size:12px;margin-top:2px}
+.plib-best{font:700 12px Inter,sans-serif;color:#15803D;white-space:nowrap}
+.plib-row .btn{flex:none;min-height:38px}
+.plib-pill{display:inline-block;font:700 11px Inter,sans-serif;border-radius:999px;padding:2px 8px;background:color-mix(in srgb,var(--text-muted) 16%,transparent);color:var(--text-muted)}
+.plib-pill.ready{background:color-mix(in srgb,#16A34A 16%,transparent);color:#15803D}
+.plib-pill.bad{background:color-mix(in srgb,var(--coral) 16%,transparent);color:var(--coral)}
+.plib-pill.wait{background:color-mix(in srgb,#E8890C 18%,transparent);color:#B45309}
+.plib-ov{position:fixed;inset:0;z-index:9500;background:var(--paper);display:flex;flex-direction:column;color:var(--text)}
+.plib-bar{display:flex;align-items:center;gap:8px;padding:8px 10px;padding-top:max(8px,env(safe-area-inset-top));background:var(--card);border-bottom:1px solid var(--line)}
+.plib-bar .plib-tt{flex:1;min-width:0}.plib-bar .plib-tt b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plib-bar .plib-tt span{display:block;font-size:12px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:520px){.plib-bar .btn{padding:8px 10px}.plib-clock{font-size:13px;padding:6px 8px}}
+.plib-x{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--text);font-size:18px;flex:none;cursor:pointer}
+.plib-clock{font:700 14px 'Space Grotesk',Inter,sans-serif;font-variant-numeric:tabular-nums;padding:6px 10px;border-radius:8px;background:color-mix(in srgb,var(--ink-2) 10%,transparent);color:var(--ink-2);white-space:nowrap}
+.plib-clock.low{background:color-mix(in srgb,var(--coral) 16%,transparent);color:var(--coral)}
+.plib-main{flex:1;display:grid;grid-template-columns:minmax(0,1fr) 310px;min-height:0}
+.plib-paper{overflow:auto;padding:10px;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;position:relative}
+.plib-pg{position:relative;margin:0 auto 12px;background:#fff;box-shadow:var(--shadow);border-radius:4px;overflow:hidden;width:max-content;min-width:200px}
+.plib-pg canvas{display:block;pointer-events:none}
+.plib-wm{position:absolute;inset:0;pointer-events:none;background-repeat:repeat}
+.plib-msg{padding:40px 16px;text-align:center;color:var(--text-muted)}
+.plib-zoom{position:sticky;top:0;float:right;display:flex;gap:6px;z-index:3}
+.plib-zoom button{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--text);font:700 18px Inter,sans-serif;box-shadow:var(--shadow);cursor:pointer}
+.plib-sheet{border-left:1px solid var(--line);overflow:auto;background:var(--card);padding:12px 12px calc(16px + env(safe-area-inset-bottom))}
+.plib-sheet h3{margin:0 0 8px;font:700 14px Inter,sans-serif;display:flex;align-items:center;gap:8px}
+.plib-sheet h3 span{margin-left:auto;font-weight:500;color:var(--text-muted);font-size:12.5px}
+.plib-q{display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px dashed color-mix(in srgb,var(--line) 70%,transparent)}
+.plib-q>b{width:36px;font:700 13px Inter,sans-serif;color:var(--text-muted);flex:none}
+.plib-o{width:38px;height:38px;border-radius:50%;border:1.5px solid var(--line);background:transparent;font:700 14px Inter,sans-serif;color:var(--text);cursor:pointer;flex:none;padding:0}
+.plib-o.on{background:var(--ink-2);border-color:var(--ink-2);color:#fff}
+.plib-o.ok{background:#16A34A;border-color:#16A34A;color:#fff}
+.plib-o.no{background:var(--coral);border-color:var(--coral);color:#fff}
+.plib-o.key{border-color:#16A34A;color:#15803D;border-width:2.5px}
+.plib-q i{font-style:normal;font-size:11.5px;color:var(--text-muted);margin-left:auto}
+.plib-sec{font:700 12px Inter,sans-serif;color:#B45309;margin:10px 0 4px}
+.plib-score{border-radius:14px;padding:14px;background:color-mix(in srgb,var(--ink-2) 9%,transparent);margin-bottom:10px;text-align:center}
+.plib-score b{display:block;font:800 30px 'Space Grotesk',Inter,sans-serif;color:var(--ink)}
+.plib-score div{display:flex;justify-content:center;gap:12px;font-size:12.5px;margin-top:6px;flex-wrap:wrap}
+.plib-tabs{display:flex;gap:6px;margin:0 0 10px}.plib-tabs .btn{flex:1;min-height:38px}
+.plib-tabs .btn.act{background:var(--ink-2);color:#fff;border-color:var(--ink-2)}
+.plib-sheetbtn{display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom));z-index:4;border:0;border-radius:999px;padding:12px 20px;background:var(--ink-2);color:#fff;font:700 14px Inter,sans-serif;box-shadow:0 8px 24px rgba(37,99,235,.35);cursor:pointer}
+.plib-grab{display:none;width:44px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 10px}
+.plib-modal{position:absolute;inset:0;background:rgba(10,20,40,.45);display:flex;align-items:center;justify-content:center;padding:16px;z-index:6}
+.plib-modal>div{background:var(--card);border-radius:16px;padding:18px;max-width:420px;width:100%;box-shadow:var(--shadow)}
+.plib-modal h3{margin:0 0 6px;font:700 17px 'Space Grotesk',Inter,sans-serif}
+.plib-modal .btn{width:100%;min-height:46px;margin-top:8px}
+@media (max-width:860px){
+  .plib-main{grid-template-columns:minmax(0,1fr)}
+  .plib-sheet{position:fixed;left:0;right:0;bottom:0;max-height:66vh;transform:translateY(105%);transition:transform .25s ease;border-left:0;border-top:1px solid var(--line);border-radius:18px 18px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,.22);z-index:5}
+  .plib-sheet.open{transform:none}.plib-sheetbtn{display:block}.plib-grab{display:block}
+  .plib-paper{padding-bottom:80px}
+}
+@media print{.plib-ov{display:none!important}}
+</style>
+<script>
+window.PLIB=(function(){
+  const FN=PACE_CLOUD_URL+'/functions/v1/library';
+  const h=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  async function call(body){
+    const s=(await paceCloud.auth.getSession()).data.session;
+    if(!s)throw new Error('Please sign in again.');
+    const r=await fetch(FN,{method:'POST',headers:{'Content-Type':'application/json',apikey:PACE_CLOUD_KEY,Authorization:'Bearer '+s.access_token},body:JSON.stringify(body)});
+    const ct=r.headers.get('content-type')||'';
+    if(r.ok&&ct.includes('pdf'))return await r.arrayBuffer();
+    let j={};try{j=await r.json()}catch(_){}
+    if(r.status===404&&!j.error)throw new Error('The library is not set up yet (the "library" function is missing in Supabase).');
+    if(!r.ok||j.error)throw new Error(j.error||('Error '+r.status));
+    return j;
+  }
+  /* the paper viewer (pdf.js, drawn on canvas: no download, no print, no copy) */
+  let PJ=null;
+  function pdfjs(){
+    if(PJ)return PJ;
+    PJ=new Promise((res,rej)=>{
+      if(window.pdfjsLib)return res(window.pdfjsLib);
+      const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+      s.onload=()=>{window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';res(window.pdfjsLib)};
+      s.onerror=()=>{PJ=null;rej(new Error('Could not load the paper viewer. Check the internet connection.'))};
+      document.head.appendChild(s)});
+    return PJ;
+  }
+  const wmURL=name=>{const t=h(String(name||'PACE').slice(0,40))+' · PACE';
+    return 'url("data:image/svg+xml,'+encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='340' height='220'><text x='170' y='120' text-anchor='middle' transform='rotate(-28 170 110)' font-family='Arial,sans-serif' font-size='17' font-weight='700' fill='rgba(100,110,140,0.16)'>${t}</text></svg>`)+'")'};
+  async function showPdf(host,bytes,who){
+    host.innerHTML='<div class="plib-msg">Opening the paper…</div>';
+    const lib=await pdfjs();
+    const doc=await lib.getDocument({data:new Uint8Array(bytes.slice(0)),isEvalSupported:false}).promise;
+    let Z=1;const wm=wmURL(who);
+    host.innerHTML='<div class="plib-zoom"><button type="button" data-z="-1" aria-label="Smaller">−</button><button type="button" data-z="1" aria-label="Bigger">+</button></div>';
+    const width=()=>Math.max(260,(host.clientWidth||600)-24)*Z;
+    const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){io.unobserve(e.target);draw(e.target)}}),{root:host,rootMargin:'900px 0px'});
+    async function draw(d){
+      try{const pg=await doc.getPage(+d.dataset.n),v0=pg.getViewport({scale:1}),dpr=Math.min(2,window.devicePixelRatio||1),sc=width()/v0.width,v=pg.getViewport({scale:sc*dpr});
+        const c=document.createElement('canvas');c.width=Math.floor(v.width);c.height=Math.floor(v.height);c.style.width=Math.floor(v.width/dpr)+'px';c.style.height=Math.floor(v.height/dpr)+'px';
+        await pg.render({canvasContext:c.getContext('2d'),viewport:v}).promise;
+        d.querySelectorAll('canvas').forEach(x=>x.remove());d.style.minHeight='';d.style.width='';d.insertBefore(c,d.firstChild)}catch(_){}
+    }
+    const pages=[];
+    for(let i=1;i<=doc.numPages;i++){const d=document.createElement('div');d.className='plib-pg';d.dataset.n=i;d.style.minHeight=Math.round(width()*1.35)+'px';d.style.width=Math.round(width())+'px';
+      d.innerHTML='<div class="plib-wm"></div>';d.firstChild.style.backgroundImage=wm;host.appendChild(d);pages.push(d);io.observe(d)}
+    host.querySelector('.plib-zoom').onclick=e=>{const b=e.target.closest('[data-z]');if(!b)return;const nz=Math.max(.6,Math.min(2.6,Z*(+b.dataset.z>0?1.25:.8)));if(nz===Z)return;Z=nz;
+      pages.forEach(d=>{d.querySelectorAll('canvas').forEach(x=>x.remove());d.style.minHeight=Math.round(width()*1.35)+'px';d.style.width=Math.round(width())+'px';io.unobserve(d);io.observe(d)})};
+    host.oncontextmenu=e=>e.preventDefault();
+    return doc;
+  }
+  /* names shown to students */
+  const SUBJ=['Physics','Chemistry','Botany','Zoology'];
+  function nice(p){
+    let t=String(p.name||'').replace(/\.(pdf|docx?)$/i,'').replace(/\s*\[[^\]]*\]\s*/g,' ');
+    t=t.replace(/\(\s*20\d\d\s*-\s*\d\d\s*(batch)?\s*\)/ig,' ').replace(/\b(XII?|NEET)\s+TWT\b/ig,'TWT').replace(/^\s*(Achi?evers batch\s*)?TWT\s*[-–]?\s*/i,'')
+     .replace(/\s*[-–]\s*Prof\.?\s*[-–]?\s*[A-Z][A-Z ,&]*(\s*[-–]?\s*FINAL)?\s*$/i,'').replace(/\s*[-–]\s*FINAL\s*$/i,'').replace(/\bFINAL\b/ig,'').replace(/\s{2,}/g,' ').replace(/^[\s\-–]+|[\s\-–,]+$/g,'');
+    return t||String(p.name||'Paper');
+  }
+  const yearOf=p=>{const m=String(p.name||'').match(/\(\s*(20\d\d)\s*-\s*(\d\d)/);if(m)return m[1]+'-'+m[2];const f=String((p.path||[])[1]||'').match(/(20\d\d)\s*-\s*(\d\d)/);return f?f[1]+'-'+f[2]:''};
+  const mins=p=>p.minutes||p.n||60;
+  const labels=p=>p.opts==='ABCD'?['A','B','C','D']:['1','2','3','4'];
+  const fmtT=s=>{s=Math.max(0,Math.round(s));const hh=Math.floor(s/3600),mm=Math.floor(s%3600/60),ss=s%60;return (hh?hh+':'+String(mm).padStart(2,'0'):mm)+':'+String(ss).padStart(2,'0')};
+  const groupOf=p=>{
+    if(p.grp==='chapter'&&p.subject)return{sub:p.subject,key:(p.chapter_code||'ZZ')+'|'+(p.chapter||''),code:p.chapter_code||'',title:p.chapter||'Other'};
+    if(p.subject&&p.grp!=='full')return{sub:p.subject,key:'ZZZ|mixed',code:'',title:'Mixed chapters & part tests'};
+    return{sub:'Full papers',key:(p.chapter||'')+'|full',code:'',title:p.chapter?'Batch '+p.chapter.replace(/[()]/g,''):'Full syllabus papers'};
+  };
+  const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k)||'null')}catch(_){return null}},lsSet=(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,JSON.stringify(v))}catch(_){}};
+
+  /* ================= students ================= */
+  const ST={sub:null,q:'',open:new Set()};
+  let DATA=null;
+  async function student(el,user){
+    if(!el)return;
+    try{DATA=await call({list:true})}catch(e){el.innerHTML=/not set up/.test(e.message)?'':`<div class="card" style="margin-bottom:12px"><p class="muted" style="margin:0">🧪 Test library: ${h(e.message)}</p></div>`;return}
+    if(DATA.off||!(DATA.papers||[]).length){el.innerHTML='';return}
+    DATA.user=user;paintList(el);
+  }
+  function paintList(el){
+    const P=DATA.papers,subs=[...SUBJ.filter(s=>P.some(p=>groupOf(p).sub===s)),...(P.some(p=>groupOf(p).sub==='Full papers')?['Full papers']:[])];
+    if(!ST.sub||!subs.includes(ST.sub))ST.sub=subs[0];
+    const q=ST.q.trim().toLowerCase(),list=P.filter(p=>q?(nice(p)+' '+(p.chapter||'')+' '+(p.subject||'')).toLowerCase().includes(q):groupOf(p).sub===ST.sub);
+    const G=new Map();list.forEach(p=>{const g=groupOf(p),k=g.sub+'#'+g.key;if(!G.has(k))G.set(k,{...g,items:[]});G.get(k).items.push(p)});
+    const groups=[...G.values()].sort((a,b)=>a.sub===b.sub?a.key.localeCompare(b.key,'en',{numeric:true}):subs.indexOf(a.sub)-subs.indexOf(b.sub));
+    const done=P.filter(p=>p.mine).length;
+    el.innerHTML=`<div class="card plib-home" style="margin-bottom:14px"><div class="cardhead"><h2>🧪 NEET test library</h2></div>
+      <p class="muted" style="font-size:13px;margin:0 0 10px">${P.length} chapter-wise papers. Read and answer inside the app; you get your marks, the answer key and solutions right after you submit.${done?` You have tried ${done}.`:''}</p>
+      <input class="plib-search" type="search" placeholder="Search a chapter, e.g. Electrostatics" value="${h(ST.q)}" aria-label="Search papers">
+      ${q?'':`<div class="pe-filter" style="margin-bottom:10px">${subs.map(s=>`<button type="button" class="pe-chip${s===ST.sub?' act':''}" data-lsub="${h(s)}">${h(s)}</button>`).join('')}</div>`}
+      ${groups.map(g=>{const k=g.sub+'#'+g.key,tried=g.items.filter(p=>p.mine).length;
+        const items=g.items.sort((a,b)=>(yearOf(b)||'').localeCompare(yearOf(a)||'')||nice(a).localeCompare(nice(b)));
+        return `<details class="plib-ch"${ST.open.has(k)||q?' open':''} data-gk="${h(k)}"><summary>${g.code?`<em>${h(g.code)}</em>`:''}${q?h(g.sub)+' · ':''}${h(g.title)}<span>${items.length} paper${items.length>1?'s':''}${tried?' · ✓ '+tried:''}</span></summary>
+          ${items.map(p=>`<div class="plib-row"><div><b>${h(nice(p))}</b><span>${[yearOf(p),p.n+' Q',mins(p)+' min',p.tag?h(p.tag):''].filter(Boolean).join(' · ')}</span></div>${p.mine?`<span class="plib-best" title="${p.mine.n} attempt(s)">Best ${+p.mine.best}/${+p.mine.max}</span>`:''}<button type="button" class="btn ${p.mine?'ghost':'primary'}" data-go="${h(p.id)}">${p.mine?'Retake':'Start'}</button></div>`).join('')}</details>`}).join('')||'<p class="muted" style="font-size:13px">No papers match.</p>'}</div>`;
+    const s=el.querySelector('.plib-search');let tm;s.oninput=()=>{clearTimeout(tm);tm=setTimeout(()=>{ST.q=s.value;paintList(el);const n=el.querySelector('.plib-search');n.focus();n.setSelectionRange(n.value.length,n.value.length)},250)};
+    el.querySelectorAll('[data-lsub]').forEach(b=>b.onclick=()=>{ST.sub=b.dataset.lsub;paintList(el)});
+    el.querySelectorAll('details[data-gk]').forEach(d=>d.ontoggle=()=>{d.open?ST.open.add(d.dataset.gk):ST.open.delete(d.dataset.gk)});
+    el.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{const p=DATA.papers.find(x=>x.id===b.dataset.go);if(p)attempt(p,()=>student(el,DATA.user))});
+  }
+
+  /* one attempt: choose timed / untimed, read the paper, tap answers, submit, see the key and solutions */
+  function attempt(p,onClose){
+    const uid=(DATA.user&&DATA.user.id)||'me',LK='plib:'+uid+':'+p.id,L=labels(p),who=DATA.name||'Student';
+    const ov=document.createElement('div');ov.className='plib-ov';ov.setAttribute('role','dialog');ov.setAttribute('aria-label',nice(p));
+    ov.innerHTML=`<div class="plib-bar"><button type="button" class="plib-x" data-x aria-label="Close">✕</button><div class="plib-tt"><b>${h(nice(p))}</b><span>${h([p.subject,p.chapter,yearOf(p)].filter(Boolean).join(' · '))}</span></div><span class="plib-clock" hidden></span><button type="button" class="btn primary" data-sub hidden>Submit</button></div>
+      <div class="plib-main"><div class="plib-paper"></div><aside class="plib-sheet"></aside></div><button type="button" class="plib-sheetbtn" hidden>📝 Answer sheet</button>`;
+    document.body.appendChild(ov);const prevOver=document.body.style.overflow;document.body.style.overflow='hidden';
+    const paper=ov.querySelector('.plib-paper'),sheet=ov.querySelector('.plib-sheet'),clock=ov.querySelector('.plib-clock'),subB=ov.querySelector('[data-sub]'),sb=ov.querySelector('.plib-sheetbtn');
+    let ans={},start=0,timed=false,tick=null,result=null,view='q',busy=false,didSubmit=false,upd=()=>{};const cache={};
+    const keyBlock=e=>{if((e.ctrlKey||e.metaKey)&&/^[psc]$/i.test(e.key)){e.preventDefault()}};document.addEventListener('keydown',keyBlock,true);
+    const close=()=>{clearInterval(tick);document.removeEventListener('keydown',keyBlock,true);ov.remove();document.body.style.overflow=prevOver;if(didSubmit&&onClose)onClose()};
+    const qs=p.q_start||1,N=p.n||0,count=()=>Object.keys(ans).length;
+    const secLabel=q=>{const c=(p.choice||[]).find(c=>c.from===q);return c?`<div class="plib-sec">Q${c.from}–${c.to}: attempt any ${c.attempt}</div>`:''};
+    function paintSheet(){
+      if(result){paintReview();return}
+      sheet.innerHTML=`<div class="plib-grab"></div><h3>Answer sheet <span>${count()} / ${N} answered</span></h3><p class="muted" style="font-size:12px;margin:0 0 8px">Marking: +${+p.pos} right, −${+p.neg} wrong. Tap again to clear an answer.</p>`+
+        Array.from({length:N},(_,i)=>{const q=qs+i;return secLabel(q)+`<div class="plib-q"><b>${q}</b>${L.map((l,j)=>`<button type="button" class="plib-o${ans[q]===String(j+1)?' on':''}" data-q="${q}" data-a="${j+1}" aria-label="Question ${q} option ${l}">${l}</button>`).join('')}</div>`}).join('')+
+        `<button type="button" class="btn primary" data-sub2 style="width:100%;margin-top:12px;min-height:46px">Submit paper</button>`;
+      sb.textContent=`📝 Answer sheet · ${count()}/${N}`;
+    }
+    function paintReview(){
+      const r=result,D=Object.fromEntries(r.detail.map(d=>[d.q,d]));
+      sheet.innerHTML=`<div class="plib-grab"></div><div class="plib-score"><span class="muted" style="font-size:12px">Your score</span><b>${+r.score} / ${+r.max}</b><div><span style="color:#15803D">✓ ${r.correct} right</span><span style="color:var(--coral)">✗ ${r.wrong} wrong</span><span class="muted">— ${r.skipped} left</span><span class="muted">⏱ ${fmtT(r.seconds)}</span></div></div>
+        <div class="plib-tabs"><button type="button" class="btn ghost${view==='q'?' act':''}" data-view="q">Questions</button>${r.has_sol?`<button type="button" class="btn ghost${view==='s'?' act':''}" data-view="s">📖 Solutions</button>`:''}</div>
+        <p class="muted" style="font-size:12px;margin:0 0 6px">Green ring = correct answer. Filled green = you were right, red = wrong.</p>`+
+        Array.from({length:N},(_,i)=>{const q=qs+i,d=D[q]||{},k=String(d.k||'').split(',');return secLabel(q)+`<div class="plib-q"><b>${q}</b>${L.map((l,j)=>{const v=String(j+1),mine=d.a===v,isK=k.includes(v)||d.k==='X';return `<span class="plib-o${mine?(d.r==='right'||d.r==='bonus'?' ok':' no'):isK?' key':''}" style="display:inline-flex;align-items:center;justify-content:center">${l}</span>`}).join('')}<i>${d.r==='bonus'?'bonus':d.r==='extra'?'not counted':d.r==='skip'?'left':d.r==='nokey'?'no key':''}</i></div>`}).join('')+
+        `<div style="display:flex;gap:8px;margin-top:12px"><button type="button" class="btn ghost" data-again style="flex:1;min-height:44px">↻ Retake</button><button type="button" class="btn primary" data-x style="flex:1;min-height:44px">Done</button></div>`;
+      sb.textContent='📊 Result & key';
+    }
+    async function load(part){
+      paper.innerHTML='<div class="plib-msg">Opening…</div>';
+      try{const bytes=cache[part]||(cache[part]=await call({paper:p.id,part}));await showPdf(paper,bytes,who)}catch(e){paper.innerHTML=`<div class="plib-msg">${h(e.message)}</div>`}
+    }
+    function begin(useTimer,resume){
+      timed=useTimer;ans=resume?resume.a||{}:{};start=resume?resume.s:Date.now();
+      clock.hidden=false;subB.hidden=false;subB.disabled=false;subB.textContent='Submit';sb.hidden=false;clearInterval(tick);paintSheet();load('q');
+      const total=mins(p)*60;
+      upd=()=>{const el=(Date.now()-start)/1000;if(timed){const left=total-el;clock.textContent='⏱ '+fmtT(left)+' left';clock.classList.toggle('low',left<=300);if(left<=0){clearInterval(tick);submit(true)}}else clock.textContent='⏱ '+fmtT(el)};
+      upd();tick=setInterval(upd,1000);
+      lsSet(LK,{a:ans,s:start,t:timed});
+    }
+    async function submit(auto){
+      if(busy||result)return;
+      if(!auto){const left=N-count();if(!confirm(left?`Submit now? ${left} question${left>1?'s are':' is'} not answered.`:'Submit your answers?'))return}
+      busy=true;subB.disabled=true;subB.textContent='Checking…';clearInterval(tick);
+      try{result=await call({submit:p.id,answers:ans,timed,seconds:Math.round((Date.now()-start)/1000)});lsSet(LK,null);didSubmit=true;
+        clock.hidden=true;subB.hidden=true;sheet.classList.add('open');paintSheet();
+        if(auto)alert('Time is up — your answers were submitted.');
+        p.mine={n:((p.mine&&p.mine.n)||0)+1,best:Math.max(result.score,(p.mine&&p.mine.best!=null)?p.mine.best:-1e9),max:result.max};
+      }catch(e){busy=false;subB.disabled=false;subB.textContent='Submit';alert('Could not submit: '+e.message+'\nYour answers are kept — please tap Submit again.');
+        if(!auto)tick=setInterval(upd,1000)}
+      busy=false;
+    }
+    ov.addEventListener('click',async e=>{
+      const t=e.target;
+      if(t.closest('[data-x]')){if(result||!start||confirm('Leave this paper? Your answers stay saved on this device and you can continue later.'+(timed?' The timer keeps running.':'')))close();return}
+      const o=t.closest('.plib-o[data-q]');if(o&&!result){const q=o.dataset.q;ans[q]===o.dataset.a?delete ans[q]:ans[q]=o.dataset.a;lsSet(LK,{a:ans,s:start,t:timed});
+        o.parentNode.querySelectorAll('.plib-o').forEach(b=>b.classList.toggle('on',ans[q]===b.dataset.a));sheet.querySelector('h3 span').textContent=count()+' / '+N+' answered';sb.textContent=`📝 Answer sheet · ${count()}/${N}`;return}
+      if(t.closest('[data-sub],[data-sub2]')){submit(false);return}
+      if(t.closest('.plib-sheetbtn')){sheet.classList.toggle('open');return}
+      if(t.closest('.plib-grab')){sheet.classList.remove('open');return}
+      const v=t.closest('[data-view]');if(v&&result){view=v.dataset.view;paintSheet();if(view==='s')load('s');else load('q');if(innerWidth<=860)sheet.classList.remove('open');return}
+      if(t.closest('[data-again]')){result=null;view='q';sheet.classList.remove('open');pick();return}
+    });
+    function pick(){
+      const saved=lsGet(LK),fresh=saved&&saved.s&&Date.now()-saved.s<36*3600e3&&(!saved.t||Date.now()-saved.s<mins(p)*60e3);
+      const m=document.createElement('div');m.className='plib-modal';
+      m.innerHTML=`<div><h3>${h(nice(p))}</h3><p class="muted" style="font-size:13px;margin:0 0 6px">${N} questions · +${+p.pos} / −${+p.neg}${p.choice&&p.choice.length?' · some sections: attempt any':''}${p.mine?` · best so far ${+p.mine.best}/${+p.mine.max}`:''}</p>
+        ${fresh?`<button type="button" class="btn primary" data-m="resume">▶ Continue where you left (${Object.keys(saved.a||{}).length} answered)</button>`:''}
+        <button type="button" class="btn ${fresh?'ghost':'primary'}" data-m="timed">⏱ Timed · ${mins(p)} min (submits itself)</button>
+        <button type="button" class="btn ghost" data-m="free">🕊️ Untimed · at my own pace</button>
+        <button type="button" class="btn ghost" data-m="no" style="border:0">Cancel</button></div>`;
+      ov.appendChild(m);
+      m.onclick=e=>{const b=e.target.closest('[data-m]');if(!b)return;m.remove();
+        if(b.dataset.m==='no'){close();return}
+        if(b.dataset.m==='resume')begin(!!saved.t,saved);else{lsSet(LK,null);begin(b.dataset.m==='timed',null)}};
+    }
+    pick();
+  }
+
+  /* ================= admin ================= */
+  const AD={f:'help',q:'',lim:120,data:null,at:0};
+  const SNAME={ready:'Ready',new:'Waiting to be read',working:'Being read',waitkey:'Waiting for its key file',nokey:'No answer key',check:'Please check',duplicate:'Duplicate (hidden)',error:'Error',keyfile:'Answer-key file'};
+  const pill=s=>`<span class="plib-pill ${s==='ready'?'ready':['nokey','check','error'].includes(s)?'bad':['new','working','waitkey'].includes(s)?'wait':''}">${h(SNAME[s]||s)}</span>`;
+  async function admin(el,batches){
+    if(!el)return;
+    if(!AD.data||Date.now()-AD.at>20000){
+      el.innerHTML='<div class="card"><p class="muted" style="margin:0">🧪 Loading the NEET test library…</p></div>';
+      try{AD.data=await call({admin_list:true});AD.at=Date.now()}catch(e){el.innerHTML=`<div class="card"><div class="cardhead"><h2>🧪 NEET test library</h2></div><p class="muted" style="font-size:13px">${h(e.message)}</p>${setupHelp()}</div>`;return}
+    }
+    paintAdmin(el,batches||[]);
+  }
+  function setupHelp(){return `<details style="margin-top:8px"><summary style="cursor:pointer;font-weight:700">How to bring the papers from Google Drive</summary><ol style="font-size:13px;line-height:1.6;padding-left:18px;margin:8px 0 0">
+    <li>Supabase → SQL Editor: run <b>library.sql</b>.</li><li>Supabase → Edge Functions: deploy <b>library</b> (paste library.ts), then in its Settings turn OFF “Verify JWT”.</li>
+    <li>Supabase → Edge Functions → Secrets: add <b>LIBRARY_SECRET</b> (any long password).</li>
+    <li>script.google.com → New project → paste the PACE Drive script → put the same password on line 6 → choose <b>setup</b> → Run → allow access.</li>
+    <li>Tick the NEET batches below. Papers appear for students as soon as each one is ready.</li></ol></details>`}
+  function paintAdmin(el,batches){
+    const R=AD.data.rows||[],C={};R.forEach(r=>C[r.status]=(C[r.status]||0)+1);
+    const ids=new Set((AD.data.batch_ids||[]).map(String)),busy=(C.new||0)+(C.working||0)+(C.waitkey||0),help=(C.nokey||0)+(C.check||0)+(C.error||0);
+    const F={help:r=>['nokey','check','error'].includes(r.status),ready:r=>r.status==='ready'&&!r.hidden,hidden:r=>r.hidden,wait:r=>['new','working','waitkey'].includes(r.status),dup:r=>r.status==='duplicate',keyfile:r=>r.status==='keyfile',all:()=>true};
+    if(AD.f==='help'&&!help)AD.f='ready';
+    const q=AD.q.trim().toLowerCase(),L=R.filter(F[AD.f]||F.all).filter(r=>!q||(r.name+' '+(r.chapter||'')+' '+(r.subject||'')).toLowerCase().includes(q));
+    const where=r=>[r.subject||'',r.chapter_code||'',r.chapter||(r.grp==='mixed'?'Mixed':'')].filter(Boolean).join(' · ')||(r.path||[]).join(' / ');
+    el.innerHTML=`<div class="card"><div class="cardhead"><h2>🧪 NEET test library</h2><button type="button" class="btn ghost" data-lr style="margin-left:auto">↻ Refresh</button></div>
+      <p class="muted" style="font-size:13px;margin:0 0 10px">Chapter-wise papers students attempt inside the app. They cannot download them; the answer key and solution pages are cut off and shown only after they submit.</p>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">${['ready','wait','help','dup','keyfile','hidden','all'].map(k=>{const n=k==='all'?R.length:R.filter(F[k]).length;return n||k==='all'||k==='ready'?`<button type="button" class="pe-chip${AD.f===k?' act':''}" data-lf="${k}">${{ready:'✅ Ready',wait:'⏳ Being prepared',help:'⚠ Needs you',dup:'Duplicates',keyfile:'Key files',hidden:'Hidden',all:'All'}[k]} ${n}</button>`:''}).join('')}</div>
+      ${busy?`<p style="font-size:13px;margin:0 0 10px">⏳ ${busy} paper${busy>1?'s are':' is'} still being read by the AI. This runs by itself every minute while the Drive script is on. <button type="button" class="btn ghost" data-lp>▶ Read some now</button></p>`:''}
+      <details style="margin:0 0 10px"${ids.size?'':' open'}><summary style="cursor:pointer;font-weight:700">🎓 Batches that see the library (${ids.size})</summary><div class="tb-pick" style="margin-top:8px">${batches.map(b=>`<label class="tb-c${ids.has(String(b.id))?' on':''}"><input type="checkbox" value="${h(b.id)}"${ids.has(String(b.id))?' checked':''}><span>${h(b.name)}</span></label>`).join('')||'<span class="muted">No batches yet.</span>'}</div><button type="button" class="btn primary" data-lbs style="margin-top:8px">Save batches</button></details>
+      ${R.length?'':setupHelp()}
+      <input type="search" class="plib-search" placeholder="Search papers" value="${h(AD.q)}" data-lq>
+      ${L.slice(0,AD.lim).map(r=>`<div class="plib-row" style="padding-left:0;padding-right:0"><div><b>${h(nice(r))}</b><span>${h(where(r))}${r.n?' · '+r.n+' Q':''}${r.attempts?' · '+r.attempts+' attempts':''}</span><span>${pill(r.status)}${r.hidden&&r.status==='ready'?' <span class="plib-pill">hidden</span>':''} ${r.note||r.error?`<span style="font-size:12px;color:var(--text-muted)">${h(r.error||r.note)}</span>`:''}</span></div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;flex:none;max-width:52%">${r.status!=='keyfile'?`<button type="button" class="btn ghost" data-lv="${r.id}" data-part="q" title="What students see">👁</button>`:''}${r.has_sol?`<button type="button" class="btn ghost" data-lv="${r.id}" data-part="s" title="Answer key / solution pages">📖</button>`:''}<button type="button" class="btn ghost" data-lv="${r.id}" data-part="raw" title="Original file">📄</button>${r.status!=='keyfile'?`<button type="button" class="btn ghost" data-lk="${r.id}" title="Answer key">🔑</button>`:''}${r.status==='ready'?`<button type="button" class="btn ghost" data-lh="${r.id}" data-hid="${r.hidden?1:0}">${r.hidden?'Show':'Hide'}</button>`:''}<button type="button" class="btn ghost" data-lre="${r.id}" title="Let the AI read it again">↻</button></div></div>`).join('')||'<p class="muted" style="font-size:13px">Nothing here.</p>'}
+      ${L.length>AD.lim?`<button type="button" class="btn ghost" data-lm style="width:100%;margin-top:8px">Show more (${L.length-AD.lim})</button>`:''}
+      <details style="margin-top:12px" data-latt><summary style="cursor:pointer;font-weight:700">📊 Recent student attempts</summary><div data-lattb class="muted" style="font-size:13px;margin-top:6px">Loading…</div></details></div>`;
+    const again=()=>{AD.at=0;admin(el,batches)},say=m=>{if(window.toast)toast(m);else alert(m)};
+    el.querySelector('[data-lr]').onclick=again;
+    el.querySelectorAll('[data-lf]').forEach(b=>b.onclick=()=>{AD.f=b.dataset.lf;AD.lim=120;paintAdmin(el,batches)});
+    const qi=el.querySelector('[data-lq]');let tm;qi.oninput=()=>{clearTimeout(tm);tm=setTimeout(()=>{AD.q=qi.value;paintAdmin(el,batches);const n=el.querySelector('[data-lq]');n.focus();n.setSelectionRange(n.value.length,n.value.length)},250)};
+    const lm=el.querySelector('[data-lm]');if(lm)lm.onclick=()=>{AD.lim+=200;paintAdmin(el,batches)};
+    el.querySelectorAll('.tb-c input').forEach(c=>c.onchange=()=>c.closest('.tb-c').classList.toggle('on',c.checked));
+    el.querySelector('[data-lbs]')&&(el.querySelector('[data-lbs]').onclick=async()=>{const sel=[...el.querySelectorAll('.tb-c input:checked')].map(c=>c.value);
+      try{await call({admin_settings:{batch_ids:sel}});AD.data.batch_ids=sel;say('Saved ✓ '+sel.length+' batch'+(sel.length===1?'':'es')+' see the library.');paintAdmin(el,batches)}catch(e){say(e.message)}});
+    const lp=el.querySelector('[data-lp]');if(lp)lp.onclick=async()=>{lp.disabled=true;lp.textContent='Starting…';try{const r=await call({admin_process:true});say(r.started?'Reading '+r.started+' papers now. Refresh in a minute or two.':'Nothing to read right now.')}catch(e){say(e.message)}lp.disabled=false;lp.textContent='▶ Read some now'};
+    el.querySelectorAll('[data-lv]').forEach(b=>b.onclick=()=>adminView(R.find(r=>r.id===b.dataset.lv),b.dataset.part));
+    el.querySelectorAll('[data-lk]').forEach(b=>b.onclick=()=>keyEditor(R.find(r=>r.id===b.dataset.lk),again));
+    el.querySelectorAll('[data-lh]').forEach(b=>b.onclick=async()=>{try{await call({admin_hide:b.dataset.lh,hidden:b.dataset.hid!=='1'});again()}catch(e){say(e.message)}});
+    el.querySelectorAll('[data-lre]').forEach(b=>b.onclick=async()=>{if(!confirm('Let the AI read this paper again? (uses a little AI credit)'))return;b.disabled=true;try{await call({admin_retry:b.dataset.lre});say('Reading it again — refresh in a minute.');setTimeout(again,1500)}catch(e){say(e.message);b.disabled=false}});
+    const att=el.querySelector('[data-latt]');att.ontoggle=async()=>{if(!att.open)return;const box=el.querySelector('[data-lattb]');
+      try{const r=await call({admin_attempts:true});box.innerHTML=(r.rows||[]).map(a=>`<div style="padding:5px 0;border-bottom:1px solid var(--line)"><b style="color:var(--text)">${h(a.student_name||'Student')}</b> · ${a.paper?h(nice(a.paper)):'(deleted paper)'} · <b style="color:var(--text)">${+a.score}/${+a.max_marks}</b> · ${a.timed?'timed':'untimed'} · ${new Date(a.created_at).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'})}</div>`).join('')||'No attempts yet.'}catch(e){box.textContent=e.message}};
+  }
+  function adminView(r,part){
+    if(!r)return;
+    const ov=document.createElement('div');ov.className='plib-ov';
+    ov.innerHTML=`<div class="plib-bar"><button type="button" class="plib-x" data-x aria-label="Close">✕</button><div class="plib-tt"><b>${h(nice(r))}</b><span>${part==='s'?'Answer key / solution pages (students see these after submitting)':part==='raw'?'Original file from Drive':'What students see while answering'}</span></div></div><div class="plib-main" style="grid-template-columns:1fr"><div class="plib-paper"></div></div>`;
+    document.body.appendChild(ov);const po=document.body.style.overflow;document.body.style.overflow='hidden';
+    ov.querySelector('[data-x]').onclick=()=>{ov.remove();document.body.style.overflow=po};
+    const host=ov.querySelector('.plib-paper');
+    call({admin_view:r.id,part}).then(b=>showPdf(host,b,'Admin preview')).catch(e=>{host.innerHTML=`<div class="plib-msg">${h(e.message)}</div>`});
+  }
+  async function keyEditor(r,done){
+    if(!r)return;let k={};
+    try{k=await call({admin_key:r.id})}catch(e){alert(e.message);return}
+    const qs=k.q_start||1,keys=k.key||{},n=k.n||Object.keys(keys).length,txt=Array.from({length:n},(_,i)=>(qs+i)+'-'+(keys[String(qs+i)]||'?')).join(', ');
+    const ov=document.createElement('div');ov.className='plib-ov';ov.style.background='transparent';
+    ov.innerHTML=`<div class="plib-modal" style="position:fixed"><div style="max-width:520px"><h3>🔑 Answer key</h3><p class="muted" style="font-size:12.5px;margin:0 0 8px">${h(nice(r))}${k.pages?' · '+k.pages+' pages':''}</p>
+      <label style="font-size:12.5px;font-weight:600">Answers (1-4 or A-D), e.g. <code>1-2, 2-3, 3-1</code> or just <code>2 3 1 4 …</code>. X = bonus.</label>
+      <textarea rows="7" style="width:100%;margin:4px 0 8px;font:13px/1.5 ui-monospace,monospace" data-kt>${h(n?txt:'')}</textarea>
+      <div class="row" style="gap:8px"><div class="field"><label>First question no.</label><input type="number" min="1" value="${qs}" data-kq></div><div class="field"><label>Key/solutions start on page</label><input type="number" min="1" placeholder="${k.key_page||'—'}" data-kp></div></div>
+      <div class="row" style="gap:8px"><div class="field"><label>+ right</label><input type="number" step="0.5" value="${k.pos||4}" data-kpo></div><div class="field"><label>− wrong</label><input type="number" step="0.5" min="0" value="${k.neg!=null?k.neg:1}" data-kne></div><div class="field"><label>Minutes</label><input type="number" min="1" placeholder="${k.minutes||n||''}" data-kmi></div></div>
+      <label style="display:flex;gap:8px;align-items:center;font-size:12.5px;margin-top:6px"><input type="checkbox" data-knk style="width:auto"> This file has no key or solution pages: show all its pages to students</label>
+      <p class="muted" style="font-size:12px;margin:8px 0 0">Saving makes the paper Ready for students.</p>
+      <button type="button" class="btn primary" data-ks>Save key</button><button type="button" class="btn ghost" data-kc style="border:0">Cancel</button></div></div>`;
+    document.body.appendChild(ov);
+    ov.querySelector('[data-kc]').onclick=()=>ov.remove();
+    ov.querySelector('[data-ks]').onclick=async e=>{const b=e.target;b.disabled=true;b.textContent='Saving…';
+      try{const r2=await call({admin_save_key:r.id,keytext:ov.querySelector('[data-kt]').value.replace(/\?/g,''),q_start:+ov.querySelector('[data-kq]').value||1,key_page:+ov.querySelector('[data-kp]').value||null,
+        no_key_pages:ov.querySelector('[data-knk]').checked,pos:+ov.querySelector('[data-kpo]').value||4,neg:ov.querySelector('[data-kne]').value,minutes:+ov.querySelector('[data-kmi]').value||null});
+        ov.remove();(window.toast||alert)('Saved ✓ '+r2.n+' questions. The paper is ready for students.');done&&done()}catch(err){b.disabled=false;b.textContent='Save key';alert(err.message)}};
+  }
+  return {student,admin,call};
+})();
+</script>
+
 </body></html>
