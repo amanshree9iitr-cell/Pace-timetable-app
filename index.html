@@ -6159,7 +6159,15 @@ window.PLIB=(function(){
   }
   const wmURL=name=>{const t=h(String(name||'PACE').slice(0,40))+' · PACE';
     return 'url("data:image/svg+xml,'+encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='340' height='220'><text x='170' y='120' text-anchor='middle' transform='rotate(-28 170 110)' font-family='Arial,sans-serif' font-size='17' font-weight='700' fill='rgba(100,110,140,0.16)'>${t}</text></svg>`)+'")'};
-  async function showPdf(host,bytes,who){
+  /* where a paper prints its test date: covered with white, and the day of the attempt is written there instead */
+  const dayText=t=>new Date(t||Date.now()).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+  function coverFor(p,part,when){const kp=+p.key_page||0,ky=+p.key_y||0,out=[];
+    (p.date_boxes||[]).forEach(d=>{let pg=+d.page;
+      if(part==='s'){if(!kp||pg<kp)return;pg=pg-kp+1;if(pg===1&&ky)return}
+      else{if(kp&&pg>kp)return;if(kp&&pg===kp&&!ky)return;if(kp&&pg===kp&&ky&&d.box[0]>ky*1000)return}
+      out.push({page:pg,box:d.box})});
+    return {boxes:out,text:dayText(when)}}
+  async function showPdf(host,bytes,who,cover){
     host.innerHTML='<div class="plib-msg">Opening the paper…</div>';
     const lib=await pdfjs();
     const doc=await lib.getDocument({data:new Uint8Array(bytes.slice(0)),isEvalSupported:false}).promise;
@@ -6171,6 +6179,11 @@ window.PLIB=(function(){
       try{const pg=await doc.getPage(+d.dataset.n),v0=pg.getViewport({scale:1}),dpr=Math.min(2,window.devicePixelRatio||1),sc=width()/v0.width,v=pg.getViewport({scale:sc*dpr});
         const c=document.createElement('canvas');c.width=Math.floor(v.width);c.height=Math.floor(v.height);c.style.width=Math.floor(v.width/dpr)+'px';c.style.height=Math.floor(v.height/dpr)+'px';
         await pg.render({canvasContext:c.getContext('2d'),viewport:v}).promise;
+        if(cover&&cover.boxes)cover.boxes.filter(b=>b.page===+d.dataset.n).forEach(b=>{const x=c.getContext('2d'),[y0,x0,y1,x1]=b.box,
+          X=x0/1000*c.width,Y=y0/1000*c.height,W=(x1-x0)/1000*c.width,H=(y1-y0)/1000*c.height,pad=Math.max(2,H*.18);
+          x.fillStyle='#fff';x.fillRect(X-pad,Y-pad,W+pad*2,H+pad*2);
+          let fs=Math.max(8,H*.82);x.font='600 '+fs+'px Arial,sans-serif';while(fs>8&&x.measureText(cover.text).width>Math.max(W,c.width*.16)){fs-=1;x.font='600 '+fs+'px Arial,sans-serif'}
+          x.fillStyle='#111';x.textBaseline='middle';x.fillText(cover.text,X,Y+H/2)});
         d.querySelectorAll('canvas').forEach(x=>x.remove());d.style.minHeight='';d.style.width='';d.insertBefore(c,d.firstChild)}catch(_){}
     }
     const pages=[];
@@ -6185,9 +6198,11 @@ window.PLIB=(function(){
   const SUBJ=['Physics','Chemistry','Botany','Zoology'];
   function nice(p){
     let t=String(p.name||'').replace(/\.(pdf|docx?)$/i,'').replace(/\s*\[[^\]]*\]\s*/g,' ');
+    t=t.replace(/\(?\s*\bDt\.?\s*[^()\[\]]*?(\)|$|(?=\s[-–]\s))/ig,' ').replace(/\b\d{1,2}\s*[-\/.]\s*\d{1,2}\s*[-\/.]\s*\d{2,4}\b/g,' ')
+     .replace(/\b\d{1,2}\s*(st|nd|rd|th)?\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?(\s+20\d\d)?\b/ig,' ').replace(/\bQP\b/g,' ').replace(/\(\s*\)/g,' ');
     t=t.replace(/\(\s*20\d\d\s*-\s*\d\d\s*(batch)?\s*\)/ig,' ').replace(/\b(XII?|NEET)\s+TWT\b/ig,'TWT').replace(/^\s*(Achi?evers batch\s*)?TWT\s*[-–]?\s*/i,'')
-     .replace(/\s*[-–]\s*Prof\.?\s*[-–]?\s*[A-Z][A-Z ,&]*(\s*[-–]?\s*FINAL)?\s*$/i,'').replace(/\s*[-–]\s*FINAL\s*$/i,'').replace(/\bFINAL\b/ig,'').replace(/\s{2,}/g,' ').replace(/^[\s\-–]+|[\s\-–,]+$/g,'');
-    return t||String(p.name||'Paper');
+     .replace(/\s*([-–]\s*)?\bProf\.?\s*[-–]?\s*[A-Z][A-Z ,&]*(\s*[-–]?\s*FINAL)?\s*$/i,'').replace(/\s*[-–]\s*FINAL\s*$/i,'').replace(/\bFINAL\b/ig,'').replace(/\s{2,}/g,' ').replace(/^[\s\-–]+|[\s\-–,]+$/g,'');
+    return t&&/[a-z]{3}/i.test(t)?t:(p.subject?p.subject+' test paper':'Full test paper');
   }
   const yearOf=p=>{const m=String(p.name||'').match(/\(\s*(20\d\d)\s*-\s*(\d\d)/);if(m)return m[1]+'-'+m[2];const f=String((p.path||[])[1]||'').match(/(20\d\d)\s*-\s*(\d\d)/);return f?f[1]+'-'+f[2]:''};
   const mins=p=>p.minutes||p.n||60;
@@ -6196,7 +6211,7 @@ window.PLIB=(function(){
   const groupOf=p=>{
     if(p.grp==='chapter'&&p.subject)return{sub:p.subject,key:(p.chapter_code||'ZZ')+'|'+(p.chapter||''),code:p.chapter_code||'',title:p.chapter||'Other'};
     if(p.subject&&p.grp!=='full')return{sub:p.subject,key:'ZZZ|mixed',code:'',title:'Mixed chapters & part tests'};
-    return{sub:'Full papers',key:(p.chapter||'')+'|full',code:'',title:p.chapter?'Batch '+p.chapter.replace(/[()]/g,''):'Full syllabus papers'};
+    return{sub:'Full papers',key:'full',code:'',title:'Full syllabus papers'};
   };
   const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k)||'null')}catch(_){return null}},lsSet=(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,JSON.stringify(v))}catch(_){}};
 
@@ -6223,7 +6238,7 @@ window.PLIB=(function(){
       ${groups.map(g=>{const k=g.sub+'#'+g.key,tried=g.items.filter(p=>p.mine).length;
         const items=g.items.sort((a,b)=>(yearOf(b)||'').localeCompare(yearOf(a)||'')||nice(a).localeCompare(nice(b)));
         return `<details class="plib-ch"${ST.open.has(k)||q?' open':''} data-gk="${h(k)}"><summary>${g.code?`<em>${h(g.code)}</em>`:''}${q?h(g.sub)+' · ':''}${h(g.title)}<span>${items.length} paper${items.length>1?'s':''}${tried?' · ✓ '+tried:''}</span></summary>
-          ${items.map(p=>`<div class="plib-row"><div><b>${h(nice(p))}</b><span>${[yearOf(p),p.n+' Q',mins(p)+' min',p.tag?h(p.tag):''].filter(Boolean).join(' · ')}</span></div>${p.mine?`<span class="plib-best" title="${p.mine.n} attempt(s)">Best ${+p.mine.best}/${+p.mine.max}</span>`:''}<button type="button" class="btn ${p.mine?'ghost':'primary'}" data-go="${h(p.id)}">${p.mine?'Retake':'Start'}</button></div>`).join('')}</details>`}).join('')||'<p class="muted" style="font-size:13px">No papers match.</p>'}</div>`;
+          ${items.map(p=>`<div class="plib-row"><div><b>${h(nice(p))}</b><span>${[p.n+' Q',mins(p)+' min'].join(' · ')}</span></div>${p.mine?`<span class="plib-best" title="${p.mine.n} attempt(s)">Best ${+p.mine.best}/${+p.mine.max}</span>`:''}<button type="button" class="btn ${p.mine?'ghost':'primary'}" data-go="${h(p.id)}">${p.mine?'Retake':'Start'}</button></div>`).join('')}</details>`}).join('')||'<p class="muted" style="font-size:13px">No papers match.</p>'}</div>`;
     const s=el.querySelector('.plib-search');let tm;s.oninput=()=>{clearTimeout(tm);tm=setTimeout(()=>{ST.q=s.value;paintList(el);const n=el.querySelector('.plib-search');n.focus();n.setSelectionRange(n.value.length,n.value.length)},250)};
     el.querySelectorAll('[data-lsub]').forEach(b=>b.onclick=()=>{ST.sub=b.dataset.lsub;paintList(el)});
     el.querySelectorAll('details[data-gk]').forEach(d=>d.ontoggle=()=>{d.open?ST.open.add(d.dataset.gk):ST.open.delete(d.dataset.gk)});
@@ -6234,7 +6249,7 @@ window.PLIB=(function(){
   function attempt(p,onClose){
     const uid=(DATA.user&&DATA.user.id)||'me',LK='plib:'+uid+':'+p.id,L=labels(p),who=DATA.name||'Student';
     const ov=document.createElement('div');ov.className='plib-ov';ov.setAttribute('role','dialog');ov.setAttribute('aria-label',nice(p));
-    ov.innerHTML=`<div class="plib-bar"><button type="button" class="plib-x" data-x aria-label="Close">✕</button><div class="plib-tt"><b>${h(nice(p))}</b><span>${h([p.subject,p.chapter,yearOf(p)].filter(Boolean).join(' · '))}</span></div><span class="plib-clock" hidden></span><button type="button" class="btn primary" data-sub hidden>Submit</button></div>
+    ov.innerHTML=`<div class="plib-bar"><button type="button" class="plib-x" data-x aria-label="Close">✕</button><div class="plib-tt"><b>${h(nice(p))}</b><span data-sub2line>${h([p.subject,p.chapter].filter(Boolean).join(' · '))}</span></div><span class="plib-clock" hidden></span><button type="button" class="btn primary" data-sub hidden>Submit</button></div>
       <div class="plib-main"><div class="plib-paper"></div><aside class="plib-sheet"></aside></div><button type="button" class="plib-sheetbtn" hidden>📝 Answer sheet</button>`;
     document.body.appendChild(ov);const prevOver=document.body.style.overflow;document.body.style.overflow='hidden';
     const paper=ov.querySelector('.plib-paper'),sheet=ov.querySelector('.plib-sheet'),clock=ov.querySelector('.plib-clock'),subB=ov.querySelector('[data-sub]'),sb=ov.querySelector('.plib-sheetbtn');
@@ -6261,10 +6276,11 @@ window.PLIB=(function(){
     }
     async function load(part){
       paper.innerHTML='<div class="plib-msg">Opening…</div>';
-      try{const bytes=cache[part]||(cache[part]=await call({paper:p.id,part}));await showPdf(paper,bytes,who)}catch(e){paper.innerHTML=`<div class="plib-msg">${h(e.message)}</div>`}
+      try{const bytes=cache[part]||(cache[part]=await call({paper:p.id,part}));await showPdf(paper,bytes,who,coverFor(p,part,start))}catch(e){paper.innerHTML=`<div class="plib-msg">${h(e.message)}</div>`}
     }
     function begin(useTimer,resume){
       timed=useTimer;ans=resume?resume.a||{}:{};start=resume?resume.s:Date.now();
+      ov.querySelector('[data-sub2line]').textContent=[p.subject,p.chapter,'📅 '+dayText(start)].filter(Boolean).join(' · ');
       clock.hidden=false;subB.hidden=false;subB.disabled=false;subB.textContent='Submit';sb.hidden=false;clearInterval(tick);paintSheet();load('q');
       const total=mins(p)*60;
       upd=()=>{const el=(Date.now()-start)/1000;if(timed){const left=total-el;clock.textContent='⏱ '+fmtT(left)+' left';clock.classList.toggle('low',left<=300);if(left<=0){clearInterval(tick);submit(true)}}else clock.textContent='⏱ '+fmtT(el)};
@@ -6368,7 +6384,7 @@ window.PLIB=(function(){
     document.body.appendChild(ov);const po=document.body.style.overflow;document.body.style.overflow='hidden';
     ov.querySelector('[data-x]').onclick=()=>{ov.remove();document.body.style.overflow=po};
     const host=ov.querySelector('.plib-paper');
-    call({admin_view:r.id,part}).then(b=>showPdf(host,b,'Admin preview')).catch(e=>{host.innerHTML=`<div class="plib-msg">${h(e.message)}</div>`});
+    call({admin_view:r.id,part}).then(b=>showPdf(host,b,'Admin preview',part==='raw'?null:coverFor(r,part,Date.now()))).catch(e=>{host.innerHTML=`<div class="plib-msg">${h(e.message)}</div>`});
   }
   async function keyEditor(r,done){
     if(!r)return;let k={};
