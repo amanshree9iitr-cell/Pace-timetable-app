@@ -4467,7 +4467,7 @@ PM.upload=async function(el,ctx){
     try{busy[d.id]='Preparing the pages…';list();
       const isPdf=x=>/\.pdf$/i.test(x.name)||x.type==='application/pdf';let pdf;
       if(F.length===1&&isPdf(F[0])){if(F[0].size>10*1024*1024)throw new Error('The PDF is larger than 10 MB. Scan it at a lower quality.');pdf=F[0]}
-      else if(F.every(x=>!isPdf(x))){if(F.length>20)throw new Error('Add at most 20 pages.');if(!window.paceMakePdf)throw new Error('Reload the app and try again.');pdf=await window.paceMakePdf(F)}
+      else if(F.every(x=>!isPdf(x))){if(F.length>40)throw new Error('Add at most 40 pages.');if(!window.paceMakePdf)throw new Error('Reload the app and try again.');pdf=await window.paceMakePdf(F)}
       else throw new Error('Choose either one PDF or photos, not both.');
       busy[d.id]='Uploading…';list();
       let r=await fn({admin_upload:{test_id:tid,directory_id:d.id}});if(r.error)throw new Error(await em(r.error));
@@ -5726,7 +5726,7 @@ function imgsToPdf(items){
   return new Blob(parts,{type:'application/pdf'});
 }
 async function makePdf(files){
-  for(const [side,q] of [[1800,.82],[1500,.7],[1200,.6]]){
+  for(const [side,q] of [[1800,.82],[1500,.7],[1200,.6],[1050,.55],[950,.5]]){
     const items=[];for(const f of files)items.push(await toJpeg(f,side,q));
     const b=imgsToPdf(items);if(b.size<=9.5*MB)return b;
   }
@@ -5800,7 +5800,7 @@ window.peTests=async function(box,user,role){
     const isPdf=x=>/\.pdf$/i.test(x.name)||x.type==='application/pdf';let L=window.__tp[id]||[];
     if(add.some(isPdf)){if(add.length>1||L.length){m.style.color='var(--coral)';m.textContent='Upload either one PDF, or photos — not both. Remove the photos first to use a PDF.';return}window.__tp[id]=[add[0]];tpRedraw(id);m.textContent='';return}
     if(L.length&&isPdf(L[0])){m.style.color='var(--coral)';m.textContent='Remove the PDF first to add photos instead.';return}
-    if(L.length+add.length>20){m.style.color='var(--coral)';m.textContent='At most 20 pages. Remove some pages first.';return}
+    if(L.length+add.length>40){m.style.color='var(--coral)';m.textContent='At most 40 pages. Remove some pages first.';return}
     m.style.color='var(--text-muted)';m.textContent='Preparing photo…';
     const small=[];for(const f of add){try{const r=await toJpeg(f,2000,0.85);small.push(new File([r.jpeg],(f.name||'page').replace(/\.[^.]*$/,'')+'.jpg',{type:'image/jpeg'}))}catch(_){small.push(f)}}
     L=window.__tp[id]||[];window.__tp[id]=L.concat(small);m.style.color='var(--text-muted)';m.textContent=`✓ ${window.__tp[id].length} page${window.__tp[id].length>1?'s':''} ready — add more, or submit.`;tpRedraw(id)};
@@ -5840,7 +5840,7 @@ window.peTests=async function(box,user,role){
     try{
       const isPdf=x=>/\.pdf$/i.test(x.name)||x.type==='application/pdf';
       if(files.length===1&&isPdf(files[0])){f=files[0];if(f.size>10*MB)throw new Error('The file is larger than 10 MB. Please scan at a lower quality.')}
-      else if(files.every(x=>!isPdf(x))){if(files.length>20)throw new Error('Please add at most 20 pages.');say('Preparing '+files.length+' photo(s)…');f=new File([await makePdf(files)],'answer.pdf',{type:'application/pdf'})}
+      else if(files.every(x=>!isPdf(x))){if(files.length>40)throw new Error('Please add at most 40 pages.');say('Preparing '+files.length+' photo(s)…');f=new File([await makePdf(files)],'answer.pdf',{type:'application/pdf'})}
       else throw new Error('Choose either one PDF or several photos, not both.');
     }catch(err){g.disabled=false;return say(err.message||String(err),1)}
     say('Uploading…');
