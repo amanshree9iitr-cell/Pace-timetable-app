@@ -6083,7 +6083,7 @@ if(!TEACHER){
 .plib-pill.ready{background:color-mix(in srgb,#16A34A 16%,transparent);color:#15803D}
 .plib-pill.bad{background:color-mix(in srgb,var(--coral) 16%,transparent);color:var(--coral)}
 .plib-pill.wait{background:color-mix(in srgb,#E8890C 18%,transparent);color:#B45309}
-.plib-ov{position:fixed;inset:0;z-index:9500;background:var(--paper);display:flex;flex-direction:column;color:var(--text)}
+.plib-ov{position:fixed;inset:0;z-index:100002;background:var(--paper);display:flex;flex-direction:column;color:var(--text)}
 .plib-bar{display:flex;align-items:center;gap:8px;padding:8px 10px;padding-top:max(8px,env(safe-area-inset-top));background:var(--card);border-bottom:1px solid var(--line)}
 .plib-bar .plib-tt{flex:1;min-width:0}.plib-bar .plib-tt b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .plib-bar .plib-tt span{display:block;font-size:12px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -6166,7 +6166,7 @@ window.PLIB=(function(){
       if(part==='s'){if(!kp||pg<kp)return;pg=pg-kp+1;if(pg===1&&ky)return}
       else{if(kp&&pg>kp)return;if(kp&&pg===kp&&!ky)return;if(kp&&pg===kp&&ky&&d.box[0]>ky*1000)return}
       out.push({page:pg,box:d.box})});
-    return {boxes:out,text:dayText(when)}}
+    return {boxes:out,text:dayText(when),keep:part==='q'&&Array.isArray(p.keep_bands)&&p.keep_bands.length?p.keep_bands:null}}
   async function showPdf(host,bytes,who,cover){
     host.innerHTML='<div class="plib-msg">Opening the paper…</div>';
     const lib=await pdfjs();
@@ -6179,7 +6179,11 @@ window.PLIB=(function(){
       try{const pg=await doc.getPage(+d.dataset.n),v0=pg.getViewport({scale:1}),dpr=Math.min(2,window.devicePixelRatio||1),sc=width()/v0.width,v=pg.getViewport({scale:sc*dpr});
         const c=document.createElement('canvas');c.width=Math.floor(v.width);c.height=Math.floor(v.height);c.style.width=Math.floor(v.width/dpr)+'px';c.style.height=Math.floor(v.height/dpr)+'px';
         await pg.render({canvasContext:c.getContext('2d'),viewport:v}).promise;
-        if(cover&&cover.boxes)cover.boxes.filter(b=>b.page===+d.dataset.n).forEach(b=>{const x=c.getContext('2d'),[y0,x0,y1,x1]=b.box,
+        let bands=null;
+        if(cover&&cover.keep){/* answers printed under each question: only the question parts show until the paper is submitted */
+          const x=c.getContext('2d'),pad=7;bands=cover.keep.filter(k=>k.page===+d.dataset.n).map(k=>[Math.max(0,k.top-pad),Math.min(1000,k.bottom+pad)]).sort((a,b)=>a[0]-b[0]);
+          x.fillStyle='#fff';let y=0;bands.forEach(([t,b])=>{if(t>y)x.fillRect(0,y/1000*c.height,c.width,(t-y)/1000*c.height+1);y=Math.max(y,b)});if(y<1000)x.fillRect(0,y/1000*c.height,c.width,c.height)}
+        if(cover&&cover.boxes)cover.boxes.filter(b=>b.page===+d.dataset.n&&(!bands||bands.some(([t,e])=>b.box[0]>=t&&b.box[2]<=e))).forEach(b=>{const x=c.getContext('2d'),[y0,x0,y1,x1]=b.box,
           X=x0/1000*c.width,Y=y0/1000*c.height,W=(x1-x0)/1000*c.width,H=(y1-y0)/1000*c.height,pad=Math.max(2,H*.18);
           x.fillStyle='#fff';x.fillRect(X-pad,Y-pad,W+pad*2,H+pad*2);
           let fs=Math.max(8,H*.82);x.font='600 '+fs+'px Arial,sans-serif';while(fs>8&&x.measureText(cover.text).width>Math.max(W,c.width*.16)){fs-=1;x.font='600 '+fs+'px Arial,sans-serif'}
