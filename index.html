@@ -4461,7 +4461,7 @@ PM.upload=async function(el,ctx){
       ${tid?`<input id="upQ" type="search" placeholder="🔍 Search a student…" value="${E(q)}" style="width:100%;box-sizing:border-box;margin-top:10px" autocomplete="off">`:''}
       <div id="upL" style="margin-top:6px"></div></div>`;
     list()};
-  const pump=()=>{while(upRun<2&&upQ.length){const j=upQ.shift();upRun++;busy[j.d.id]='🤖 Checking… (1–5 minutes)';list();
+  const pump=()=>{while(upRun<4&&upQ.length){const j=upQ.shift();upRun++;busy[j.d.id]='🤖 Checking… (1–5 minutes)';list();
     paceCheck(j.id).then(async r=>{busy[j.d.id]=r.error?'⚠ '+await em(r.error):null}).catch(e=>{busy[j.d.id]='⚠ '+(e.message||e)})
       .finally(async()=>{upRun--;try{await load()}catch(_){}list();pump()})}};
   const check=(d,id)=>{busy[d.id]='⏳ Waiting to be checked…';upQ.push({d,id});list();pump()};
