@@ -827,7 +827,7 @@ function removeSubject(name){
 }
 
 /* ================= Message builders ================= */
-function facultyMessage(teacherId,date){const t=teacherById(teacherId);if(!t)return '';const e=classesFor(date).filter(c=>c.teacherId===teacherId).sort((a,b)=>a.start.localeCompare(b.start)||a.end.localeCompare(b.end));if(!e.length)return null;let out=`Good Evening\n*${t.name.split(' ')[0]} ${t.salutation||'Sir'}*\n\nDate:- ${fmtDateLong(date)}\nDay:- ${dayName(date)}\n`;e.forEach(c=>{const b=batchById(c.batchId),batch=c.customBatchLabel||(b?b.label:'Batch'),center=b?b.center:(c.customCenter||'Other');out+=`\n*${center} Center*\n`;out+=c.isDoubt?`_${fmt12(c.start)} - ${fmt12(c.end)}: Doubt Session_\n`:`${fmt12(c.start)} - ${fmt12(c.end)}: ${batch}${c.subject?' ('+c.subject+')':''}\n`;});if(e.some(c=>!c.isDoubt&&c.end==='16:30')&&!e.some(c=>c.isDoubt&&c.start==='16:30'))out+=`\n_*4:30 PM - 6:00 PM: Doubt Session*_\n`;return out+'\nThank you.';}
+function facultyMessage(teacherId,date){const t=teacherById(teacherId);if(!t)return '';const e=classesFor(date).filter(c=>c.teacherId===teacherId).sort((a,b)=>a.start.localeCompare(b.start)||a.end.localeCompare(b.end));if(!e.length)return null;let out=`Good Evening\n*${t.name.split(' ')[0]} ${t.salutation||'Sir'}*\n\nDate:- ${fmtDateLong(date)}\nDay:- ${dayName(date)}\n`;e.forEach(c=>{const b=batchById(c.batchId),batch=c.customBatchLabel||(b?b.label:'Batch'),center=b?b.center:(c.customCenter||'Other');out+=`\n*${center} Center*\n`;out+=c.isDoubt?`_${fmt12(c.start)} - ${fmt12(c.end)}: Doubt Session_\n`:`${fmt12(c.start)} - ${fmt12(c.end)}: ${batch}${c.subject?' ('+c.subject+')':''}\n`;});if(e.some(c=>!c.isDoubt&&c.end==='16:30')&&!e.some(c=>!c.isDoubt&&c.end>'16:30')&&!e.some(c=>c.isDoubt&&c.start==='16:30'))out+=`\n_*4:30 PM - 6:00 PM: Doubt Session*_\n`;return out+'\nThank you.';}
 function studentMessage(batchId,date){
  const b=batchById(batchId);if(!b)return '';
  const e=classesFor(date).filter(c=>c.batchId===batchId).sort((a,b)=>a.start.localeCompare(b.start));
@@ -2058,7 +2058,16 @@ async function initPrivateTeacherView(){
     classes.sort((a,b)=>String(a.start).localeCompare(String(b.start))||String(a.end).localeCompare(String(b.end)));
 
     const renderClass=c=>{const b=batchMap.get(c.batchId),name=c.customBatchLabel||(b?.label||b?.name||'Batch'),center=b?.center||c.customCenter||'';const detail=c.isTest?(Array.isArray(c.testTopics)?c.testTopics.map(x=>`${x.subject}: ${x.topic}`).join(' · '):''):c.isDoubt||c.isPractice?'':((l=>l?'📖 '+l:'📖 Chapter not set — use “Set chapter” below')(window.PCH?PCH.label(c,payload.classes,()=>String(teacher.code||'').toUpperCase(),true):''));return `<article style="border:1px solid var(--line);border-radius:10px;padding:13px"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><strong>${esc(name)}${c.subject?' · '+esc(c.subject):''}</strong><strong>${esc(fmt12(c.start))} – ${esc(fmt12(c.end))}</strong></div>${center?`<div class="muted" style="margin-top:4px">${esc(center)} Centre</div>`:''}${detail?`<div style="margin-top:5px;color:var(--text-muted);font-size:13px">${esc(detail)}</div>`:''}${c.online?'<div style="margin-top:5px;font-size:12px;color:var(--teal)">Online class</div>':''}</article>`;};
-    results.innerHTML=`<p class="muted">${esc(dayName(date))}, ${esc(fmtDateLong(date))}</p><section style="margin-top:14px"><div style="display:grid;gap:10px">${classes.map(renderClass).join('')}</div></section>`;
+    /* classes at the same time in different batches: one card, batches separated by commas */
+    const groups=[];classes.forEach(c=>{const g=!c.isDoubt&&groups.find(x=>!x[0].isDoubt&&x[0].start===c.start&&x[0].end===c.end);g?g.push(c):groups.push([c])});
+    const renderGroup=g=>{if(g.length===1)return renderClass(g[0]);
+      const nm=c=>{const b=batchMap.get(c.batchId);return c.customBatchLabel||(b?.label||b?.name||'Batch')},c0=g[0],b0=batchMap.get(c0.batchId),center=b0?.center||c0.customCenter||'';
+      const subj=[...new Set(g.map(c=>c.subject).filter(Boolean))].join(', ');
+      const lab=c=>c.isTest?(Array.isArray(c.testTopics)?c.testTopics.map(x=>`${x.subject}: ${x.topic}`).join(' · '):''):c.isPractice?'':(window.PCH?PCH.label(c,payload.classes,()=>String(teacher.code||'').toUpperCase(),true):'');
+      const L=g.map(lab),same=L.every(x=>x===L[0]);
+      const detail=same?(L[0]?(c0.isTest?L[0]:'📖 '+L[0]):(c0.isTest||c0.isPractice?'':'📖 Chapter not set — use “Set chapter” below')):g.map((c,k)=>nm(c)+' – '+(L[k]||'chapter not set')).join('; ');
+      return `<article style="border:1px solid var(--line);border-radius:10px;padding:13px"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><strong>${esc([...new Set(g.map(nm))].join(', '))}${subj?' · '+esc(subj):''}</strong><strong>${esc(fmt12(c0.start))} – ${esc(fmt12(c0.end))}</strong></div>${center?`<div class="muted" style="margin-top:4px">${esc(center)} Centre</div>`:''}${detail?`<div style="margin-top:5px;color:var(--text-muted);font-size:13px">${esc(detail)}</div>`:''}</article>`};
+    results.innerHTML=`<p class="muted">${esc(dayName(date))}, ${esc(fmtDateLong(date))}</p><section style="margin-top:14px"><div style="display:grid;gap:10px">${groups.map(renderGroup).join('')}</div></section>`;
   }
   async function loadTeacher(session){
     const user=session?.user;
@@ -3026,7 +3035,7 @@ facultyMessage=function(teacherId,date){
     if(center!==last){out+=`\n*${center} Center*\n`;last=center}
     out+=c.isDoubt?`_${fmt12(c.start)} - ${fmt12(c.end)}: Doubt Session_\n`:`${fmt12(c.start)} - ${fmt12(c.end)}: ${batch}${c.subject?' ('+c.subject+')':''}\n`;
   });
-  if(e.some(c=>!c.isDoubt&&c.end==='16:30')&&!e.some(c=>c.isDoubt&&c.start==='16:30'))out+=`\n_*4:30 PM - 6:00 PM: Doubt Session*_\n`;
+  if(e.some(c=>!c.isDoubt&&c.end==='16:30')&&!e.some(c=>!c.isDoubt&&c.end>'16:30')&&!e.some(c=>c.isDoubt&&c.start==='16:30'))out+=`\n_*4:30 PM - 6:00 PM: Doubt Session*_\n`;
   return out+'\nThank you.';
 };
 })();
@@ -3377,7 +3386,7 @@ if(typeof facultyMessage==='function'&&typeof STATE!=='undefined'){
       if(c.isCollege){out+=`\n*College lecture*\nTime: ${fmt12(c.start)} - ${fmt12(c.end)}\n`;return}
       if(c.isTest){const k=c.testKind;out+=`\n*${paceClassTitle(c)}*\nTime: ${fmt12(c.start)} - ${fmt12(c.end)}\n${k==='topic'||!topics(c)?'':'Syllabus: '+topics(c)+'\n'}`;return}
       n++;const i=PCH.info(c,STATE.classes,codeOf,batchId);
-      out+=`\n*Lecture ${n}*\nFaculty: ${who(t)}\n${c.isPractice?'Practice: '+(c.subject||'Practice session'):'Chapter: '+(i&&!i.none?`${i.name} (Lecture ${i.no})`:'—')}\n`;
+      out+=`\n*Class ${n}*\nFaculty: ${who(t)}\n${c.isPractice?'Practice: '+(c.subject||'Practice session'):'Chapter: '+(i&&!i.none?`${i.name} (Lecture ${i.no})`:'—')}\n`;
     });
     d.forEach(c=>{out+=`\n*Doubt Session*\nTime: ${fmt12(c.start)} - ${fmt12(c.end)}\n`});
     if(main.some(c=>c.end==='16:30'&&!c.isTest&&!c.isCollege)&&!d.some(c=>c.start==='16:30'))out+=DOUBT;
@@ -3387,23 +3396,23 @@ if(typeof facultyMessage==='function'&&typeof STATE!=='undefined'){
     const t=teacherById(teacherId);if(!t)return '';
     let e=classesFor(date).filter(c=>c.teacherId===teacherId).sort((a,b)=>a.start.localeCompare(b.start)||a.end.localeCompare(b.end));
     if(!e.length)return null;
-    /* a combined class is saved once per batch — show it once */
+    /* a combined class (saved once per batch), or classes at the same time in different batches: one class, batches separated by commas */
     const seen=new Map(),G=[];
-    e.forEach(c=>{const g=c.combinedGroupId;if(g&&seen.has(g)){seen.get(g).push(c);return}const a=[c];if(g)seen.set(g,a);G.push(a)});
+    e.forEach(c=>{const g=c.combinedGroupId?'g:'+c.combinedGroupId:(c.isDoubt?null:'t:'+c.start+'|'+c.end);if(g&&seen.has(g)){seen.get(g).push(c);return}const a=[c];if(g)seen.set(g,a);G.push(a)});
     let out=`Good Evening\n*${who(t)}*\nDate :- ${fmtDateLong(date)}\nDay :- ${dayName(date)}\n`,last=null,n=0;
     G.forEach(grp=>{
       const c=grp[0],bs=grp.map(x=>{const b=batchById(x.batchId);return{b,label:x.customBatchLabel||(b?b.label:'Batch'),id:x.batchId,c:x}});
       const center=bs[0].b?bs[0].b.center:(c.customCenter||'Other');
       if(center!==last){out+=`\n*${center} Center*\n`;last=center}
       if(c.isDoubt){out+=`\n*Doubt Session*\nTime: ${fmt12(c.start)} - ${fmt12(c.end)}\n`;return}
-      n++;out+=`\n*Class ${n}*\nBatch: ${bs.map(x=>x.label).join(' + ')}\nTime: ${fmt12(c.start)} - ${fmt12(c.end)}\n`;
+      n++;out+=`\n*Class ${n}*\nBatch: ${[...new Set(bs.map(x=>x.label))].join(', ')}\nTime: ${fmt12(c.start)} - ${fmt12(c.end)}\n`;
       if(c.isTest){out+=`Test: ${topics(c)||c.subject||'—'}\n`;return}
       if(c.isPractice){out+=`Practice: ${c.subject||'Practice session'}\n`;return}
       const L=bs.map(x=>{const i=PCH.info(x.c,STATE.classes,codeOf,x.id);return i&&!i.none?`${i.name} (Lecture ${i.no}${i.total?' out of '+i.total:''})`:'—'});
       const same=L.every(x=>x===L[0]);
       out+=`Chapter: ${same?L[0]:bs.map((x,k)=>x.label+' – '+L[k]).join('; ')}\n`;
     });
-    if(e.some(c=>!c.isDoubt&&c.end==='16:30')&&!e.some(c=>c.isDoubt&&c.start==='16:30'))out+=DOUBT;
+    if(e.some(c=>!c.isDoubt&&c.end==='16:30')&&!e.some(c=>!c.isDoubt&&c.end>'16:30')&&!e.some(c=>c.isDoubt&&c.start==='16:30'))out+=DOUBT;
     return out+'\nThank you.';
   };
 }
@@ -5550,6 +5559,7 @@ async function publishMembers(){
     STATE.classes.filter(c=>c.date===date&&c.teacherId&&!c.isDoubt&&!c.isTest&&c.end).forEach(c=>(byT[c.teacherId]=byT[c.teacherId]||[]).push(c));
     Object.entries(byT).forEach(([tid,cl])=>{
       const last=cl.reduce((p,c)=>c.end>p.end?c:p,cl[0]),t=STATE.teachers.find(x=>x.id===tid);
+      if(last.end>'16:30')return;   /* not free after 4:30: no doubt session for this teacher that day */
       if(t&&cof(last))doubts.push({d:date,t:tid,n:t.name,c:cof(last),e:last.end,s:[...new Set(cl.map(c=>c.subject).filter(Boolean))]});
     });
   });
@@ -5557,7 +5567,7 @@ async function publishMembers(){
   const bids=[...new Set(d.data.map(x=>x.batch_id))];
   const brows=bids.map(bid=>{
     const b=STATE.batches.find(x=>x.id===bid);if(!b)return null;
-    const cl=STATE.classes.filter(c=>c.batchId===bid||c.secondBatchId===bid).map(c=>({id:c.id,date:c.date,batchId:c.batchId,teacherId:c.teacherId,subject:c.subject,chapter:c.chapter,lectureNo:c.lectureNo,start:c.start,end:c.end,isDoubt:!!c.isDoubt,isTest:!!c.isTest,isPractice:!!c.isPractice,isCollege:!!c.isCollege,testKind:c.testKind||'',testTopics:c.testTopics||[]})),
+    const cl=STATE.classes.filter(c=>c.batchId===bid||c.secondBatchId===bid).map(c=>({id:c.id,date:c.date,batchId:c.batchId,secondBatchId:c.secondBatchId||null,combinedGroupId:c.combinedGroupId||null,teacherId:c.teacherId,subject:c.subject,chapter:c.chapter,lectureNo:c.lectureNo,start:c.start,end:c.end,isDoubt:!!c.isDoubt,isTest:!!c.isTest,isPractice:!!c.isPractice,isCollege:!!c.isCollege,testKind:c.testKind||'',testTopics:c.testTopics||[]})),
       tids=new Set(cl.map(c=>c.teacherId));
     return{batch_id:bid,updated_at:new Date().toISOString(),payload:{batches:[{id:b.id,label:b.label,center:b.center}],teachers:STATE.teachers.filter(t=>tids.has(t.id)).map(t=>({id:t.id,name:t.name,code:t.code||''})),classes:cl,
       materials:(STATE.materials||[]).filter(m=>!m.batchId||m.batchId===bid).map(m=>({id:m.id,title:m.title,url:m.url,kind:m.kind,subject:m.subject||''})),
@@ -5566,7 +5576,7 @@ async function publishMembers(){
   for(let i=0;i<brows.length;i+=20){const r=await paceCloud.from('pace_batch_timetables').upsert(brows.slice(i,i+20),{onConflict:'batch_id'});if(r.error){console.warn('batch publish',r.error.message);break}}
   const rows=Object.entries(by).map(([uid,list])=>{
     const ids=new Set(list.map(x=>x.batch_id)),
-      classes=STATE.classes.filter(c=>ids.has(c.batchId)||ids.has(c.secondBatchId)).map(c=>({id:c.id,date:c.date,batchId:c.batchId,teacherId:c.teacherId,subject:c.subject,chapter:c.chapter,lectureNo:c.lectureNo,start:c.start,end:c.end,isDoubt:!!c.isDoubt,isTest:!!c.isTest,isPractice:!!c.isPractice,isCollege:!!c.isCollege,testKind:c.testKind||'',testTopics:c.testTopics||[]})),
+      classes=STATE.classes.filter(c=>ids.has(c.batchId)||ids.has(c.secondBatchId)).map(c=>({id:c.id,date:c.date,batchId:c.batchId,secondBatchId:c.secondBatchId||null,combinedGroupId:c.combinedGroupId||null,teacherId:c.teacherId,subject:c.subject,chapter:c.chapter,lectureNo:c.lectureNo,start:c.start,end:c.end,isDoubt:!!c.isDoubt,isTest:!!c.isTest,isPractice:!!c.isPractice,isCollege:!!c.isCollege,testKind:c.testKind||'',testTopics:c.testTopics||[]})),
       tids=new Set(classes.map(c=>c.teacherId)),batches=STATE.batches.filter(b=>ids.has(b.id)),centers=new Set(batches.map(b=>String(b.center||'').toLowerCase()));
     return{user_id:uid,updated_at:new Date().toISOString(),payload:{name:list[0].name||'',role:list[0].role,batches:batches.map(b=>({id:b.id,label:b.label,center:b.center})),teachers:STATE.teachers.filter(t=>tids.has(t.id)).map(t=>({id:t.id,name:t.name,code:t.code||''})),classes,
       materials:(STATE.materials||[]).filter(m=>!m.batchId||ids.has(m.batchId)).map(m=>({id:m.id,title:m.title,url:m.url,kind:m.kind,subject:m.subject||''})),
