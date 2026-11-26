@@ -3372,10 +3372,26 @@ if(typeof facultyMessage==='function'&&typeof STATE!=='undefined'){
   const who=t=>t?`${String(t.name||'').trim().split(/\s+/)[0]} ${t.salutation||'Sir'}`:'—';
   const topics=c=>(c.testTopics||[]).map(x=>x.subject+': '+x.topic).join(', ');
   const DOUBT='\n*Doubt Session*\nTime: 4:30 PM - 6:30 PM\n';
+  /* teachers who take doubts 4:30-6:30 at a centre on a date: their last class ends at 4:30 there (or a doubt slot is set at 4:30 there),
+     and they have no class after 4:30 - the same rule as the doubt session in the faculty timetable */
+  const centreOf=c=>{const x=batchById(c.batchId);return String((x&&x.center)||c.customCenter||'').trim().toLowerCase()};
+  const doubtCodesAt=(centre,date)=>{const by={},out=[];centre=String(centre||'').trim().toLowerCase();if(!centre)return out;
+    classesFor(date).filter(c=>c.teacherId&&!c.isTest&&!c.isCollege).forEach(c=>(by[c.teacherId]=by[c.teacherId]||[]).push(c));
+    Object.entries(by).forEach(([tid,cl])=>{const main=cl.filter(c=>!c.isDoubt);if(main.some(c=>c.end>'16:30'))return;
+      const set=cl.find(c=>c.isDoubt&&c.start==='16:30'),last=main.filter(c=>c.end==='16:30')[0];
+      const at=set?centreOf(set):last?centreOf(last):'';if(at!==centre)return;
+      const t=teacherById(tid);if(t)out.push(String(t.code||t.name||'').trim())});
+    return [...new Set(out.filter(Boolean))].sort()};
+  const isXII=b=>/\bXII\b|\b12\s*(th)?\b/i.test(String(b.label||'')+' '+String(b.short||''));
   studentMessage=function(batchId,date){
     const b=batchById(batchId);if(!b)return '';
     const e=classesFor(date).filter(c=>inBatch(c,batchId)).sort((a,b)=>a.start.localeCompare(b.start)||a.end.localeCompare(b.end));
-    if(!e.length)return null;
+    const dc=isXII(b)?doubtCodesAt(b.center,date):[];
+    if(!e.length){
+      if(!dc.length)return null;
+      /* 12th batch with no class that day: only the doubt session */
+      return `Dear Students\n(${b.label})${b.short?' '+b.short:''}\n\n${relLabel(date)?relLabel(date)+' ':''}${fmtDateLong(date)} ${dc.join(', ')} will be available for doubts from 4:30 to 6:30 pm\n\nThank you`;
+    }
     const main=e.filter(c=>!c.isDoubt),d=e.filter(c=>c.isDoubt);
     const st=main.length?main.reduce((m,c)=>c.start<m?c.start:m,main[0].start):null,en=main.length?main.reduce((m,c)=>c.end>m?c.end:m,main[0].end):null;
     let out=`Good Evening\nDear Students\n(${b.label})${b.short?' '+b.short:''}\n\n${relLabel(date)?relLabel(date)+' ':''}${fmtDateLong(date)} ${dayName(date)}\nClass timings are as follows -\n`;
@@ -3388,6 +3404,11 @@ if(typeof facultyMessage==='function'&&typeof STATE!=='undefined'){
       n++;const i=PCH.info(c,STATE.classes,codeOf,batchId);
       out+=`\n*Class ${n}*\nFaculty: ${who(t)}\n${c.isPractice?'Practice: '+(c.subject||'Practice session'):'Chapter: '+(i&&!i.none?`${i.name} (Lecture ${i.no})`:'—')}\n`;
     });
+    if(dc.length){   /* 12th batches: the teachers taking doubts at this centre */
+      d.filter(c=>c.start!=='16:30').forEach(c=>{out+=`\n*Doubt Session*\nTime: ${fmt12(c.start)} - ${fmt12(c.end)}\n`});
+      out+=`\n*Doubt Session*\nTime: 4:30 PM - 6:30 PM\nFaculty available: ${dc.join(', ')}\n`;
+      return out+'\nThank You';
+    }
     d.forEach(c=>{out+=`\n*Doubt Session*\nTime: ${fmt12(c.start)} - ${fmt12(c.end)}\n`});
     if(main.some(c=>c.end==='16:30'&&!c.isTest&&!c.isCollege)&&!d.some(c=>c.start==='16:30'))out+=DOUBT;
     return out+'\nThank You';
